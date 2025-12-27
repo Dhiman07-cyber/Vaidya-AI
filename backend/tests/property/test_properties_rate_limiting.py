@@ -421,3 +421,188 @@ async def test_property_multi_level_rate_limiting(user_id, plan, feature):
         # Property: Should fail when feature-specific limit exceeded
         assert result is False, \
             f"Should reject when MCQ limit exceeded. MCQs: {usage_over_feature['mcqs_generated']}, Limit: {limits['mcqs_per_day']}"
+
+
+# Feature: medical-ai-platform, Property 20: Usage tracking is comprehensive
+@given(
+    user_id=valid_user_id(),
+    tokens=st.integers(min_value=0, max_value=10000),
+    feature=st.one_of(st.none(), valid_feature())
+)
+@settings(max_examples=100)
+@pytest.mark.property_test
+@pytest.mark.asyncio
+async def test_property_usage_tracking_comprehensive(user_id, tokens, feature):
+    """
+    Property 20: For any user request, all applicable usage metrics 
+    (tokens_used, requests_count, feature-specific counters) should be 
+    incremented correctly.
+    
+    Validates: Requirements 9.1
+    """
+    # Create mock Supabase client
+    mock_supabase = MagicMock()
+    
+    today = str(date.today())
+    
+    # Initial usage data
+    initial_usage = {
+        'id': 'usage-id-123',
+        'user_id': user_id,
+        'date': today,
+        'tokens_used': 100,
+        'requests_count': 5,
+        'pdf_uploads': 2,
+        'mcqs_generated': 3,
+        'images_used': 1,
+        'flashcards_generated': 4,
+    }
+    
+    # Mock existing usage counter
+    mock_usage_response = MagicMock()
+    mock_usage_response.data = [initial_usage.copy()]
+    
+    # Mock update response
+    mock_update_response = MagicMock()
+    mock_update_response.data = [{'id': 'usage-id-123'}]
+    
+    # Track what update was called with
+    update_data_captured = {}
+    
+    def mock_table_operations(table_name):
+        mock_table = MagicMock()
+        
+        if table_name == "usage_counters":
+            # Mock select chain
+            mock_select = MagicMock()
+            mock_eq1 = MagicMock()
+            mock_eq2 = MagicMock()
+            mock_eq2.execute.return_value = mock_usage_response
+            mock_eq1.eq.return_value = mock_eq2
+            mock_select.eq.return_value = mock_eq1
+            mock_table.select.return_value = mock_select
+            
+            # Mock update chain
+            def capture_update(data):
+                update_data_captured.update(data)
+                mock_update = MagicMock()
+                mock_eq_update = MagicMock()
+                mock_eq_update.execute.return_value = mock_update_response
+                mock_update.eq.return_value = mock_eq_update
+                return mock_update
+            
+            mock_table.update.side_effect = capture_update
+        
+        return mock_table
+    
+    mock_supabase.table.side_effect = mock_table_operations
+    
+    # Create rate limiter with mock client
+    rate_limiter = RateLimiter(supabase_client=mock_supabase)
+    
+    # Increment usage
+    await rate_limiter.increment_usage(user_id, tokens, feature)
+    
+    # Property 1: tokens_used should be incremented by the specified amount
+    assert 'tokens_used' in update_data_captured, \
+        "tokens_used should be updated"
+    assert update_data_captured['tokens_used'] == initial_usage['tokens_used'] + tokens, \
+        f"tokens_used should be incremented by {tokens}. Expected: {initial_usage['tokens_used'] + tokens}, Got: {update_data_captured['tokens_used']}"
+    
+    # Property 2: requests_count should always be incremented by 1
+    assert 'requests_count' in update_data_captured, \
+        "requests_count should be updated"
+    assert update_data_captured['requests_count'] == initial_usage['requests_count'] + 1, \
+        f"requests_count should be incremented by 1. Expected: {initial_usage['requests_count'] + 1}, Got: {update_data_captured['requests_count']}"
+    
+    # Property 3: Feature-specific counters should be incremented when feature is specified
+    if feature == 'mcq':
+        assert 'mcqs_generated' in update_data_captured, \
+            "mcqs_generated should be updated for mcq feature"
+        assert update_data_captured['mcqs_generated'] == initial_usage['mcqs_generated'] + 1, \
+            f"mcqs_generated should be incremented by 1"
+    elif feature == 'flashcard':
+        assert 'flashcards_generated' in update_data_captured, \
+            "flashcards_generated should be updated for flashcard feature"
+        assert update_data_captured['flashcards_generated'] == initial_usage['flashcards_generated'] + 1, \
+            f"flashcards_generated should be incremented by 1"
+    elif feature == 'pdf':
+        assert 'pdf_uploads' in update_data_captured, \
+            "pdf_uploads should be updated for pdf feature"
+        assert update_data_captured['pdf_uploads'] == initial_usage['pdf_uploads'] + 1, \
+            f"pdf_uploads should be incremented by 1"
+    elif feature == 'image':
+        assert 'images_used' in update_data_captured, \
+            "images_used should be updated for image feature"
+        assert update_data_captured['images_used'] == initial_usage['images_used'] + 1, \
+            f"images_used should be incremented by 1"
+    
+    # Property 4: Database update should be called
+    mock_supabase.table.assert_any_call("usage_counters")
+
+
+# Feature: medical-ai-platform, Property 23: Daily counters reset at midnight UTC
+@given(
+    num_users=st.integers(min_value=0, max_value=100)
+)
+@settings(max_examples=100)
+@pytest.mark.property_test
+@pytest.mark.asyncio
+async def test_property_daily_counters_reset(num_users):
+    """
+    Property 23: For any user, after the daily reset job runs, 
+    all usage counters for the current date should be zero.
+    
+    Note: The reset job doesn't delete old records (for history tracking),
+    but ensures new requests create fresh counters for the new day.
+    
+    Validates: Requirements 9.4
+    """
+    # Import here to avoid circular dependency
+    from services.scheduler import Scheduler
+    
+    # Create mock Supabase client
+    mock_supabase = MagicMock()
+    
+    today = str(date.today())
+    
+    # Mock the count query for previous day users
+    mock_count_response = MagicMock()
+    mock_count_response.count = num_users
+    mock_count_response.data = []
+    
+    # Set up mock chain for select query
+    mock_execute = MagicMock()
+    mock_execute.execute.return_value = mock_count_response
+    mock_lt = MagicMock()
+    mock_lt.lt.return_value = mock_execute
+    mock_select = MagicMock()
+    mock_select.select.return_value = mock_lt
+    mock_supabase.table.return_value = mock_select
+    
+    # Create scheduler with mock client
+    scheduler = Scheduler(supabase_client=mock_supabase)
+    
+    # Run the reset job
+    result = await scheduler.reset_daily_counters()
+    
+    # Property 1: Reset should complete successfully
+    assert result is not None, "Reset should return a result"
+    assert result["status"] == "success", f"Reset should succeed, got status: {result['status']}"
+    
+    # Property 2: Reset should record the date
+    assert result["reset_date"] == today, \
+        f"Reset date should be today ({today}), got: {result['reset_date']}"
+    
+    # Property 3: Reset should record the time
+    assert "reset_time" in result, "Reset should record the time"
+    assert result["reset_time"] is not None, "Reset time should not be None"
+    
+    # Property 4: Reset should track previous day users
+    assert "users_with_previous_usage" in result, \
+        "Reset should track users with previous usage"
+    assert result["users_with_previous_usage"] == num_users, \
+        f"Should track {num_users} users, got: {result['users_with_previous_usage']}"
+    
+    # Property 5: Database query should be called to check previous usage
+    mock_supabase.table.assert_called_with("usage_counters")

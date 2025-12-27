@@ -130,14 +130,20 @@ class TestChatMessageEndpoints:
         assert data[0]["content"] == "Hello"
     
     @patch('main.get_chat_service')
+    @patch('main.get_rate_limiter')
     @patch('main.get_current_user_id')
-    def test_send_message_stores_message(self, mock_get_user_id, mock_get_chat_service):
+    def test_send_message_stores_message(self, mock_get_user_id, mock_get_rate_limiter, mock_get_chat_service):
         """Test POST /api/chat/sessions/{session_id}/messages stores message"""
         # Arrange
         user_id = str(uuid.uuid4())
         session_id = str(uuid.uuid4())
         message_id = str(uuid.uuid4())
         mock_get_user_id.return_value = AsyncMock(return_value=user_id)()
+        
+        # Mock rate limiter to allow request
+        mock_rate_limiter = MagicMock()
+        mock_rate_limiter.check_rate_limit = AsyncMock(return_value=True)
+        mock_get_rate_limiter.return_value = mock_rate_limiter
         
         mock_chat_service = MagicMock()
         mock_chat_service.send_message = AsyncMock(return_value={
@@ -165,13 +171,19 @@ class TestChatMessageEndpoints:
         assert data["role"] == "user"
     
     @patch('main.get_chat_service')
+    @patch('main.get_rate_limiter')
     @patch('main.get_current_user_id')
-    def test_send_message_to_invalid_session_returns_404(self, mock_get_user_id, mock_get_chat_service):
+    def test_send_message_to_invalid_session_returns_404(self, mock_get_user_id, mock_get_rate_limiter, mock_get_chat_service):
         """Test sending message to non-existent session returns 404"""
         # Arrange
         user_id = str(uuid.uuid4())
         session_id = str(uuid.uuid4())
         mock_get_user_id.return_value = AsyncMock(return_value=user_id)()
+        
+        # Mock rate limiter to allow request
+        mock_rate_limiter = MagicMock()
+        mock_rate_limiter.check_rate_limit = AsyncMock(return_value=True)
+        mock_get_rate_limiter.return_value = mock_rate_limiter
         
         mock_chat_service = MagicMock()
         mock_chat_service.send_message = AsyncMock(
@@ -235,3 +247,174 @@ class TestChatMessageEndpoints:
         data = response.json()
         assert "detail" in data
         assert data["detail"]["error"]["code"] == "SESSION_NOT_FOUND"
+
+
+
+class TestRateLimitErrors:
+    """Tests for rate limit error handling (Requirements 9.3, 28.2)"""
+    
+    @patch('main.get_rate_limiter')
+    @patch('main.get_auth_service')
+    @patch('main.get_current_user_id')
+    def test_rate_limit_exceeded_returns_429_with_upgrade_prompt(
+        self, mock_get_user_id, mock_get_auth_service, mock_get_rate_limiter
+    ):
+        """
+        Test that exceeding rate limit returns 429 with upgrade prompt
+        Requirements: 9.3, 28.2
+        """
+        # Arrange
+        user_id = str(uuid.uuid4())
+        session_id = str(uuid.uuid4())
+        mock_get_user_id.return_value = AsyncMock(return_value=user_id)()
+        
+        # Mock rate limiter to return False (limit exceeded)
+        mock_rate_limiter = MagicMock()
+        mock_rate_limiter.check_rate_limit = AsyncMock(return_value=False)
+        mock_rate_limiter.get_user_usage = AsyncMock(return_value={
+            "tokens_used": 10000,
+            "requests_count": 20,
+            "pdf_uploads": 0,
+            "mcqs_generated": 5,
+            "images_used": 0,
+            "flashcards_generated": 10,
+        })
+        mock_get_rate_limiter.return_value = mock_rate_limiter
+        
+        # Mock auth service to return user plan
+        mock_auth_service = MagicMock()
+        mock_auth_service.get_user_plan = AsyncMock(return_value="free")
+        mock_get_auth_service.return_value = mock_auth_service
+        
+        # Act
+        response = client.post(
+            f"/api/chat/sessions/{session_id}/messages",
+            json={"message": "Test message"},
+            headers={"Authorization": f"Bearer {user_id}"}
+        )
+        
+        # Assert
+        assert response.status_code == 429
+        data = response.json()
+        assert "detail" in data
+        error = data["detail"]["error"]
+        
+        # Requirement 28.2: Error message includes upgrade prompt
+        assert error["code"] == "RATE_LIMIT_EXCEEDED"
+        assert "upgrade" in error["message"].lower() or "limit" in error["message"].lower()
+        assert error["action"] == "upgrade"
+        assert error["upgrade_url"] == "/pricing"
+        
+        # Requirement 9.3: Error includes limit details
+        assert "details" in error
+        assert "current_plan" in error["details"]
+        assert error["details"]["current_plan"] == "free"
+        assert "tokens_used" in error["details"]
+        assert "tokens_limit" in error["details"]
+        assert "requests_used" in error["details"]
+        assert "requests_limit" in error["details"]
+    
+    @patch('main.get_rate_limiter')
+    @patch('main.get_auth_service')
+    @patch('main.get_current_user_id')
+    def test_rate_limit_error_includes_limit_details(
+        self, mock_get_user_id, mock_get_auth_service, mock_get_rate_limiter
+    ):
+        """
+        Test that rate limit error includes specific limit details
+        Requirements: 28.2
+        """
+        # Arrange
+        user_id = str(uuid.uuid4())
+        session_id = str(uuid.uuid4())
+        mock_get_user_id.return_value = AsyncMock(return_value=user_id)()
+        
+        # Mock rate limiter to return False (limit exceeded)
+        mock_rate_limiter = MagicMock()
+        mock_rate_limiter.check_rate_limit = AsyncMock(return_value=False)
+        mock_rate_limiter.get_user_usage = AsyncMock(return_value={
+            "tokens_used": 50000,
+            "requests_count": 100,
+            "pdf_uploads": 5,
+            "mcqs_generated": 50,
+            "images_used": 10,
+            "flashcards_generated": 100,
+        })
+        mock_get_rate_limiter.return_value = mock_rate_limiter
+        
+        # Mock auth service to return student plan
+        mock_auth_service = MagicMock()
+        mock_auth_service.get_user_plan = AsyncMock(return_value="student")
+        mock_get_auth_service.return_value = mock_auth_service
+        
+        # Act
+        response = client.post(
+            f"/api/chat/sessions/{session_id}/messages",
+            json={"message": "Test message"},
+            headers={"Authorization": f"Bearer {user_id}"}
+        )
+        
+        # Assert
+        assert response.status_code == 429
+        data = response.json()
+        error = data["detail"]["error"]
+        details = error["details"]
+        
+        # Verify all required details are present
+        assert details["current_plan"] == "student"
+        assert details["tokens_used"] == 50000
+        assert details["tokens_limit"] == 50000  # Student plan limit
+        assert details["requests_used"] == 100
+        assert details["requests_limit"] == 100  # Student plan limit
+    
+    @patch('main.get_chat_service')
+    @patch('main.get_rate_limiter')
+    @patch('main.get_current_user_id')
+    def test_within_rate_limit_allows_request(
+        self, mock_get_user_id, mock_get_rate_limiter, mock_get_chat_service
+    ):
+        """
+        Test that requests within rate limit are allowed
+        """
+        # Arrange
+        user_id = str(uuid.uuid4())
+        session_id = str(uuid.uuid4())
+        message_id = str(uuid.uuid4())
+        
+        # Fix: Properly mock the async function
+        async def mock_get_user():
+            return user_id
+        mock_get_user_id.return_value = mock_get_user()
+        
+        # Mock rate limiter to return True (within limits)
+        mock_rate_limiter = MagicMock()
+        mock_rate_limiter.check_rate_limit = AsyncMock(return_value=True)
+        mock_get_rate_limiter.return_value = mock_rate_limiter
+        
+        # Mock chat service
+        mock_chat_service = MagicMock()
+        mock_chat_service.send_message = AsyncMock(return_value={
+            "id": message_id,
+            "session_id": session_id,
+            "role": "user",
+            "content": "Test message",
+            "tokens_used": None,
+            "citations": None,
+            "created_at": "2024-01-01T00:00:00Z"
+        })
+        mock_get_chat_service.return_value = mock_chat_service
+        
+        # Act
+        response = client.post(
+            f"/api/chat/sessions/{session_id}/messages",
+            json={"message": "Test message"},
+            headers={"Authorization": f"Bearer {user_id}"}
+        )
+        
+        # Assert
+        assert response.status_code == 201
+        data = response.json()
+        assert data["content"] == "Test message"
+        
+        # Verify rate limit was checked
+        assert mock_rate_limiter.check_rate_limit.called

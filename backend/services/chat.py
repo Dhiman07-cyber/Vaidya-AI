@@ -1,13 +1,14 @@
 """
 Chat Service
 Handles chat session management and message persistence
-Requirements: 3.2, 3.4
+Requirements: 3.2, 3.4, 9.1
 """
 import os
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timezone
 from supabase import Client, create_client
 from dotenv import load_dotenv
+from services.rate_limiter import get_rate_limiter
 
 # Load environment variables
 load_dotenv()
@@ -94,27 +95,32 @@ class ChatService:
         user_id: str, 
         session_id: str, 
         message: str,
-        role: str = "user"
+        role: str = "user",
+        tokens_used: int = 0,
+        generate_response: bool = True
     ) -> Dict[str, Any]:
         """
-        Send a message in a chat session (stub for now)
+        Send a message in a chat session and optionally generate AI response
         
-        This is a stub implementation that stores the user message.
-        Future implementations will integrate with model router for AI responses.
+        Integrates with model router to generate AI responses using available providers.
+        Detects and routes slash commands to appropriate handlers.
         
         Args:
             user_id: User's unique identifier
             session_id: Chat session identifier
             message: Message content
             role: Message role (user, assistant, system)
+            tokens_used: Number of tokens used for this message (default 0 for user messages)
+            generate_response: Whether to generate an AI response (default True)
             
         Returns:
-            Dict containing the stored message data
+            Dict containing the stored message data (user message if generate_response=False,
+            assistant message if generate_response=True)
             
         Raises:
-            Exception: If message storage fails
+            Exception: If message storage or AI generation fails
             
-        Requirements: 3.2, 3.4
+        Requirements: 3.2, 3.3, 3.4, 4.1, 4.2, 4.3, 4.4, 4.5, 9.1, 21.1
         """
         try:
             # Verify session belongs to user
@@ -127,19 +133,100 @@ class ChatService:
             if not session_response.data or len(session_response.data) == 0:
                 raise Exception("Session not found or does not belong to user")
             
-            # Store message in database with timestamp
-            message_data = {
+            # Store user message in database with timestamp
+            user_message_data = {
                 "session_id": session_id,
                 "role": role,
                 "content": message,
-                "tokens_used": None,  # Will be set when AI integration is added
+                "tokens_used": tokens_used if tokens_used > 0 else None,
                 "citations": None
             }
             
-            response = self.supabase.table("messages").insert(message_data).execute()
+            user_message_response = self.supabase.table("messages").insert(user_message_data).execute()
             
-            if not response.data or len(response.data) == 0:
-                raise Exception("Failed to store message")
+            if not user_message_response.data or len(user_message_response.data) == 0:
+                raise Exception("Failed to store user message")
+            
+            # If not generating response, return user message
+            if not generate_response:
+                # Update session's updated_at timestamp
+                self.supabase.table("chat_sessions")\
+                    .update({"updated_at": datetime.now(timezone.utc).isoformat()})\
+                    .eq("id", session_id)\
+                    .execute()
+                
+                return user_message_response.data[0]
+            
+            # Check if message is a slash command (Requirements 4.1-4.5)
+            from services.commands import get_command_service
+            
+            command_service = get_command_service(self.supabase)
+            parsed_command = command_service.parse_command(message)
+            
+            if parsed_command:
+                # Execute the command
+                command_result = await command_service.execute_command(
+                    user_id=user_id,
+                    command=parsed_command['command'],
+                    topic=parsed_command['topic']
+                )
+                
+                # Store command result as assistant message
+                ai_message_data = {
+                    "session_id": session_id,
+                    "role": "assistant",
+                    "content": command_result["content"],
+                    "tokens_used": command_result["tokens_used"],
+                    "citations": None
+                }
+                
+                ai_message_response = self.supabase.table("messages").insert(ai_message_data).execute()
+                
+                if not ai_message_response.data or len(ai_message_response.data) == 0:
+                    raise Exception("Failed to store command result")
+                
+                # Update session's updated_at timestamp
+                self.supabase.table("chat_sessions")\
+                    .update({"updated_at": datetime.now(timezone.utc).isoformat()})\
+                    .eq("id", session_id)\
+                    .execute()
+                
+                # Return the command result message
+                return ai_message_response.data[0]
+            
+            # Not a command, generate regular AI response using model router (Requirement 21.1)
+            from services.model_router import get_model_router_service
+            
+            router = get_model_router_service(self.supabase)
+            
+            # Select provider for chat feature
+            provider = await router.select_provider("chat")
+            
+            # Execute request with automatic fallback (Requirement 3.3)
+            ai_result = await router.execute_with_fallback(
+                provider=provider,
+                feature="chat",
+                prompt=message,
+                system_prompt="You are a helpful medical education AI tutor. Provide accurate, clear, and educational responses to medical students."
+            )
+            
+            if not ai_result["success"]:
+                # AI generation failed, return error
+                raise Exception(f"AI response generation failed: {ai_result.get('error', 'Unknown error')}")
+            
+            # Store AI response message
+            ai_message_data = {
+                "session_id": session_id,
+                "role": "assistant",
+                "content": ai_result["content"],
+                "tokens_used": ai_result["tokens_used"],
+                "citations": None
+            }
+            
+            ai_message_response = self.supabase.table("messages").insert(ai_message_data).execute()
+            
+            if not ai_message_response.data or len(ai_message_response.data) == 0:
+                raise Exception("Failed to store AI message")
             
             # Update session's updated_at timestamp
             self.supabase.table("chat_sessions")\
@@ -147,7 +234,16 @@ class ChatService:
                 .eq("id", session_id)\
                 .execute()
             
-            return response.data[0]
+            # Track usage after successful message storage (Requirement 9.1)
+            rate_limiter = get_rate_limiter(self.supabase)
+            await rate_limiter.increment_usage(
+                user_id=user_id,
+                tokens=ai_result["tokens_used"],
+                feature="chat"
+            )
+            
+            # Return the AI response message
+            return ai_message_response.data[0]
         except Exception as e:
             raise Exception(f"Failed to send message: {str(e)}")
     

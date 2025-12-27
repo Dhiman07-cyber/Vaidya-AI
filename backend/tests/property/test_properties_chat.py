@@ -5,7 +5,7 @@ Feature: medical-ai-platform
 """
 import pytest
 from hypothesis import given, strategies as st, settings
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import MagicMock, AsyncMock, patch
 from services.chat import ChatService
 import uuid
 
@@ -74,11 +74,16 @@ async def test_message_persistence_property(message_content, role):
     mock_update.execute.return_value = mock_update_response
     mock_supabase.table.return_value.update.return_value.eq.return_value = mock_update
     
+    # Mock rate limiter
+    mock_rate_limiter = MagicMock()
+    mock_rate_limiter.increment_usage = AsyncMock()
+    
     # Create chat service with mock client
     chat_service = ChatService(supabase_client=mock_supabase)
     
-    # Act: Send message
-    result = await chat_service.send_message(user_id, session_id, message_content, role)
+    # Act: Send message with mocked rate limiter (without generating AI response)
+    with patch('services.chat.get_rate_limiter', return_value=mock_rate_limiter):
+        result = await chat_service.send_message(user_id, session_id, message_content, role, generate_response=False)
     
     # Assert: Message was persisted with correct data
     assert result is not None
@@ -90,6 +95,9 @@ async def test_message_persistence_property(message_content, role):
     # Verify the message was inserted into the database
     mock_supabase.table.assert_any_call("messages")
     mock_insert.execute.assert_called_once()
+    
+    # Verify usage was NOT tracked (since we're not generating AI response)
+    mock_rate_limiter.increment_usage.assert_not_called()
 
 
 
@@ -144,11 +152,16 @@ async def test_message_routing_property(message_content, role):
     mock_update.execute.return_value = mock_update_response
     mock_supabase.table.return_value.update.return_value.eq.return_value = mock_update
     
+    # Mock rate limiter
+    mock_rate_limiter = MagicMock()
+    mock_rate_limiter.increment_usage = AsyncMock()
+    
     # Create chat service with mock client
     chat_service = ChatService(supabase_client=mock_supabase)
     
-    # Act: Send message (simulating routing from frontend to backend)
-    result = await chat_service.send_message(user_id, session_id, message_content, role)
+    # Act: Send message (simulating routing from frontend to backend) with mocked rate limiter (without generating AI response)
+    with patch('services.chat.get_rate_limiter', return_value=mock_rate_limiter):
+        result = await chat_service.send_message(user_id, session_id, message_content, role, generate_response=False)
     
     # Assert: Message reached the backend and was processed
     assert result is not None
@@ -157,3 +170,6 @@ async def test_message_routing_property(message_content, role):
     
     # Verify the backend received and processed the message
     mock_insert.execute.assert_called_once()
+    
+    # Verify usage was NOT tracked (since we're not generating AI response)
+    mock_rate_limiter.increment_usage.assert_not_called()

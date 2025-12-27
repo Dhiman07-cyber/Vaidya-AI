@@ -1,7 +1,7 @@
 """
 Medical AI Platform - FastAPI Backend
 Main application entry point
-Requirements: 20.1, 20.6, 20.7
+Requirements: 20.1, 20.6, 20.7, 11.1
 """
 from fastapi import FastAPI, Request, HTTPException, status, Header
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,9 +12,14 @@ import os
 import logging
 import time
 import uuid
+import asyncio
 from dotenv import load_dotenv
 from services.auth import get_auth_service
 from services.chat import get_chat_service
+from services.rate_limiter import get_rate_limiter
+from services.health_monitor import get_health_monitor
+from services.encryption import get_encryption_service
+from supabase import create_client
 
 # Load environment variables
 load_dotenv()
@@ -41,6 +46,141 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Background task control
+_health_check_task: Optional[asyncio.Task] = None
+_health_check_running = False
+
+
+async def periodic_health_check():
+    """
+    Background task that performs periodic health checks on all active API keys
+    
+    Runs every 5 minutes and checks the health of all active API keys.
+    Requirements: 11.1
+    """
+    global _health_check_running
+    
+    # Initialize Supabase client for health monitor
+    supabase_url = os.getenv("SUPABASE_URL")
+    supabase_key = os.getenv("SUPABASE_SERVICE_KEY")
+    
+    if not supabase_url or not supabase_key:
+        logger.error("Cannot start health check task: SUPABASE_URL and SUPABASE_SERVICE_KEY must be set")
+        return
+    
+    supabase_client = create_client(supabase_url, supabase_key)
+    health_monitor = get_health_monitor(supabase_client)
+    encryption_service = get_encryption_service()
+    
+    logger.info("Starting periodic health check background task (every 5 minutes)")
+    _health_check_running = True
+    
+    while _health_check_running:
+        try:
+            # Get all active API keys
+            result = supabase_client.table("api_keys") \
+                .select("id, provider, feature, key_value, status") \
+                .eq("status", "active") \
+                .execute()
+            
+            if result.data:
+                logger.info(f"Running health checks for {len(result.data)} active API keys")
+                
+                for key_data in result.data:
+                    try:
+                        # Decrypt the API key
+                        decrypted_key = encryption_service.decrypt_key(key_data["key_value"])
+                        
+                        # Perform health check
+                        health_result = await health_monitor.check_provider_health(
+                            provider=key_data["provider"],
+                            key=decrypted_key,
+                            feature=key_data["feature"]
+                        )
+                        
+                        # Log the health check result
+                        await health_monitor.log_health_check(
+                            key_id=key_data["id"],
+                            status=health_result["status"],
+                            response_time_ms=health_result["response_time_ms"],
+                            error_message=health_result["error_message"],
+                            quota_remaining=health_result["quota_remaining"]
+                        )
+                        
+                        # If health check failed, record the failure
+                        if health_result["status"] == "failed":
+                            await health_monitor.record_failure(
+                                key_id=key_data["id"],
+                                error=health_result["error_message"] or "Health check failed",
+                                provider=key_data["provider"],
+                                feature=key_data["feature"]
+                            )
+                            logger.warning(
+                                f"Health check failed for key {key_data['id']} "
+                                f"({key_data['provider']}/{key_data['feature']}): "
+                                f"{health_result['error_message']}"
+                            )
+                        else:
+                            logger.debug(
+                                f"Health check passed for key {key_data['id']} "
+                                f"({key_data['provider']}/{key_data['feature']}) "
+                                f"in {health_result['response_time_ms']}ms"
+                            )
+                    
+                    except Exception as e:
+                        logger.error(
+                            f"Error checking health for key {key_data['id']}: {str(e)}",
+                            exc_info=True
+                        )
+            else:
+                logger.debug("No active API keys to check")
+            
+        except Exception as e:
+            logger.error(f"Error in periodic health check: {str(e)}", exc_info=True)
+        
+        # Wait 5 minutes before next check
+        await asyncio.sleep(300)  # 300 seconds = 5 minutes
+
+
+@app.on_event("startup")
+async def startup_event():
+    """
+    FastAPI startup event handler
+    Starts background tasks including periodic health checks
+    
+    Requirements: 11.1
+    """
+    global _health_check_task
+    
+    logger.info("Application starting up...")
+    
+    # Start periodic health check background task
+    _health_check_task = asyncio.create_task(periodic_health_check())
+    logger.info("Periodic health check task started")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """
+    FastAPI shutdown event handler
+    Stops background tasks gracefully
+    """
+    global _health_check_task, _health_check_running
+    
+    logger.info("Application shutting down...")
+    
+    # Stop health check task
+    if _health_check_task:
+        _health_check_running = False
+        _health_check_task.cancel()
+        try:
+            await _health_check_task
+        except asyncio.CancelledError:
+            logger.info("Health check task cancelled")
+    
+    logger.info("Application shutdown complete")
 
 
 # Request logging middleware (Requirement 20.6)
@@ -504,7 +644,7 @@ async def send_message(
     This is a stub implementation that stores the message.
     Future implementations will integrate with model router for AI responses.
     
-    Requirements: 3.2, 3.4
+    Requirements: 3.2, 3.4, 9.2, 9.3, 28.2
     
     Args:
         session_id: Chat session identifier
@@ -515,10 +655,48 @@ async def send_message(
         Stored message data
         
     Raises:
-        HTTPException: If authentication fails, session not found, or sending fails
+        HTTPException: If authentication fails, rate limit exceeded, session not found, or sending fails
     """
     try:
         user_id = await get_current_user_id(authorization)
+        
+        # Check rate limits before processing (Requirement 9.2)
+        rate_limiter = get_rate_limiter()
+        within_limits = await rate_limiter.check_rate_limit(user_id, "chat")
+        
+        if not within_limits:
+            # Get current usage for detailed error message
+            usage = await rate_limiter.get_user_usage(user_id)
+            
+            # Get user plan for limit information
+            auth_service = get_auth_service()
+            plan = await auth_service.get_user_plan(user_id)
+            
+            # Import plan limits
+            from services.rate_limiter import PLAN_LIMITS
+            limits = PLAN_LIMITS.get(plan, PLAN_LIMITS["free"])
+            
+            # Requirement 9.3, 28.2: Return 429 with upgrade prompt
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail={
+                    "error": {
+                        "code": "RATE_LIMIT_EXCEEDED",
+                        "message": f"You've reached your daily limit. Upgrade to continue using the service.",
+                        "details": {
+                            "current_plan": plan,
+                            "tokens_used": usage["tokens_used"],
+                            "tokens_limit": limits["daily_tokens"],
+                            "requests_used": usage["requests_count"],
+                            "requests_limit": limits["daily_requests"],
+                        },
+                        "action": "upgrade",
+                        "upgrade_url": "/pricing"
+                    }
+                }
+            )
+        
+        # Process message if within limits
         chat_service = get_chat_service()
         message = await chat_service.send_message(
             user_id=user_id,
@@ -550,6 +728,621 @@ async def send_message(
                 "error": {
                     "code": "SEND_MESSAGE_FAILED",
                     "message": "Failed to send message"
+                }
+            }
+        )
+
+
+# ============================================================================
+# ADMIN ENDPOINTS
+# ============================================================================
+
+# Pydantic models for admin endpoints
+class UpdatePlanRequest(BaseModel):
+    """Request model for updating user plan"""
+    plan: str
+
+
+class AdminUserResponse(BaseModel):
+    """Response model for admin user operations"""
+    id: str
+    email: str
+    name: str
+    plan: str
+    role: Optional[str]
+    disabled: bool
+    created_at: str
+
+
+class AuditLogResponse(BaseModel):
+    """Response model for audit log"""
+    id: str
+    admin_id: str
+    action_type: str
+    target_type: str
+    target_id: str
+    details: Optional[dict]
+    timestamp: str
+
+
+class AddApiKeyRequest(BaseModel):
+    """Request model for adding an API key"""
+    provider: str
+    feature: str
+    key: str
+    priority: int = 0
+
+
+class UpdateKeyStatusRequest(BaseModel):
+    """Request model for updating API key status"""
+    status: str
+
+
+class TestApiKeyRequest(BaseModel):
+    """Request model for testing an API key"""
+    key: str
+    provider: str
+
+
+class ApiKeyResponse(BaseModel):
+    """Response model for API key (with encrypted key_value)"""
+    id: str
+    provider: str
+    feature: str
+    key_value: str  # Encrypted
+    priority: int
+    status: str
+    failure_count: int
+    last_used_at: Optional[str]
+    created_at: str
+    updated_at: str
+
+
+class TestApiKeyResponse(BaseModel):
+    """Response model for API key test"""
+    valid: bool
+    message: str
+
+
+# Helper function for admin authentication
+async def require_admin(authorization: Optional[str] = Header(None)) -> str:
+    """
+    Verify that the current user is an admin
+    
+    Args:
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        Admin user ID
+        
+    Raises:
+        HTTPException: If not authenticated or not an admin
+    """
+    from middleware.admin_auth import get_admin_auth_middleware
+    
+    # Get user ID from authorization
+    user_id = await get_current_user_id(authorization)
+    
+    # Create mock request for admin middleware
+    class MockRequest:
+        def __init__(self, auth_header):
+            self.headers = {"X-Emergency-Admin-Token": auth_header.replace("Bearer ", "") if auth_header else None}
+        
+        def get(self, key, default=None):
+            return self.headers.get(key, default)
+    
+    mock_request = MockRequest(authorization)
+    
+    # Verify admin access
+    admin_middleware = get_admin_auth_middleware()
+    await admin_middleware.require_admin(mock_request, user_id)
+    
+    return user_id
+
+
+@app.get("/api/admin/users", response_model=List[AdminUserResponse])
+async def admin_list_users(
+    plan: Optional[str] = None,
+    role: Optional[str] = None,
+    disabled: Optional[bool] = None,
+    limit: int = 100,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    List users with optional filtering (admin only)
+    
+    Requirements: 13.1, 2.7
+    
+    Args:
+        plan: Optional filter by plan
+        role: Optional filter by role
+        disabled: Optional filter by disabled status
+        limit: Maximum number of users to return
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        List of users
+        
+    Raises:
+        HTTPException: If not authenticated, not admin, or retrieval fails
+    """
+    try:
+        # Verify admin access
+        await require_admin(authorization)
+        
+        # Get users
+        from services.admin import get_admin_service
+        admin_service = get_admin_service()
+        users = await admin_service.list_users(
+            plan=plan,
+            role=role,
+            disabled=disabled,
+            limit=limit
+        )
+        
+        return users
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to list users: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "LIST_USERS_FAILED",
+                    "message": "Failed to retrieve users"
+                }
+            }
+        )
+
+
+@app.put("/api/admin/users/{user_id}/plan", response_model=AdminUserResponse)
+async def admin_update_user_plan(
+    user_id: str,
+    request: UpdatePlanRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Update a user's plan (admin only)
+    
+    Requirements: 13.3, 2.7
+    
+    Args:
+        user_id: ID of the user to update
+        request: Plan update request
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        Updated user data
+        
+    Raises:
+        HTTPException: If not authenticated, not admin, or update fails
+    """
+    try:
+        # Verify admin access
+        admin_id = await require_admin(authorization)
+        
+        # Update user plan
+        from services.admin import get_admin_service
+        admin_service = get_admin_service()
+        updated_user = await admin_service.update_user_plan(
+            admin_id=admin_id,
+            user_id=user_id,
+            new_plan=request.plan
+        )
+        
+        return updated_user
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update user plan: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "UPDATE_PLAN_FAILED",
+                    "message": str(e)
+                }
+            }
+        )
+
+
+@app.post("/api/admin/users/{user_id}/usage/reset")
+async def admin_reset_user_usage(
+    user_id: str,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Reset a user's usage counters (admin only)
+    
+    Requirements: 13.4, 2.7
+    
+    Args:
+        user_id: ID of the user whose usage to reset
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        Reset confirmation
+        
+    Raises:
+        HTTPException: If not authenticated, not admin, or reset fails
+    """
+    try:
+        # Verify admin access
+        admin_id = await require_admin(authorization)
+        
+        # Reset user usage
+        from services.admin import get_admin_service
+        admin_service = get_admin_service()
+        result = await admin_service.reset_user_usage(
+            admin_id=admin_id,
+            user_id=user_id
+        )
+        
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to reset user usage: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "RESET_USAGE_FAILED",
+                    "message": str(e)
+                }
+            }
+        )
+
+
+@app.post("/api/admin/users/{user_id}/disable", response_model=AdminUserResponse)
+async def admin_disable_user(
+    user_id: str,
+    disabled: bool = True,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Disable or enable a user account (admin only)
+    
+    Requirements: 13.5, 2.7
+    
+    Args:
+        user_id: ID of the user to disable/enable
+        disabled: True to disable, False to enable
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        Updated user data
+        
+    Raises:
+        HTTPException: If not authenticated, not admin, or update fails
+    """
+    try:
+        # Verify admin access
+        admin_id = await require_admin(authorization)
+        
+        # Disable/enable user
+        from services.admin import get_admin_service
+        admin_service = get_admin_service()
+        updated_user = await admin_service.disable_user(
+            admin_id=admin_id,
+            user_id=user_id,
+            disabled=disabled
+        )
+        
+        return updated_user
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to disable/enable user: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "DISABLE_USER_FAILED",
+                    "message": str(e)
+                }
+            }
+        )
+
+
+@app.get("/api/admin/audit-logs", response_model=List[AuditLogResponse])
+async def admin_get_audit_logs(
+    admin_id: Optional[str] = None,
+    action_type: Optional[str] = None,
+    target_type: Optional[str] = None,
+    limit: int = 100,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get audit logs with optional filtering (admin only)
+    
+    Requirements: 19.6, 2.7
+    
+    Args:
+        admin_id: Optional filter by admin ID
+        action_type: Optional filter by action type
+        target_type: Optional filter by target type
+        limit: Maximum number of logs to return
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        List of audit logs
+        
+    Raises:
+        HTTPException: If not authenticated, not admin, or retrieval fails
+    """
+    try:
+        # Verify admin access
+        await require_admin(authorization)
+        
+        # Get audit logs
+        from services.audit import get_audit_service
+        audit_service = get_audit_service()
+        logs = await audit_service.get_audit_logs(
+            admin_id=admin_id,
+            action_type=action_type,
+            target_type=target_type,
+            limit=limit
+        )
+        
+        return logs
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get audit logs: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "GET_AUDIT_LOGS_FAILED",
+                    "message": "Failed to retrieve audit logs"
+                }
+            }
+        )
+
+
+
+# ============================================================================
+# API KEY MANAGEMENT ENDPOINTS
+# ============================================================================
+
+@app.get("/api/admin/api-keys", response_model=List[ApiKeyResponse])
+async def admin_list_api_keys(
+    authorization: Optional[str] = Header(None)
+):
+    """
+    List all API keys (admin only)
+    
+    Requirements: 14.2, 2.7
+    
+    Args:
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        List of API keys (with encrypted key values)
+        
+    Raises:
+        HTTPException: If not authenticated, not admin, or retrieval fails
+    """
+    try:
+        # Verify admin access
+        await require_admin(authorization)
+        
+        # Get API keys
+        from services.admin import get_admin_service
+        admin_service = get_admin_service()
+        keys = await admin_service.list_api_keys()
+        
+        return keys
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to list API keys: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "LIST_API_KEYS_FAILED",
+                    "message": "Failed to retrieve API keys"
+                }
+            }
+        )
+
+
+@app.post("/api/admin/api-keys", response_model=ApiKeyResponse, status_code=status.HTTP_201_CREATED)
+async def admin_add_api_key(
+    request: AddApiKeyRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Add a new API key (admin only)
+    
+    Requirements: 14.2, 2.7
+    
+    Args:
+        request: API key addition request
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        Created API key data (with encrypted key value)
+        
+    Raises:
+        HTTPException: If not authenticated, not admin, or creation fails
+    """
+    try:
+        # Verify admin access
+        admin_id = await require_admin(authorization)
+        
+        # Add API key
+        from services.admin import get_admin_service
+        admin_service = get_admin_service()
+        created_key = await admin_service.add_api_key(
+            admin_id=admin_id,
+            provider=request.provider,
+            feature=request.feature,
+            key=request.key,
+            priority=request.priority
+        )
+        
+        return created_key
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to add API key: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "ADD_API_KEY_FAILED",
+                    "message": str(e)
+                }
+            }
+        )
+
+
+@app.put("/api/admin/api-keys/{key_id}", response_model=ApiKeyResponse)
+async def admin_update_api_key_status(
+    key_id: str,
+    request: UpdateKeyStatusRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Update an API key's status (admin only)
+    
+    Requirements: 14.4, 2.7
+    
+    Args:
+        key_id: ID of the API key to update
+        request: Status update request
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        Updated API key data
+        
+    Raises:
+        HTTPException: If not authenticated, not admin, or update fails
+    """
+    try:
+        # Verify admin access
+        admin_id = await require_admin(authorization)
+        
+        # Update key status
+        from services.admin import get_admin_service
+        admin_service = get_admin_service()
+        updated_key = await admin_service.update_key_status(
+            admin_id=admin_id,
+            key_id=key_id,
+            status=request.status
+        )
+        
+        return updated_key
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update API key status: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "UPDATE_KEY_STATUS_FAILED",
+                    "message": str(e)
+                }
+            }
+        )
+
+
+@app.delete("/api/admin/api-keys/{key_id}")
+async def admin_delete_api_key(
+    key_id: str,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Delete an API key (admin only)
+    
+    Requirements: 14.6, 2.7
+    
+    Args:
+        key_id: ID of the API key to delete
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        Deletion confirmation
+        
+    Raises:
+        HTTPException: If not authenticated, not admin, or deletion fails
+    """
+    try:
+        # Verify admin access
+        admin_id = await require_admin(authorization)
+        
+        # Delete API key
+        from services.admin import get_admin_service
+        admin_service = get_admin_service()
+        result = await admin_service.delete_api_key(
+            admin_id=admin_id,
+            key_id=key_id
+        )
+        
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete API key: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "DELETE_API_KEY_FAILED",
+                    "message": str(e)
+                }
+            }
+        )
+
+
+@app.post("/api/admin/api-keys/test", response_model=TestApiKeyResponse)
+async def admin_test_api_key(
+    request: TestApiKeyRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Test an API key before storage (admin only)
+    
+    Requirements: 14.7, 2.7
+    
+    Args:
+        request: API key test request
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        Test result with validation status
+        
+    Raises:
+        HTTPException: If not authenticated, not admin, or test fails
+    """
+    try:
+        # Verify admin access
+        await require_admin(authorization)
+        
+        # Test API key
+        from services.admin import get_admin_service
+        admin_service = get_admin_service()
+        result = await admin_service.test_api_key(
+            key=request.key,
+            provider=request.provider
+        )
+        
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to test API key: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "TEST_API_KEY_FAILED",
+                    "message": str(e)
                 }
             }
         )

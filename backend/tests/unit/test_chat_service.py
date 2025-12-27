@@ -3,7 +3,7 @@ Unit tests for Chat Service
 Tests specific examples and edge cases for chat functionality
 """
 import pytest
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import MagicMock, AsyncMock, patch
 from services.chat import ChatService, get_chat_service
 import uuid
 
@@ -112,15 +112,22 @@ async def test_send_message_stores_with_timestamp():
     mock_update.execute.return_value = mock_update_response
     mock_supabase.table.return_value.update.return_value.eq.return_value = mock_update
     
+    # Mock rate limiter
+    mock_rate_limiter = MagicMock()
+    mock_rate_limiter.increment_usage = AsyncMock()
+    
     chat_service = ChatService(supabase_client=mock_supabase)
     
     # Act
-    result = await chat_service.send_message(user_id, session_id, message_content)
+    with patch('services.chat.get_rate_limiter', return_value=mock_rate_limiter):
+        result = await chat_service.send_message(user_id, session_id, message_content, generate_response=False)
     
     # Assert
     assert result["content"] == message_content
     assert "created_at" in result
     assert result["created_at"] is not None
+    # Usage should not be tracked when not generating AI response
+    mock_rate_limiter.increment_usage.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -186,10 +193,17 @@ async def test_send_message_rejects_invalid_session():
     mock_session_response.data = []
     mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_session_response
     
+    # Mock rate limiter (won't be called but needed for import)
+    mock_rate_limiter = MagicMock()
+    mock_rate_limiter.increment_usage = AsyncMock()
+    
     chat_service = ChatService(supabase_client=mock_supabase)
     
     # Act & Assert
-    with pytest.raises(Exception) as exc_info:
-        await chat_service.send_message(user_id, session_id, "Test message")
+    with patch('services.chat.get_rate_limiter', return_value=mock_rate_limiter):
+        with pytest.raises(Exception) as exc_info:
+            await chat_service.send_message(user_id, session_id, "Test message")
     
     assert "Session not found" in str(exc_info.value)
+    # Usage should not be incremented for failed requests
+    mock_rate_limiter.increment_usage.assert_not_called()
