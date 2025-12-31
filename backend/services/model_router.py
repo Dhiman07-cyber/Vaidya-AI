@@ -318,13 +318,15 @@ class ModelRouterService:
         feature: str,
         prompt: str,
         system_prompt: Optional[str] = None,
-        max_retries: int = 3
+        max_retries: int = 3,
+        user_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Execute a request with automatic fallback to next available key on failure
         
         Tries up to max_retries times with different keys before giving up.
         Records failures for each failed key.
+        User-supplied keys have priority over shared keys.
         
         Args:
             provider: Provider name (gemini, openai, etc.)
@@ -332,6 +334,7 @@ class ModelRouterService:
             prompt: User prompt/message
             system_prompt: Optional system prompt for context
             max_retries: Maximum number of retry attempts (default: 3)
+            user_id: Optional user ID to check for personal API key
             
         Returns:
             Dict containing:
@@ -341,27 +344,91 @@ class ModelRouterService:
                 - tokens_used: Token count
                 - key_id: ID of the key that succeeded (if success)
                 - attempts: Number of attempts made
+                - used_user_key: bool indicating if user's personal key was used
                 
-        Requirements: 21.2, 21.3
+        Requirements: 21.2, 21.3, 27.2, 27.7
         """
+        # Check if user has a personal API key (Requirement 27.2)
+        user_key = None
+        if user_id:
+            user_key = await self.get_user_api_key(user_id)
+        
         # Get all active keys for this provider and feature
         keys = await self.get_all_active_keys(provider, feature)
         
+        # If user has a personal key, try it first (Requirement 27.2)
+        if user_key:
+            logger.info(f"User {user_id} has personal API key, will try it first")
+            
+            # Try user's personal key first
+            logger.info(f"Attempt 1/{max_retries}: Trying user's personal API key")
+            
+            try:
+                # Import provider module dynamically based on provider name
+                if provider == "gemini":
+                    from services.providers.gemini import get_gemini_provider
+                    provider_instance = get_gemini_provider()
+                    
+                    # Call the provider with user's key
+                    result = await provider_instance.call_gemini(
+                        api_key=user_key,
+                        prompt=prompt,
+                        system_prompt=system_prompt
+                    )
+                    
+                    if result["success"]:
+                        logger.info(
+                            f"Request succeeded with user's personal API key. "
+                            f"Tokens used: {result['tokens_used']}"
+                        )
+                        
+                        # Add metadata to result
+                        result["key_id"] = f"user_{user_id}"
+                        result["attempts"] = 1
+                        result["used_user_key"] = True
+                        
+                        return result
+                    else:
+                        # User's key failed, log and fall back to shared keys (Requirement 27.7)
+                        error_msg = result.get("error", "Unknown error")
+                        logger.warning(
+                            f"User's personal API key failed: {error_msg}. "
+                            f"Falling back to shared keys."
+                        )
+                        
+                        # Continue to shared keys below
+                        
+                else:
+                    # Provider not yet implemented
+                    logger.error(f"Provider '{provider}' not yet implemented")
+                    # Continue to shared keys below
+                    
+            except Exception as e:
+                error_msg = f"Unexpected error with user's personal key: {str(e)}"
+                logger.warning(f"{error_msg}. Falling back to shared keys.")
+                # Continue to shared keys below
+        
+        # If no user key or user key failed, use shared keys
         if not keys:
             logger.error(f"No active keys available for provider '{provider}', feature '{feature}'")
             return {
                 "success": False,
                 "error": "No API keys available for this feature",
                 "tokens_used": 0,
-                "attempts": 0
+                "attempts": 1 if user_key else 0,
+                "used_user_key": False
             }
         
         # Limit attempts to available keys or max_retries, whichever is smaller
         max_attempts = min(len(keys), max_retries)
         
+        # Calculate starting attempt number (1 if user key was tried, 0 otherwise)
+        starting_attempt = 1 if user_key else 0
+        
         logger.info(
             f"Starting request with fallback. Provider: {provider}, Feature: {feature}, "
-            f"Available keys: {len(keys)}, Max attempts: {max_attempts}"
+            f"Available keys: {len(keys)}, Max attempts: {max_attempts}, "
+            f"User key tried: {user_key is not None}"
         )
         
         # Try each key in priority order
@@ -370,8 +437,11 @@ class ModelRouterService:
             key_id = key["id"]
             api_key = key["key_value"]
             
+            # Calculate actual attempt number (including user key attempt if it happened)
+            actual_attempt = starting_attempt + attempt + 1
+            
             logger.info(
-                f"Attempt {attempt + 1}/{max_attempts}: Trying key {key_id} "
+                f"Attempt {actual_attempt}/{starting_attempt + max_attempts}: Trying key {key_id} "
                 f"(priority: {key['priority']})"
             )
             
@@ -390,15 +460,20 @@ class ModelRouterService:
                     
                     if result["success"]:
                         logger.info(
-                            f"Request succeeded with key {key_id} on attempt {attempt + 1}. "
+                            f"Request succeeded with key {key_id} on attempt {actual_attempt}. "
                             f"Tokens used: {result['tokens_used']}"
                         )
                         
-                        # If we had to fallback (attempt > 0), send notification (Requirement 18.2)
-                        if attempt > 0:
+                        # If we had to fallback (attempt > 0 or user_key was tried), send notification (Requirement 18.2)
+                        if attempt > 0 or user_key:
                             try:
                                 notification_service = get_notification_service()
-                                from_key_id = keys[0]["id"]  # Original key that failed
+                                # If user key was tried, it was the first attempt that failed
+                                if user_key and attempt == 0:
+                                    from_key_id = f"user_{user_id}"
+                                else:
+                                    from_key_id = keys[0]["id"] if attempt > 0 else f"user_{user_id}"
+                                
                                 await notification_service.notify_fallback(
                                     from_key_id=from_key_id,
                                     to_key_id=key_id,
@@ -410,14 +485,15 @@ class ModelRouterService:
                         
                         # Add metadata to result
                         result["key_id"] = key_id
-                        result["attempts"] = attempt + 1
+                        result["attempts"] = actual_attempt
+                        result["used_user_key"] = False
                         
                         return result
                     else:
                         # Provider call failed, record failure and try next key
                         error_msg = result.get("error", "Unknown error")
                         logger.warning(
-                            f"Key {key_id} failed on attempt {attempt + 1}: {error_msg}"
+                            f"Key {key_id} failed on attempt {actual_attempt}: {error_msg}"
                         )
                         
                         # Record the failure
@@ -440,7 +516,7 @@ class ModelRouterService:
                                 # Evaluate if maintenance should be triggered
                                 maintenance_level = await maintenance_service.evaluate_maintenance_trigger(
                                     feature=feature,
-                                    failures=max_attempts
+                                    failures=actual_attempt
                                 )
                                 
                                 if maintenance_level:
@@ -454,7 +530,8 @@ class ModelRouterService:
                             except Exception as maint_error:
                                 logger.error(f"Failed to trigger maintenance mode: {str(maint_error)}")
                             
-                            result["attempts"] = attempt + 1
+                            result["attempts"] = actual_attempt
+                            result["used_user_key"] = False
                             return result
                         
                         # Otherwise, continue to next key
@@ -466,12 +543,13 @@ class ModelRouterService:
                         "success": False,
                         "error": f"Provider '{provider}' not yet implemented",
                         "tokens_used": 0,
-                        "attempts": attempt + 1
+                        "attempts": actual_attempt,
+                        "used_user_key": False
                     }
                     
             except Exception as e:
                 error_msg = f"Unexpected error: {str(e)}"
-                logger.error(f"Key {key_id} failed with exception on attempt {attempt + 1}: {error_msg}")
+                logger.error(f"Key {key_id} failed with exception on attempt {actual_attempt}: {error_msg}")
                 
                 # Record the failure
                 await self.record_failure(key_id, error_msg)
@@ -493,7 +571,7 @@ class ModelRouterService:
                         # Evaluate if maintenance should be triggered
                         maintenance_level = await maintenance_service.evaluate_maintenance_trigger(
                             feature=feature,
-                            failures=max_attempts
+                            failures=actual_attempt
                         )
                         
                         if maintenance_level:
@@ -511,7 +589,8 @@ class ModelRouterService:
                         "success": False,
                         "error": error_msg,
                         "tokens_used": 0,
-                        "attempts": attempt + 1
+                        "attempts": actual_attempt,
+                        "used_user_key": False
                     }
                 
                 # Otherwise, continue to next key
@@ -522,7 +601,8 @@ class ModelRouterService:
             "success": False,
             "error": "All retry attempts exhausted",
             "tokens_used": 0,
-            "attempts": max_attempts
+            "attempts": starting_attempt + max_attempts,
+            "used_user_key": False
         }
 
 

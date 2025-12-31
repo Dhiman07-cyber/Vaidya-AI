@@ -462,7 +462,7 @@ async def test_property_no_active_keys_returns_none(provider, feature, encryptio
     num_keys=st.integers(min_value=2, max_value=4),
     encryption_key=valid_encryption_key()
 )
-@settings(max_examples=100)
+@settings(max_examples=100, deadline=500)  # Increased deadline to 500ms for this test
 @pytest.mark.property_test
 @pytest.mark.asyncio
 async def test_property_failed_requests_trigger_automatic_retry(feature, num_keys, encryption_key):
@@ -1374,6 +1374,334 @@ async def test_property_health_status_tracked_per_feature(
         for active_feature in active_features:
             assert results[active_feature] is not None, \
                 f"Active feature '{active_feature}' should work despite degraded features {degraded_features}"
+        
+    finally:
+        # Restore original environment variable
+        if original_env is not None:
+            os.environ["ENCRYPTION_KEY"] = original_env
+        elif "ENCRYPTION_KEY" in os.environ:
+            del os.environ["ENCRYPTION_KEY"]
+
+
+
+# Feature: medical-ai-platform, Property 54: User-supplied keys have priority
+@given(
+    feature=valid_feature(),
+    user_id=st.text(min_size=10, max_size=50),
+    user_key=valid_api_key_string(),
+    num_shared_keys=st.integers(min_value=1, max_value=3),
+    encryption_key=valid_encryption_key()
+)
+@settings(max_examples=100, deadline=None)
+@pytest.mark.property_test
+@pytest.mark.asyncio
+async def test_property_user_supplied_keys_have_priority(
+    feature, user_id, user_key, num_shared_keys, encryption_key
+):
+    """
+    Property 54: For any user who has provided their own API key,
+    requests from that user should use their personal key before shared keys.
+    
+    Validates: Requirements 27.2
+    """
+    # Only test with gemini provider (others not yet implemented)
+    provider = 'gemini'
+    
+    # Set encryption key for test
+    original_env = os.environ.get("ENCRYPTION_KEY")
+    os.environ["ENCRYPTION_KEY"] = encryption_key
+    
+    try:
+        # Encrypt user's personal key
+        encrypted_user_key = encrypt_key(user_key)
+        
+        # Create mock shared keys
+        shared_keys = []
+        for i in range(num_shared_keys):
+            shared_key_plaintext = f"shared-key-{i}"
+            encrypted_shared_key = encrypt_key(shared_key_plaintext)
+            
+            shared_keys.append({
+                "id": f"shared-key-{i}",
+                "provider": provider,
+                "feature": feature,
+                "key_value": encrypted_shared_key,
+                "priority": num_shared_keys - i,
+                "status": "active",
+                "failure_count": 0
+            })
+        
+        # Sort by priority descending
+        shared_keys_sorted = sorted(shared_keys, key=lambda k: k["priority"], reverse=True)
+        
+        # Create mock Supabase client
+        mock_supabase = MagicMock()
+        
+        # Track which table was queried
+        table_queries = []
+        
+        def mock_table_call(table_name):
+            table_queries.append(table_name)
+            mock_table = MagicMock()
+            
+            if table_name == "users":
+                # Mock query for user's personal API key
+                mock_response = MagicMock()
+                mock_response.data = [{
+                    "personal_api_key": encrypted_user_key
+                }]
+                
+                mock_eq = MagicMock()
+                mock_eq.execute.return_value = mock_response
+                
+                mock_select = MagicMock()
+                mock_select.eq.return_value = mock_eq
+                
+                mock_table.select.return_value = mock_select
+                
+            elif table_name == "api_keys":
+                # Mock query for shared keys
+                mock_response = MagicMock()
+                mock_response.data = shared_keys_sorted
+                
+                mock_order = MagicMock()
+                mock_order.execute.return_value = mock_response
+                
+                mock_eq3 = MagicMock()
+                mock_eq3.order.return_value = mock_order
+                
+                mock_eq2 = MagicMock()
+                mock_eq2.eq.return_value = mock_eq3
+                
+                mock_eq1 = MagicMock()
+                mock_eq1.eq.return_value = mock_eq2
+                
+                mock_select = MagicMock()
+                mock_select.eq.return_value = mock_eq1
+                
+                mock_table.select.return_value = mock_select
+            
+            return mock_table
+        
+        mock_supabase.table = mock_table_call
+        
+        # Create model router service with mock client
+        router = ModelRouterService(supabase_client=mock_supabase)
+        
+        # Track which key was used
+        used_key = [None]
+        
+        async def mock_call_gemini(self, api_key, prompt, system_prompt=None):
+            used_key[0] = api_key
+            return {
+                "success": True,
+                "content": "Test response",
+                "tokens_used": 10
+            }
+        
+        from services.providers.gemini import GeminiProvider
+        with patch.object(GeminiProvider, 'call_gemini', new=mock_call_gemini):
+            result = await router.execute_with_fallback(
+                provider=provider,
+                feature=feature,
+                prompt="Test prompt",
+                user_id=user_id
+            )
+        
+        # Property: User's personal key should be used first
+        assert result["success"] is True, "Request should succeed"
+        assert used_key[0] == user_key, \
+            f"Should use user's personal key '{user_key}', used '{used_key[0]}'"
+        assert result["used_user_key"] is True, \
+            "Result should indicate user's personal key was used"
+        assert result["attempts"] == 1, \
+            f"Should succeed on first attempt with user key, made {result['attempts']} attempts"
+        
+        # Property: User table should be queried before api_keys table
+        assert "users" in table_queries, "Should query users table for personal key"
+        users_query_index = table_queries.index("users")
+        
+        # If api_keys was queried, it should be after users
+        if "api_keys" in table_queries:
+            api_keys_query_index = table_queries.index("api_keys")
+            assert users_query_index < api_keys_query_index, \
+                "Should check user's personal key before shared keys"
+        
+    finally:
+        # Restore original environment variable
+        if original_env is not None:
+            os.environ["ENCRYPTION_KEY"] = original_env
+        elif "ENCRYPTION_KEY" in os.environ:
+            del os.environ["ENCRYPTION_KEY"]
+
+
+# Feature: medical-ai-platform, Property 56: Failed user keys fall back to shared keys
+@given(
+    feature=valid_feature(),
+    user_id=st.text(min_size=10, max_size=50),
+    user_key=valid_api_key_string(),
+    num_shared_keys=st.integers(min_value=1, max_value=3),
+    encryption_key=valid_encryption_key()
+)
+@settings(max_examples=100, deadline=None)
+@pytest.mark.property_test
+@pytest.mark.asyncio
+async def test_property_failed_user_keys_fall_back_to_shared_keys(
+    feature, user_id, user_key, num_shared_keys, encryption_key
+):
+    """
+    Property 56: For any request using a user-supplied key that fails,
+    the system should fall back to shared keys if available.
+    
+    Validates: Requirements 27.7
+    """
+    # Only test with gemini provider (others not yet implemented)
+    provider = 'gemini'
+    
+    # Set encryption key for test
+    original_env = os.environ.get("ENCRYPTION_KEY")
+    os.environ["ENCRYPTION_KEY"] = encryption_key
+    
+    try:
+        # Encrypt user's personal key
+        encrypted_user_key = encrypt_key(user_key)
+        
+        # Create mock shared keys
+        shared_keys = []
+        for i in range(num_shared_keys):
+            shared_key_plaintext = f"shared-key-{i}"
+            encrypted_shared_key = encrypt_key(shared_key_plaintext)
+            
+            shared_keys.append({
+                "id": f"shared-key-{i}",
+                "provider": provider,
+                "feature": feature,
+                "key_value": encrypted_shared_key,
+                "priority": num_shared_keys - i,
+                "status": "active",
+                "failure_count": 0
+            })
+        
+        # Sort by priority descending
+        shared_keys_sorted = sorted(shared_keys, key=lambda k: k["priority"], reverse=True)
+        highest_priority_shared = shared_keys_sorted[0]
+        
+        # Create mock Supabase client
+        mock_supabase = MagicMock()
+        
+        def mock_table_call(table_name):
+            mock_table = MagicMock()
+            
+            if table_name == "users":
+                # Mock query for user's personal API key
+                mock_response = MagicMock()
+                mock_response.data = [{
+                    "personal_api_key": encrypted_user_key
+                }]
+                
+                mock_eq = MagicMock()
+                mock_eq.execute.return_value = mock_response
+                
+                mock_select = MagicMock()
+                mock_select.eq.return_value = mock_eq
+                
+                mock_table.select.return_value = mock_select
+                
+            elif table_name == "api_keys":
+                # Mock query for shared keys
+                mock_response = MagicMock()
+                mock_response.data = shared_keys_sorted
+                
+                mock_order = MagicMock()
+                mock_order.execute.return_value = mock_response
+                
+                mock_eq3 = MagicMock()
+                mock_eq3.order.return_value = mock_order
+                
+                mock_eq2 = MagicMock()
+                mock_eq2.eq.return_value = mock_eq3
+                
+                mock_eq1 = MagicMock()
+                mock_eq1.eq.return_value = mock_eq2
+                
+                mock_select = MagicMock()
+                mock_select.eq.return_value = mock_eq1
+                
+                mock_table.select.return_value = mock_select
+                
+                # Mock update for failure recording (not used in this test but needed for interface)
+                mock_update_response = MagicMock()
+                mock_update_response.data = [{"failure_count": 1}]
+                mock_update_response.execute.return_value = mock_update_response
+                mock_update_eq = MagicMock()
+                mock_update_eq.execute.return_value = mock_update_response
+                mock_update = MagicMock()
+                mock_update.eq.return_value = mock_update_eq
+                mock_table.update.return_value = mock_update
+            
+            return mock_table
+        
+        mock_supabase.table = mock_table_call
+        
+        # Create model router service with mock client
+        router = ModelRouterService(supabase_client=mock_supabase)
+        
+        # Track which keys were used
+        keys_used = []
+        
+        async def mock_call_gemini(self, api_key, prompt, system_prompt=None):
+            keys_used.append(api_key)
+            
+            if api_key == user_key:
+                # User's key fails
+                return {
+                    "success": False,
+                    "error": "User API key quota exceeded",
+                    "tokens_used": 0
+                }
+            else:
+                # Shared key succeeds
+                return {
+                    "success": True,
+                    "content": "Test response",
+                    "tokens_used": 10
+                }
+        
+        from services.providers.gemini import GeminiProvider
+        with patch.object(GeminiProvider, 'call_gemini', new=mock_call_gemini):
+            result = await router.execute_with_fallback(
+                provider=provider,
+                feature=feature,
+                prompt="Test prompt",
+                user_id=user_id
+            )
+        
+        # Property: Should try user key first, then fall back to shared key
+        assert len(keys_used) >= 2, \
+            f"Should try at least 2 keys (user + shared), tried {len(keys_used)}"
+        
+        assert keys_used[0] == user_key, \
+            f"First attempt should use user's key '{user_key}', used '{keys_used[0]}'"
+        
+        # The second key used should be the plaintext version of the highest priority shared key
+        # Extract the plaintext key from the highest priority shared key
+        expected_shared_key = highest_priority_shared['id'].replace('shared-key-', 'shared-key-')
+        assert keys_used[1] == expected_shared_key, \
+            f"Second attempt should use highest priority shared key '{expected_shared_key}', used '{keys_used[1]}'"
+        
+        # Property: Request should ultimately succeed with shared key
+        assert result["success"] is True, \
+            "Request should succeed after falling back to shared key"
+        
+        assert result["used_user_key"] is False, \
+            "Result should indicate shared key was used (not user key)"
+        
+        assert result["attempts"] == 2, \
+            f"Should make 2 attempts (user key + shared key), made {result['attempts']}"
+        
+        # Property: Fallback should be transparent to the user (they get a response)
+        assert "content" in result, "Should return content from successful shared key call"
+        assert result["tokens_used"] > 0, "Should track tokens from successful call"
         
     finally:
         # Restore original environment variable

@@ -141,7 +141,7 @@ CREATE TABLE IF NOT EXISTS embeddings (
   document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
   chunk_text TEXT NOT NULL,
   chunk_index INTEGER NOT NULL,
-  embedding VECTOR(768), -- dimension depends on embedding model
+  embedding VECTOR(768), -- dimension: 768 for embedding model
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -178,6 +178,29 @@ CREATE TABLE IF NOT EXISTS messages (
 
 -- Create index for faster message retrieval
 CREATE INDEX IF NOT EXISTS idx_messages_session_created ON messages(session_id, created_at);
+
+-- ============================================================================
+-- STUDY PLANNER
+-- ============================================================================
+
+-- Study sessions table
+CREATE TABLE IF NOT EXISTS study_sessions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  topic TEXT NOT NULL,
+  duration INTEGER NOT NULL, -- duration in minutes
+  scheduled_date TIMESTAMPTZ,
+  notes TEXT,
+  status TEXT NOT NULL DEFAULT 'planned' CHECK (status IN ('planned', 'in_progress', 'completed', 'cancelled')),
+  completed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Create indexes for faster study session lookups
+CREATE INDEX IF NOT EXISTS idx_study_sessions_user_id ON study_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_study_sessions_status ON study_sessions(status);
+CREATE INDEX IF NOT EXISTS idx_study_sessions_scheduled ON study_sessions(scheduled_date);
 
 -- ============================================================================
 -- PAYMENTS AND SUBSCRIPTIONS
@@ -263,6 +286,9 @@ CREATE TRIGGER update_chat_sessions_updated_at BEFORE UPDATE ON chat_sessions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_subscriptions_updated_at BEFORE UPDATE ON subscriptions
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_study_sessions_updated_at BEFORE UPDATE ON study_sessions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================================================

@@ -196,41 +196,47 @@ async def test_regular_message_not_treated_as_command():
     # Mock session update
     mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value = Mock()
     
-    # Mock model router for regular chat - patch where it's imported in chat.py
-    with patch('services.model_router.get_model_router_service') as mock_router_getter:
-        mock_router = AsyncMock()
-        mock_router.select_provider = AsyncMock(return_value="gemini")
-        mock_router.execute_with_fallback = AsyncMock(return_value={
-            "success": True,
-            "content": "I can help you with that...",
-            "tokens_used": 50
-        })
-        mock_router_getter.return_value = mock_router
+    # Mock document service - patch where it's imported in chat.py
+    with patch('services.documents.get_document_service') as mock_doc_getter:
+        mock_doc_service = AsyncMock()
+        mock_doc_service.get_user_documents = AsyncMock(return_value=[])  # No documents
+        mock_doc_getter.return_value = mock_doc_service
         
-        # Mock rate limiter - patch where it's imported in chat.py
-        with patch('services.rate_limiter.get_rate_limiter') as mock_limiter_getter:
-            mock_limiter = AsyncMock()
-            mock_limiter.increment_usage = AsyncMock()
-            mock_limiter_getter.return_value = mock_limiter
+        # Mock model router for regular chat - patch where it's imported in chat.py
+        with patch('services.model_router.get_model_router_service') as mock_router_getter:
+            mock_router = AsyncMock()
+            mock_router.select_provider = AsyncMock(return_value="gemini")
+            mock_router.execute_with_fallback = AsyncMock(return_value={
+                "success": True,
+                "content": "I can help you with that...",
+                "tokens_used": 50
+            })
+            mock_router_getter.return_value = mock_router
             
-            # Create chat service and send regular message
-            chat_service = get_chat_service(mock_supabase)
-            result = await chat_service.send_message(
-                user_id="user-123",
-                session_id="session-123",
-                message="Tell me about diabetes"
-            )
-            
-            # Verify result is from regular chat, not command
-            assert result is not None
-            assert result["role"] == "assistant"
-            assert result["content"] == "I can help you with that..."
-            
-            # Verify model router was called with "chat" feature, not command feature
-            mock_router.select_provider.assert_called_once_with("chat")
-            
-            # The key test: verify that command service was NOT used
-            # (we can tell because the router was called with "chat" not a command feature)
-            call_args = mock_router.execute_with_fallback.call_args
-            assert call_args is not None
-            assert call_args.kwargs["feature"] == "chat"
+            # Mock rate limiter - patch where it's imported in chat.py
+            with patch('services.rate_limiter.get_rate_limiter') as mock_limiter_getter:
+                mock_limiter = AsyncMock()
+                mock_limiter.increment_usage = AsyncMock()
+                mock_limiter_getter.return_value = mock_limiter
+                
+                # Create chat service and send regular message
+                chat_service = get_chat_service(mock_supabase)
+                result = await chat_service.send_message(
+                    user_id="user-123",
+                    session_id="session-123",
+                    message="Tell me about diabetes"
+                )
+                
+                # Verify result is from regular chat, not command
+                assert result is not None
+                assert result["role"] == "assistant"
+                assert result["content"] == "I can help you with that..."
+                
+                # Verify model router was called with "chat" feature, not command feature
+                mock_router.select_provider.assert_called_once_with("chat")
+                
+                # The key test: verify that command service was NOT used
+                # (we can tell because the router was called with "chat" not a command feature)
+                call_args = mock_router.execute_with_fallback.call_args
+                assert call_args is not None
+                assert call_args.kwargs["feature"] == "chat"

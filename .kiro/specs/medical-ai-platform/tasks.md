@@ -729,33 +729,33 @@ Each task builds on previous work, with no orphaned code. All testing tasks are 
   - **Property 55: User key validation before acceptance**
   - **Validates: Requirements 27.3**
 
-- [ ] 60. Update model router to prioritize user keys
+- [x] 60. Update model router to prioritize user keys
   - Check if user has personal API key
   - Use user key with priority over shared keys
   - Fall back to shared keys if user key fails
   - _Requirements: 27.2, 27.7_
 
-- [ ] 60.1 Write property test for user key priority
+- [x] 60.1 Write property test for user key priority
   - **Property 54: User-supplied keys have priority**
   - **Validates: Requirements 27.2**
 
-- [ ] 60.2 Write property test for user key fallback
+- [x] 60.2 Write property test for user key fallback
   - **Property 56: Failed user keys fall back to shared keys**
   - **Validates: Requirements 27.7**
 
-- [ ] 61. Create user API key management UI
+- [x] 61. Create user API key management UI
   - Create pages/profile.tsx
   - Create components/UserApiKeyForm.tsx
   - Implement add/update/remove personal API key
   - Display key status and usage
   - _Requirements: 27.1, 27.5_
 
-- [ ] 61.1 Write unit tests for user API key UI
+- [x] 61.1 Write unit tests for user API key UI
   - Test UserApiKeyForm validates input
   - Test key is masked in display
   - _Requirements: 27.1_
 
-- [ ] 62. Checkpoint - Ensure user API keys work
+- [x] 62. Checkpoint - Ensure user API keys work
   - Ensure all tests pass, ask the user if questions arise.
 
 ### PHASE 4: Optional Features - PDF and Document Processing
@@ -772,52 +772,52 @@ Each task builds on previous work, with no orphaned code. All testing tasks are 
   - _Requirements: 7.1, 7.2, 8.2, 8.4, 8.5_
 
 
-- [ ] 63.1 Write property test for PDF embedding generation
+- [x] 63.1 Write property test for PDF embedding generation
   - **Property 15: PDF upload generates embeddings**
   - **Validates: Requirements 7.2**
 
-- [ ] 63.2 Write property test for embedding persistence
+- [x] 63.2 Write property test for embedding persistence
   - **Property 18: Document embeddings persist**
   - **Validates: Requirements 8.4**
 
-- [ ] 63.3 Write property test for semantic search
+- [x] 63.3 Write property test for semantic search
   - **Property 19: Semantic search returns relevant results**
   - **Validates: Requirements 8.5**
 
-- [ ] 64. Implement PDF upload tracking
+- [x] 64. Implement PDF upload tracking
   - Update rate_limiter to track pdf_uploads counter
   - Check PDF upload limits before accepting uploads
   - _Requirements: 7.6_
 
-- [ ] 64.1 Write property test for upload tracking
+- [x] 64.1 Write property test for upload tracking
   - **Property 16: Upload counts tracked against quotas**
   - **Validates: Requirements 7.6**
 
-- [ ] 65. Create document upload endpoints
+- [x] 65. Create document upload endpoints
   - Create /api/documents endpoint (GET, POST)
   - Create /api/documents/{document_id} endpoint (DELETE)
   - Add file upload handling
   - Trigger async PDF processing
   - _Requirements: 7.1, 7.2_
 
-- [ ] 65.1 Write integration tests for document upload
+- [x] 65.1 Write integration tests for document upload
   - Test PDF upload and processing
   - Test upload quota enforcement
   - _Requirements: 7.1, 7.6_
 
-- [ ] 66. Implement RAG-grounded chat
+- [x] 66. Implement RAG-grounded chat
   - Update chat service to check if user has documents
   - If documents exist, perform semantic search before generating response
   - Include relevant document chunks in prompt context
   - Add citations to response
   - _Requirements: 8.1, 8.3_
 
-- [ ] 66.1 Write property test for RAG citations
+- [x] 66.1 Write property test for RAG citations
   - **Property 17: RAG responses include citations**
   - **Validates: Requirements 8.3**
 
 
-- [ ] 67. Create document management UI
+- [x] 67. Create document management UI
   - Create pages/documents.tsx
   - Create components/DocumentUpload.tsx
   - Create components/DocumentList.tsx
@@ -826,17 +826,17 @@ Each task builds on previous work, with no orphaned code. All testing tasks are 
   - Implement document deletion
   - _Requirements: 7.1_
 
-- [ ] 67.1 Write unit tests for document UI
+- [x] 67.1 Write unit tests for document UI
   - Test DocumentUpload handles file selection
   - Test DocumentList displays documents
   - _Requirements: 7.1_
 
-- [ ] 68. Checkpoint - Ensure document processing works
+- [x] 68. Checkpoint - Ensure document processing works
   - Ensure all tests pass, ask the user if questions arise.
 
 ### PHASE 4: Optional Features - Clinical Tools & Study Planner
 
-- [ ] 69. Implement clinical reasoning mode
+- [x] 69. Implement clinical reasoning mode
   - Create services/clinical.py
   - Implement create_clinical_case() function to generate patient cases
   - Implement present_case_progressively(session_id) function
@@ -844,32 +844,32 @@ Each task builds on previous work, with no orphaned code. All testing tasks are 
   - Track user performance
   - _Requirements: 5.1, 5.3, 5.5_
 
-- [ ] 69.1 Write property test for progressive case presentation
+- [x] 69.1 Write property test for progressive case presentation
   - **Property 12: Clinical reasoning presents cases progressively**
   - **Validates: Requirements 5.3**
 
-- [ ] 70. Implement OSCE simulator
+- [x] 70. Implement OSCE simulator
   - Add create_osce_scenario() to clinical.py
   - Add simulate_examiner_interaction(user_action) function
   - Track OSCE performance
   - _Requirements: 5.2, 5.4, 5.5_
 
-- [ ] 70.1 Write property test for OSCE examiner interactions
+- [x] 70.1 Write property test for OSCE examiner interactions
   - **Property 13: OSCE mode generates examiner interactions**
   - **Validates: Requirements 5.4**
 
-- [ ] 71. Create clinical tools endpoints
+- [x] 71. Create clinical tools endpoints
   - Create /api/clinical/reasoning endpoint (POST)
   - Create /api/clinical/osce endpoint (POST)
   - _Requirements: 5.1, 5.2_
 
 
-- [ ] 71.1 Write integration tests for clinical tools
+- [x] 71.1 Write integration tests for clinical tools
   - Test clinical reasoning flow
   - Test OSCE simulation flow
   - _Requirements: 5.3, 5.4_
 
-- [ ] 72. Implement study planner service
+- [x] 72. Implement study planner service
   - Create services/study_planner.py
   - Implement create_study_session(user_id, topic, duration) function
   - Implement get_study_sessions(user_id) function
@@ -878,21 +878,21 @@ Each task builds on previous work, with no orphaned code. All testing tasks are 
   - Store study plans in database
   - _Requirements: 6.1, 6.2, 6.3, 6.4_
 
-- [ ] 72.1 Write property test for study plan CRUD
+- [x] 72.1 Write property test for study plan CRUD
   - **Property 14: Study plan CRUD operations work correctly**
   - **Validates: Requirements 6.1, 6.2, 6.3, 6.4**
 
-- [ ] 73. Create study planner endpoints
+- [x] 73. Create study planner endpoints
   - Create /api/study-planner/sessions endpoint (GET, POST)
   - Create /api/study-planner/sessions/{session_id} endpoint (PUT, DELETE)
   - _Requirements: 6.1, 6.2, 6.3_
 
-- [ ] 73.1 Write integration tests for study planner
+- [x] 73.1 Write integration tests for study planner
   - Test creating and retrieving study sessions
   - Test updating and deleting sessions
   - _Requirements: 6.1, 6.2, 6.3_
 
-- [ ] 74. Create clinical tools and study planner UI
+- [x] 74. Create clinical tools and study planner UI
   - Create pages/clinical-reasoning.tsx
   - Create pages/osce.tsx
   - Create pages/study-planner.tsx
@@ -900,18 +900,18 @@ Each task builds on previous work, with no orphaned code. All testing tasks are 
   - Connect to backend endpoints
   - _Requirements: 5.1, 5.2, 6.1_
 
-- [ ] 74.1 Write unit tests for clinical and study planner UI
+- [x] 74.1 Write unit tests for clinical and study planner UI
   - Test components render correctly
   - Test user interactions
   - _Requirements: 5.1, 5.2, 6.1_
 
-- [ ] 75. Checkpoint - Ensure clinical tools and study planner work
+- [x] 75. Checkpoint - Ensure clinical tools and study planner work
   - Ensure all tests pass, ask the user if questions arise.
 
 
 ### PHASE 4: Optional Features - Payment Integration (Future)
 
-- [ ] 76. Implement Razorpay integration service
+- [x] 76. Implement Razorpay integration service
   - Create services/payments.py
   - Implement create_subscription(user_id, plan) function
   - Implement handle_payment_webhook(payload) function
@@ -919,45 +919,45 @@ Each task builds on previous work, with no orphaned code. All testing tasks are 
   - Store subscription and payment records
   - _Requirements: 24.1, 24.2, 24.6_
 
-- [ ] 76.1 Write property test for payment success
+- [x] 76.1 Write property test for payment success
   - **Property 57: Payment success updates user plan**
   - **Validates: Requirements 24.3**
 
-- [ ] 76.2 Write property test for subscription expiry
+- [x] 76.2 Write property test for subscription expiry
   - **Property 58: Subscription expiry downgrades plan**
   - **Validates: Requirements 24.4**
 
-- [ ] 77. Create payment endpoints
+- [x] 77. Create payment endpoints
   - Create /api/payments/subscribe endpoint (POST)
   - Create /api/payments/webhook endpoint (POST) for Razorpay webhooks
   - Create /api/payments/cancel endpoint (POST)
   - _Requirements: 24.2, 24.6, 24.7_
 
-- [ ] 77.1 Write integration tests for payment flow
+- [x] 77.1 Write integration tests for payment flow
   - Test subscription creation
   - Test webhook handling
   - Test plan upgrade on payment
   - _Requirements: 24.2, 24.3_
 
-- [ ] 78. Create pricing and payment UI
+- [x] 78. Create pricing and payment UI
   - Create pages/pricing.tsx
   - Create components/PricingCard.tsx
   - Create components/PaymentForm.tsx
   - Implement Razorpay checkout integration
   - _Requirements: 24.1_
 
-- [ ] 78.1 Write unit tests for payment UI
+- [x] 78.1 Write unit tests for payment UI
   - Test PricingCard displays plan details
   - Test PaymentForm handles submission
   - _Requirements: 24.1_
 
-- [ ] 79. Checkpoint - Ensure payment integration works
+- [x] 79. Checkpoint - Ensure payment integration works
   - Ensure all tests pass, ask the user if questions arise.
 
 ### PHASE 5: System Visual / Guidance
 
 
-- [ ] 80. Create comprehensive system guide
+- [x] 80. Create comprehensive system guide
   - Document all services and their responsibilities
   - Document all features and how they work
   - Create data flow diagrams for key scenarios
@@ -971,7 +971,7 @@ Each task builds on previous work, with no orphaned code. All testing tasks are 
   - Store as inline comments in code and one consolidated guide
   - _Requirements: All_
 
-- [ ] 81. Checkpoint - Review system guide
+- [x] 81. Checkpoint - Review system guide
   - Ensure all tests pass, ask the user if questions arise.
 
 ### PHASE 6: Hosting (Final Phase)

@@ -3,7 +3,7 @@ Medical AI Platform - FastAPI Backend
 Main application entry point
 Requirements: 20.1, 20.6, 20.7, 11.1
 """
-from fastapi import FastAPI, Request, HTTPException, status, Header
+from fastapi import FastAPI, Request, HTTPException, status, Header, UploadFile, File, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr
@@ -19,6 +19,7 @@ from services.chat import get_chat_service
 from services.rate_limiter import get_rate_limiter
 from services.health_monitor import get_health_monitor
 from services.encryption import get_encryption_service
+from services.documents import get_document_service
 from supabase import create_client
 
 # Load environment variables
@@ -425,6 +426,139 @@ async def root():
         "message": "Medical AI Platform API",
         "docs": "/docs"
     }
+
+
+# ============================================================================
+# USER API KEY ENDPOINTS
+# ============================================================================
+
+class SetUserApiKeyRequest(BaseModel):
+    """Request model for setting user API key"""
+    key: str
+
+
+@app.get("/api/user/api-key")
+async def get_user_api_key_status(authorization: Optional[str] = Header(None)):
+    """
+    Check if user has a personal API key set
+    
+    Requirements: 27.1, 27.5
+    
+    Args:
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        Status indicating if user has a key set
+        
+    Raises:
+        HTTPException: If authentication fails
+    """
+    try:
+        user_id = await get_current_user_id(authorization)
+        auth_service = get_auth_service()
+        
+        # Check if user has a key (don't return the actual key)
+        key = await auth_service.get_user_api_key(user_id)
+        
+        return {
+            "has_key": key is not None,
+            "message": "Personal API key is set" if key else "No personal API key set"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to check user API key: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "CHECK_KEY_FAILED",
+                    "message": "Failed to check API key status"
+                }
+            }
+        )
+
+
+@app.post("/api/user/api-key")
+async def set_user_api_key(
+    request: SetUserApiKeyRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Set or update user's personal API key
+    
+    Requirements: 27.1, 27.3, 27.5
+    
+    Args:
+        request: Request containing the API key
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        Success message
+        
+    Raises:
+        HTTPException: If authentication fails or key validation fails
+    """
+    try:
+        user_id = await get_current_user_id(authorization)
+        auth_service = get_auth_service()
+        
+        # Set the user's API key (will be encrypted and validated)
+        result = await auth_service.set_user_api_key(user_id, request.key)
+        
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to set user API key: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": {
+                    "code": "SET_KEY_FAILED",
+                    "message": str(e)
+                }
+            }
+        )
+
+
+@app.delete("/api/user/api-key")
+async def remove_user_api_key(authorization: Optional[str] = Header(None)):
+    """
+    Remove user's personal API key
+    
+    Requirements: 27.5
+    
+    Args:
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        Success message
+        
+    Raises:
+        HTTPException: If authentication fails or removal fails
+    """
+    try:
+        user_id = await get_current_user_id(authorization)
+        auth_service = get_auth_service()
+        
+        # Remove the user's API key
+        result = await auth_service.remove_user_api_key(user_id)
+        
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to remove user API key: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "REMOVE_KEY_FAILED",
+                    "message": str(e)
+                }
+            }
+        )
 
 
 # Helper function for authentication
@@ -1867,4 +2001,1002 @@ async def admin_toggle_feature(
                     "message": str(e)
                 }
             }
+        )
+
+
+# ============================================================================
+# DOCUMENT UPLOAD ENDPOINTS
+# ============================================================================
+
+class DocumentResponse(BaseModel):
+    """Response model for document"""
+    id: str
+    user_id: str
+    filename: str
+    file_type: str
+    file_size: int
+    storage_path: str
+    processing_status: str
+    created_at: str
+
+
+class DocumentListResponse(BaseModel):
+    """Response model for document list"""
+    documents: List[DocumentResponse]
+
+
+@app.get("/api/documents", response_model=DocumentListResponse)
+async def get_user_documents(authorization: Optional[str] = Header(None)):
+    """
+    Get all documents for the authenticated user
+    
+    Requirements: 7.1
+    
+    Args:
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        List of user's documents
+        
+    Raises:
+        HTTPException: If authentication fails or retrieval fails
+    """
+    try:
+        user_id = await get_current_user_id(authorization)
+        document_service = get_document_service()
+        documents = await document_service.get_user_documents(user_id)
+        
+        return {"documents": documents}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get documents: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "GET_DOCUMENTS_FAILED",
+                    "message": "Failed to retrieve documents"
+                }
+            }
+        )
+
+
+@app.post("/api/documents", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)
+async def upload_document(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Upload a document (PDF or image) for processing
+    
+    This endpoint checks rate limits before accepting the upload,
+    then stores the file and triggers async processing.
+    
+    Requirements: 7.1, 7.2, 7.6
+    
+    Args:
+        background_tasks: FastAPI background tasks for async processing
+        file: Uploaded file
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        Created document data
+        
+    Raises:
+        HTTPException: If authentication fails, rate limit exceeded, or upload fails
+    """
+    try:
+        user_id = await get_current_user_id(authorization)
+        
+        # Validate file type
+        filename = file.filename or "unknown"
+        file_extension = filename.lower().split('.')[-1] if '.' in filename else ''
+        
+        if file_extension == 'pdf':
+            file_type = 'pdf'
+            feature = 'pdf'
+        elif file_extension in ['jpg', 'jpeg', 'png', 'gif', 'bmp']:
+            file_type = 'image'
+            feature = 'image'
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "error": {
+                        "code": "INVALID_FILE_TYPE",
+                        "message": f"Unsupported file type: {file_extension}. Only PDF and image files are allowed."
+                    }
+                }
+            )
+        
+        # Check rate limits before accepting upload (Requirement 7.6)
+        rate_limiter = get_rate_limiter()
+        within_limits = await rate_limiter.check_rate_limit(user_id, feature)
+        
+        if not within_limits:
+            # Get current usage for detailed error message
+            usage = await rate_limiter.get_user_usage(user_id)
+            
+            # Get user plan for limit information
+            auth_service = get_auth_service()
+            plan = await auth_service.get_user_plan(user_id)
+            
+            # Import plan limits
+            from services.rate_limiter import PLAN_LIMITS
+            limits = PLAN_LIMITS.get(plan, PLAN_LIMITS["free"])
+            
+            # Return 429 with upgrade prompt
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail={
+                    "error": {
+                        "code": "UPLOAD_LIMIT_EXCEEDED",
+                        "message": f"You've reached your daily {file_type} upload limit. Upgrade to continue.",
+                        "details": {
+                            "current_plan": plan,
+                            "uploads_used": usage["pdf_uploads"] if file_type == 'pdf' else usage["images_used"],
+                            "uploads_limit": limits["pdf_uploads"] if file_type == 'pdf' else limits["images_per_day"],
+                        },
+                        "action": "upgrade",
+                        "upgrade_url": "/pricing"
+                    }
+                }
+            )
+        
+        # Read file content and get size
+        file_content = await file.read()
+        file_size = len(file_content)
+        
+        # Reset file pointer for upload
+        await file.seek(0)
+        
+        # Upload document
+        document_service = get_document_service()
+        document = await document_service.upload_document(
+            user_id=user_id,
+            file=file.file,
+            filename=filename,
+            file_type=file_type,
+            file_size=file_size
+        )
+        
+        # Increment usage counter (Requirement 7.6)
+        await rate_limiter.increment_usage(user_id, tokens=0, feature=feature)
+        
+        # Trigger async PDF processing if it's a PDF
+        if file_type == 'pdf':
+            background_tasks.add_task(
+                document_service.process_pdf,
+                document['id']
+            )
+            logger.info(f"Triggered background PDF processing for document {document['id']}")
+        
+        return document
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to upload document: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "UPLOAD_FAILED",
+                    "message": str(e)
+                }
+            }
+        )
+
+
+@app.delete("/api/documents/{document_id}")
+async def delete_document(
+    document_id: str,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Delete a document and its associated embeddings
+    
+    Requirements: 7.1
+    
+    Args:
+        document_id: Document's unique identifier
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        Deletion confirmation
+        
+    Raises:
+        HTTPException: If authentication fails, document not found, or deletion fails
+    """
+    try:
+        user_id = await get_current_user_id(authorization)
+        document_service = get_document_service()
+        
+        result = await document_service.delete_document(document_id, user_id)
+        
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete document: {str(e)}")
+        
+        # Check if it's a not found error
+        if "not found" in str(e).lower() or "does not belong" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "error": {
+                        "code": "DOCUMENT_NOT_FOUND",
+                        "message": "Document not found or does not belong to user"
+                    }
+                }
+            )
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "DELETE_FAILED",
+                    "message": str(e)
+                }
+            }
+        )
+
+
+# ============================================================================
+# CLINICAL TOOLS ENDPOINTS
+# ============================================================================
+
+# Pydantic models for clinical tools
+class CreateClinicalCaseRequest(BaseModel):
+    specialty: Optional[str] = None
+    difficulty: str = "intermediate"
+
+
+class ClinicalCaseResponse(BaseModel):
+    case_id: str
+    chief_complaint: str
+    current_stage: int
+    total_stages: int
+    user_id: str
+
+
+class PresentCaseRequest(BaseModel):
+    pass  # No body needed, uses path parameter
+
+
+class CaseStageResponse(BaseModel):
+    case_id: str
+    current_stage: int
+    stage_data: Optional[dict]
+    has_more_stages: bool
+    total_stages: int
+    completed: bool
+
+
+class AdvanceCaseRequest(BaseModel):
+    pass  # No body needed
+
+
+class EvaluateReasoningRequest(BaseModel):
+    user_response: str
+    stage: int
+
+
+class EvaluationResponse(BaseModel):
+    score: float
+    evaluation: str
+    feedback: List[str]
+    model_answer: str
+
+
+class CreateOSCERequest(BaseModel):
+    scenario_type: Optional[str] = None
+    difficulty: str = "intermediate"
+
+
+class OSCEScenarioResponse(BaseModel):
+    scenario_id: str
+    scenario_type: str
+    patient_info: dict
+    instructions: str
+    user_id: str
+
+
+class OSCEInteractionRequest(BaseModel):
+    user_action: str
+
+
+class OSCEInteractionResponse(BaseModel):
+    patient_response: str
+    examiner_observation: str
+    checklist_items_met: List[str]
+    feedback: Optional[str]
+
+
+class OSCEPerformanceResponse(BaseModel):
+    scenario_id: str
+    score: float
+    earned_points: int
+    total_points: int
+    checklist_items_completed: int
+    total_checklist_items: int
+
+
+@app.post("/api/clinical/reasoning", response_model=ClinicalCaseResponse, status_code=status.HTTP_201_CREATED)
+async def create_clinical_case(
+    request: CreateClinicalCaseRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Create a new clinical reasoning case
+    
+    Generates a patient case for clinical reasoning practice with progressive
+    information disclosure.
+    
+    Requirements: 5.1
+    
+    Args:
+        request: Case creation parameters (specialty, difficulty)
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        Created clinical case with initial information
+        
+    Raises:
+        HTTPException: If authentication fails or case creation fails
+    """
+    try:
+        user_id = await get_current_user_id(authorization)
+        
+        from services.clinical import get_clinical_service
+        clinical_service = get_clinical_service()
+        
+        case = await clinical_service.create_clinical_case(
+            user_id=user_id,
+            specialty=request.specialty,
+            difficulty=request.difficulty
+        )
+        
+        return ClinicalCaseResponse(
+            case_id=case["case_id"],
+            chief_complaint=case["chief_complaint"],
+            current_stage=case["current_stage"],
+            total_stages=len(case["stages"]),
+            user_id=case["user_id"]
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to create clinical case: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "CASE_CREATION_FAILED",
+                    "message": str(e)
+                }
+            }
+        )
+
+
+@app.get("/api/clinical/reasoning/{case_id}", response_model=CaseStageResponse)
+async def get_clinical_case_stage(
+    case_id: str,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get the current stage of a clinical reasoning case
+    
+    Requirements: 5.3
+    
+    Args:
+        case_id: Clinical case session identifier
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        Current stage information
+        
+    Raises:
+        HTTPException: If authentication fails or case not found
+    """
+    try:
+        user_id = await get_current_user_id(authorization)
+        
+        from services.clinical import get_clinical_service
+        clinical_service = get_clinical_service()
+        
+        result = await clinical_service.present_case_progressively(case_id, user_id)
+        
+        return CaseStageResponse(**result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get clinical case stage: {str(e)}")
+        
+        if "not found" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "error": {
+                        "code": "CASE_NOT_FOUND",
+                        "message": "Clinical case not found or does not belong to user"
+                    }
+                }
+            )
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "CASE_RETRIEVAL_FAILED",
+                    "message": str(e)
+                }
+            }
+        )
+
+
+@app.post("/api/clinical/reasoning/{case_id}/advance", response_model=CaseStageResponse)
+async def advance_clinical_case(
+    case_id: str,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Advance to the next stage of a clinical case
+    
+    Requirements: 5.3
+    
+    Args:
+        case_id: Clinical case session identifier
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        Next stage information
+        
+    Raises:
+        HTTPException: If authentication fails or advancement fails
+    """
+    try:
+        user_id = await get_current_user_id(authorization)
+        
+        from services.clinical import get_clinical_service
+        clinical_service = get_clinical_service()
+        
+        result = await clinical_service.advance_case_stage(case_id, user_id)
+        
+        return CaseStageResponse(**result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to advance clinical case: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "CASE_ADVANCE_FAILED",
+                    "message": str(e)
+                }
+            }
+        )
+
+
+@app.post("/api/clinical/reasoning/{case_id}/evaluate", response_model=EvaluationResponse)
+async def evaluate_clinical_reasoning(
+    case_id: str,
+    request: EvaluateReasoningRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Evaluate a user's clinical reasoning response
+    
+    Requirements: 5.5
+    
+    Args:
+        case_id: Clinical case session identifier
+        request: User's response and stage number
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        Evaluation with score and feedback
+        
+    Raises:
+        HTTPException: If authentication fails or evaluation fails
+    """
+    try:
+        user_id = await get_current_user_id(authorization)
+        
+        from services.clinical import get_clinical_service
+        clinical_service = get_clinical_service()
+        
+        result = await clinical_service.evaluate_clinical_reasoning(
+            session_id=case_id,
+            user_id=user_id,
+            user_response=request.user_response,
+            stage=request.stage
+        )
+        
+        return EvaluationResponse(**result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to evaluate clinical reasoning: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "EVALUATION_FAILED",
+                    "message": str(e)
+                }
+            }
+        )
+
+
+@app.post("/api/clinical/osce", response_model=OSCEScenarioResponse, status_code=status.HTTP_201_CREATED)
+async def create_osce_scenario(
+    request: CreateOSCERequest,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Create a new OSCE scenario
+    
+    Generates a structured clinical examination scenario with simulated
+    patient and examiner.
+    
+    Requirements: 5.2
+    
+    Args:
+        request: OSCE creation parameters (scenario_type, difficulty)
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        Created OSCE scenario with initial information
+        
+    Raises:
+        HTTPException: If authentication fails or scenario creation fails
+    """
+    try:
+        user_id = await get_current_user_id(authorization)
+        
+        from services.clinical import get_clinical_service
+        clinical_service = get_clinical_service()
+        
+        scenario = await clinical_service.create_osce_scenario(
+            user_id=user_id,
+            scenario_type=request.scenario_type,
+            difficulty=request.difficulty
+        )
+        
+        return OSCEScenarioResponse(
+            scenario_id=scenario["scenario_id"],
+            scenario_type=scenario["scenario_type"],
+            patient_info=scenario["patient_info"],
+            instructions=scenario["instructions"],
+            user_id=scenario["user_id"]
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to create OSCE scenario: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "OSCE_CREATION_FAILED",
+                    "message": str(e)
+                }
+            }
+        )
+
+
+@app.post("/api/clinical/osce/{scenario_id}/interact", response_model=OSCEInteractionResponse)
+async def osce_interaction(
+    scenario_id: str,
+    request: OSCEInteractionRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Simulate patient and examiner interaction in OSCE
+    
+    Requirements: 5.4
+    
+    Args:
+        scenario_id: OSCE scenario session identifier
+        request: User's action during the OSCE
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        Patient response and examiner observations
+        
+    Raises:
+        HTTPException: If authentication fails or interaction fails
+    """
+    try:
+        user_id = await get_current_user_id(authorization)
+        
+        from services.clinical import get_clinical_service
+        clinical_service = get_clinical_service()
+        
+        result = await clinical_service.simulate_examiner_interaction(
+            session_id=scenario_id,
+            user_id=user_id,
+            user_action=request.user_action
+        )
+        
+        return OSCEInteractionResponse(**result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to simulate OSCE interaction: {str(e)}")
+        
+        if "not found" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "error": {
+                        "code": "SCENARIO_NOT_FOUND",
+                        "message": "OSCE scenario not found"
+                    }
+                }
+            )
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "INTERACTION_FAILED",
+                    "message": str(e)
+                }
+            }
+        )
+
+
+@app.get("/api/clinical/osce/{scenario_id}/performance", response_model=OSCEPerformanceResponse)
+async def get_osce_performance(
+    scenario_id: str,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get performance summary for an OSCE scenario
+    
+    Requirements: 5.5
+    
+    Args:
+        scenario_id: OSCE scenario session identifier
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        Performance metrics and score
+        
+    Raises:
+        HTTPException: If authentication fails or retrieval fails
+    """
+    try:
+        user_id = await get_current_user_id(authorization)
+        
+        from services.clinical import get_clinical_service
+        clinical_service = get_clinical_service()
+        
+        result = await clinical_service.get_osce_performance(scenario_id, user_id)
+        
+        return OSCEPerformanceResponse(**result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get OSCE performance: {str(e)}")
+        
+        if "not found" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "error": {
+                        "code": "SCENARIO_NOT_FOUND",
+                        "message": "OSCE scenario not found"
+                    }
+                }
+            )
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "PERFORMANCE_RETRIEVAL_FAILED",
+                    "message": str(e)
+                }
+            }
+        )
+
+
+# ============================================================================
+# STUDY PLANNER ENDPOINTS
+# ============================================================================
+
+# Pydantic models for study planner
+class CreateStudySessionRequest(BaseModel):
+    topic: str
+    duration: int
+    scheduled_date: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class UpdateStudySessionRequest(BaseModel):
+    topic: Optional[str] = None
+    duration: Optional[int] = None
+    scheduled_date: Optional[str] = None
+    notes: Optional[str] = None
+    status: Optional[str] = None
+
+
+class StudySessionResponse(BaseModel):
+    id: str
+    user_id: str
+    topic: str
+    duration: int
+    scheduled_date: Optional[str]
+    notes: Optional[str]
+    status: str
+    completed_at: Optional[str]
+    created_at: str
+    updated_at: str
+
+
+@app.get("/api/study-planner/sessions", response_model=List[StudySessionResponse])
+async def get_study_sessions(
+    status: Optional[str] = None,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get study sessions for the authenticated user
+    
+    Requirements: 6.1, 6.4
+    """
+    try:
+        user_id = await get_current_user_id(authorization)
+        
+        from services.study_planner import get_study_planner_service
+        planner_service = get_study_planner_service()
+        
+        sessions = await planner_service.get_study_sessions(user_id, status=status)
+        
+        return [StudySessionResponse(**session) for session in sessions]
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get study sessions: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": {"code": "RETRIEVAL_FAILED", "message": str(e)}}
+        )
+
+
+@app.post("/api/study-planner/sessions", response_model=StudySessionResponse, status_code=status.HTTP_201_CREATED)
+async def create_study_session(
+    request: CreateStudySessionRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Create a new study session
+    
+    Requirements: 6.1, 6.2
+    """
+    try:
+        user_id = await get_current_user_id(authorization)
+        
+        from services.study_planner import get_study_planner_service
+        planner_service = get_study_planner_service()
+        
+        session = await planner_service.create_study_session(
+            user_id=user_id,
+            topic=request.topic,
+            duration=request.duration,
+            scheduled_date=request.scheduled_date,
+            notes=request.notes
+        )
+        
+        return StudySessionResponse(**session)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to create study session: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": {"code": "CREATION_FAILED", "message": str(e)}}
+        )
+
+
+@app.put("/api/study-planner/sessions/{session_id}", response_model=StudySessionResponse)
+async def update_study_session(
+    session_id: str,
+    request: UpdateStudySessionRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Update a study session
+    
+    Requirements: 6.3
+    """
+    try:
+        user_id = await get_current_user_id(authorization)
+        
+        from services.study_planner import get_study_planner_service
+        planner_service = get_study_planner_service()
+        
+        # Build update data from request
+        update_data = {k: v for k, v in request.dict().items() if v is not None}
+        
+        session = await planner_service.update_study_session(session_id, user_id, update_data)
+        
+        return StudySessionResponse(**session)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update study session: {str(e)}")
+        
+        if "not found" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"error": {"code": "SESSION_NOT_FOUND", "message": str(e)}}
+            )
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": {"code": "UPDATE_FAILED", "message": str(e)}}
+        )
+
+
+@app.delete("/api/study-planner/sessions/{session_id}")
+async def delete_study_session(
+    session_id: str,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Delete a study session
+    
+    Requirements: 6.3
+    """
+    try:
+        user_id = await get_current_user_id(authorization)
+        
+        from services.study_planner import get_study_planner_service
+        planner_service = get_study_planner_service()
+        
+        result = await planner_service.delete_study_session(session_id, user_id)
+        
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete study session: {str(e)}")
+        
+        if "not found" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"error": {"code": "SESSION_NOT_FOUND", "message": str(e)}}
+            )
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": {"code": "DELETE_FAILED", "message": str(e)}}
+        )
+
+
+# ============================================================================
+# PAYMENT ENDPOINTS
+# ============================================================================
+
+# Pydantic models for payments
+class CreateSubscriptionRequest(BaseModel):
+    plan: str
+    razorpay_subscription_id: str
+
+
+class SubscriptionResponse(BaseModel):
+    id: str
+    user_id: str
+    plan: str
+    razorpay_subscription_id: str
+    status: str
+    current_period_start: str
+    current_period_end: str
+
+
+class WebhookRequest(BaseModel):
+    payload: dict
+    signature: str
+
+
+@app.post("/api/payments/subscribe", response_model=SubscriptionResponse, status_code=status.HTTP_201_CREATED)
+async def create_subscription(
+    request: CreateSubscriptionRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Create a new subscription
+    
+    Requirements: 24.2
+    """
+    try:
+        user_id = await get_current_user_id(authorization)
+        
+        from services.payments import get_payment_service
+        payment_service = get_payment_service()
+        
+        subscription = await payment_service.create_subscription(
+            user_id=user_id,
+            plan=request.plan,
+            razorpay_subscription_id=request.razorpay_subscription_id
+        )
+        
+        return SubscriptionResponse(**subscription)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to create subscription: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": {"code": "SUBSCRIPTION_FAILED", "message": str(e)}}
+        )
+
+
+@app.post("/api/payments/webhook")
+async def handle_payment_webhook(request: Request):
+    """
+    Handle Razorpay webhook notifications
+    
+    Requirements: 24.3, 24.6
+    """
+    try:
+        # Get signature from headers
+        signature = request.headers.get("X-Razorpay-Signature", "")
+        
+        # Get payload
+        payload = await request.json()
+        
+        from services.payments import get_payment_service
+        payment_service = get_payment_service()
+        
+        result = await payment_service.handle_payment_webhook(payload, signature)
+        
+        return result
+    except Exception as e:
+        logger.error(f"Failed to handle webhook: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": {"code": "WEBHOOK_FAILED", "message": str(e)}}
+        )
+
+
+@app.post("/api/payments/cancel")
+async def cancel_subscription(
+    subscription_id: str,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Cancel a subscription
+    
+    Requirements: 24.7
+    """
+    try:
+        user_id = await get_current_user_id(authorization)
+        
+        from services.payments import get_payment_service
+        payment_service = get_payment_service()
+        
+        result = await payment_service.cancel_subscription(subscription_id, user_id)
+        
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to cancel subscription: {str(e)}")
+        
+        if "not found" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"error": {"code": "SUBSCRIPTION_NOT_FOUND", "message": str(e)}}
+            )
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": {"code": "CANCELLATION_FAILED", "message": str(e)}}
         )
