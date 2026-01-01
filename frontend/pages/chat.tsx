@@ -2,6 +2,7 @@ import Head from 'next/head'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { supabase, AuthUser } from '@/lib/supabase'
+import Layout from '@/components/Layout'
 import ChatWindow, { Message } from '@/components/ChatWindow'
 import ChatInput from '@/components/ChatInput'
 import SessionSidebar, { ChatSession } from '@/components/SessionSidebar'
@@ -255,9 +256,11 @@ export default function Chat() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <p>Loading...</p>
-      </div>
+      <Layout>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+          <p>Loading...</p>
+        </div>
+      </Layout>
     )
   }
 
@@ -266,76 +269,43 @@ export default function Chat() {
   }
 
   return (
-    <>
+    <Layout>
       <Head>
-        <title>Chat - Medical AI Platform</title>
-        <meta name="description" content="AI-powered medical education chat" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Chat - VaidyaAI</title>
       </Head>
-      <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        {/* Header */}
-        <header style={{
-          padding: '15px 20px',
-          borderBottom: '1px solid #ddd',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          backgroundColor: '#f8f9fa'
-        }}>
-          <h1 style={{ margin: 0, fontSize: '20px' }}>Medical AI Platform</h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <span>Welcome, {user.user_metadata?.name || user.email}</span>
-            <button
-              onClick={handleLogout}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#dc3545',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-            >
-              Logout
-            </button>
-          </div>
-        </header>
+      <div style={{
+        height: 'calc(100vh - 70px)',
+        display: 'flex',
+        overflow: 'hidden'
+      }}>
+        {/* Session Sidebar */}
+        <SessionSidebar
+          sessions={sessions}
+          currentSessionId={currentSessionId}
+          onSelectSession={handleSelectSession}
+          onNewSession={handleNewSession}
+          loading={sessionsLoading}
+          error={sessionsError}
+        />
 
-        {/* Chat Interface */}
+        {/* Main Chat Area */}
         <div style={{
           flex: 1,
           display: 'flex',
+          flexDirection: 'column',
           overflow: 'hidden'
         }}>
-          {/* Session Sidebar */}
-          <SessionSidebar
-            sessions={sessions}
-            currentSessionId={currentSessionId}
-            onSelectSession={handleSelectSession}
-            onNewSession={handleNewSession}
-            loading={sessionsLoading}
-            error={sessionsError}
+          <ChatWindow
+            messages={messages}
+            loading={messagesLoading || sendingMessage}
+            error={error}
           />
-
-          {/* Main Chat Area */}
-          <div style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden'
-          }}>
-            <ChatWindow
-              messages={messages}
-              loading={messagesLoading || sendingMessage}
-              error={error}
-            />
-            <ChatInput
-              onSendMessage={handleSendMessage}
-              disabled={sendingMessage}
-            />
-          </div>
+          <ChatInput
+            onSendMessage={handleSendMessage}
+            disabled={sendingMessage}
+          />
         </div>
-      </main>
-    </>
+      </div>
+    </Layout>
   )
 }

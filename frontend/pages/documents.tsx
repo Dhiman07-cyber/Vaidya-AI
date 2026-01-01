@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
+import Head from 'next/head'
 import { createClient } from '@supabase/supabase-js'
+import Layout from '../components/Layout'
 import DocumentUpload from '../components/DocumentUpload'
 import DocumentList, { Document } from '../components/DocumentList'
 
@@ -132,96 +134,42 @@ export default function DocumentsPage() {
 
   if (loading) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        backgroundColor: '#f8f9fa'
-      }}>
-        <div>Loading...</div>
-      </div>
+      <Layout>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '60vh'
+        }}>
+          <div>Loading...</div>
+        </div>
+      </Layout>
     )
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: '#f8f9fa'
-    }}>
-      {/* Header */}
-      <header style={{
-        backgroundColor: 'white',
-        borderBottom: '1px solid #dee2e6',
-        padding: '16px 24px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <h1 style={{ margin: 0, fontSize: '24px' }}>My Documents</h1>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button
-            onClick={() => router.push('/chat')}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            Back to Chat
-          </button>
-          <button
-            onClick={() => router.push('/profile')}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#6c757d',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            Profile
-          </button>
-          <button
-            onClick={handleSignOut}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#dc3545',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            Sign Out
-          </button>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main style={{
+    <Layout>
+      <Head>
+        <title>Documents - VaidyaAI</title>
+      </Head>
+      <div style={{
         maxWidth: '1200px',
         margin: '0 auto',
-        padding: '32px 24px'
+        padding: '2rem'
       }}>
+        <h1 style={{ fontSize: '2.5rem', color: '#2d3748', marginBottom: '0.5rem' }}>My Documents 📄</h1>
+        <p style={{ fontSize: '1.1rem', color: '#718096', marginBottom: '2rem' }}>Upload PDFs to chat with your documents</p>
+
         {/* Success Message */}
         {success && (
           <div
             data-testid="success-message"
             style={{
-              padding: '12px',
+              padding: '1rem',
               backgroundColor: '#d4edda',
               color: '#155724',
-              borderRadius: '4px',
-              marginBottom: '24px',
-              fontSize: '14px',
+              borderRadius: '8px',
+              marginBottom: '1.5rem',
               border: '1px solid #c3e6cb'
             }}
           >
@@ -234,12 +182,11 @@ export default function DocumentsPage() {
           <div
             data-testid="error-message"
             style={{
-              padding: '12px',
+              padding: '1rem',
               backgroundColor: '#f8d7da',
               color: '#721c24',
-              borderRadius: '4px',
-              marginBottom: '24px',
-              fontSize: '14px',
+              borderRadius: '8px',
+              marginBottom: '1.5rem',
               border: '1px solid #f5c6cb'
             }}
           >
@@ -248,7 +195,7 @@ export default function DocumentsPage() {
         )}
 
         {/* Upload Section */}
-        <div style={{ marginBottom: '32px' }}>
+        <div style={{ marginBottom: '2rem' }}>
           <DocumentUpload
             onUploadSuccess={handleUploadSuccess}
             onUploadError={handleUploadError}
@@ -264,17 +211,16 @@ export default function DocumentsPage() {
 
         {/* Info Section */}
         <div style={{
-          marginTop: '24px',
-          padding: '16px',
-          backgroundColor: '#e7f3ff',
-          borderRadius: '8px',
-          fontSize: '14px',
-          color: '#004085'
+          marginTop: '2rem',
+          padding: '1.5rem',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          borderRadius: '12px'
         }}>
-          <strong>Note:</strong> PDF documents will be automatically processed for semantic search.
+          <strong>💡 Tip:</strong> PDF documents will be automatically processed for semantic search.
           You can use uploaded documents in your chat conversations for more accurate, context-aware responses.
         </div>
-      </main>
-    </div>
+      </div>
+    </Layout>
   )
 }

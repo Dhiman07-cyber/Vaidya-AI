@@ -1005,7 +1005,7 @@ Allow Request    Get Plan Limits
 - **View Quota**: Estimated quota remaining (if available)
 
 **Health Monitoring**:
-- Automatic checks every 5 minutes
+- Automatic checks every 5 minutes  
 - Minimal test calls to save quota
 - Failure threshold: N failures → degraded
 - Degraded keys trigger fallback
@@ -1709,7 +1709,7 @@ The rate limiting system enforces plan-based usage limits to:
 }
 ```
 
-**Student Plan** ($9.99/month):
+**Student Plan** ($1.99/month):
 ```python
 {
     "daily_tokens": 50000,         # ~50 chat messages

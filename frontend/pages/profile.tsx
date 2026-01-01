@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
+import Head from 'next/head'
 import { createClient } from '@supabase/supabase-js'
+import Layout from '../components/Layout'
 import UserApiKeyForm from '../components/UserApiKeyForm'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -116,79 +118,40 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        backgroundColor: '#f8f9fa'
-      }}>
-        <div>Loading...</div>
-      </div>
+      <Layout>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '60vh'
+        }}>
+          <div>Loading...</div>
+        </div>
+      </Layout>
     )
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: '#f8f9fa'
-    }}>
-      {/* Header */}
-      <header style={{
-        backgroundColor: 'white',
-        borderBottom: '1px solid #dee2e6',
-        padding: '16px 24px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <h1 style={{ margin: 0, fontSize: '24px' }}>Profile</h1>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button
-            onClick={() => router.push('/chat')}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#6c757d',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            Back to Chat
-          </button>
-          <button
-            onClick={handleSignOut}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#dc3545',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            Sign Out
-          </button>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main style={{
+    <Layout>
+      <Head>
+        <title>Profile - VaidyaAI</title>
+      </Head>
+      <div style={{
         maxWidth: '800px',
         margin: '0 auto',
-        padding: '32px 24px'
+        padding: '2rem'
       }}>
+        <h1 style={{ fontSize: '2.5rem', color: '#2d3748', marginBottom: '0.5rem' }}>Profile ⚙️</h1>
+        <p style={{ fontSize: '1.1rem', color: '#718096', marginBottom: '2rem' }}>Manage your account settings</p>
+
         {error && (
           <div style={{
-            padding: '12px',
+            padding: '1rem',
             backgroundColor: '#f8d7da',
             color: '#721c24',
-            borderRadius: '4px',
-            marginBottom: '24px',
-            fontSize: '14px'
+            borderRadius: '8px',
+            marginBottom: '1.5rem',
+            border: '1px solid #f5c6cb'
           }}>
             {error}
           </div>
@@ -197,13 +160,13 @@ export default function ProfilePage() {
         {/* User Info */}
         <div style={{
           backgroundColor: 'white',
-          borderRadius: '8px',
-          padding: '24px',
-          marginBottom: '24px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          borderRadius: '12px',
+          padding: '2rem',
+          marginBottom: '2rem',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
         }}>
-          <h2 style={{ marginTop: 0, marginBottom: '16px' }}>Account Information</h2>
-          <div style={{ fontSize: '14px', color: '#495057' }}>
+          <h2 style={{ marginTop: 0, marginBottom: '1.5rem', color: '#2d3748' }}>Account Information</h2>
+          <div style={{ fontSize: '1rem', color: '#4a5568', lineHeight: '2' }}>
             <p><strong>Email:</strong> {user?.email}</p>
             <p style={{ marginBottom: 0 }}><strong>User ID:</strong> {user?.id}</p>
           </div>
@@ -215,7 +178,7 @@ export default function ProfilePage() {
           onSubmit={handleSubmitKey}
           onRemove={handleRemoveKey}
         />
-      </main>
-    </div>
+      </div>
+    </Layout>
   )
 }

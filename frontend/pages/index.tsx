@@ -13,8 +13,8 @@ export default function Home() {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
-        // User is logged in, redirect to chat
-        router.push('/chat')
+        // User is logged in, redirect to dashboard
+        router.push('/dashboard')
       } else {
         setLoading(false)
       }
@@ -24,7 +24,7 @@ export default function Home() {
   }, [router])
 
   const handleAuthSuccess = () => {
-    router.push('/chat')
+    router.push('/dashboard')
   }
 
   if (loading) {

@@ -1,6 +1,6 @@
 """
 Model Configuration Manager
-Simple model name mapping
+Feature-specific model name mapping
 """
 import json
 from typing import Dict, Optional
@@ -31,13 +31,13 @@ def load_model_config() -> Dict:
     return _config_cache
 
 
-def get_model_name(provider: str, feature: str = "chat") -> str:
+def get_model_name(provider: str, feature: str) -> str:
     """
     Get the model name for a provider and feature
     
     Args:
         provider: Provider name (e.g., "gemini", "openai", "anthropic")
-        feature: Feature type (e.g., "chat", "image", "video")
+        feature: Feature name (e.g., "chat", "flashcard", "mcq", "image")
         
     Returns:
         Model name to use with the provider API
@@ -46,8 +46,11 @@ def get_model_name(provider: str, feature: str = "chat") -> str:
         >>> get_model_name("gemini", "chat")
         "models/gemini-2.5-flash"
         
-        >>> get_model_name("openai")
-        "gpt-4o-mini"
+        >>> get_model_name("gemini", "flashcard")
+        "models/gemini-2.5-flash"
+        
+        >>> get_model_name("gemini", "image")
+        "models/gemini-2.5-flash-image"
     """
     config = load_model_config()
     
@@ -60,31 +63,52 @@ def get_model_name(provider: str, feature: str = "chat") -> str:
 
 
 # Convenience functions for common use cases
+def get_gemini_model(feature: str = "chat") -> str:
+    """Get Gemini model name for specific feature"""
+    return get_model_name("gemini", feature)
+
+
+def get_openai_model(feature: str = "chat") -> str:
+    """Get OpenAI model name for specific feature"""
+    return get_model_name("openai", feature)
+
+
+def get_anthropic_model(feature: str = "chat") -> str:
+    """Get Anthropic model name for specific feature"""
+    return get_model_name("anthropic", feature)
+
+
+def get_ollama_model(feature: str = "chat") -> str:
+    """Get Ollama model name for specific feature"""
+    return get_model_name("ollama", feature)
+
+
+# Legacy compatibility functions (deprecated)
 def get_gemini_chat_model() -> str:
-    """Get Gemini chat model name"""
-    return get_model_name("gemini", "chat")
+    """Get Gemini chat model name (deprecated: use get_gemini_model('chat'))"""
+    return get_gemini_model("chat")
 
 
 def get_gemini_image_model() -> str:
-    """Get Gemini image model name"""
-    return get_model_name("gemini", "image")
+    """Get Gemini image model name (deprecated: use get_gemini_model('image'))"""
+    return get_gemini_model("image")
 
 
 def get_gemini_video_model() -> str:
-    """Get Gemini video model name"""
-    return get_model_name("gemini", "video")
+    """Get Gemini video model name (deprecated: use get_gemini_model('video'))"""
+    return get_gemini_model("video")
 
 
 def get_openai_chat_model() -> str:
-    """Get OpenAI chat model name"""
-    return get_model_name("openai", "chat")
+    """Get OpenAI chat model name (deprecated: use get_openai_model('chat'))"""
+    return get_openai_model("chat")
 
 
 def get_anthropic_chat_model() -> str:
-    """Get Anthropic chat model name"""
-    return get_model_name("anthropic", "chat")
+    """Get Anthropic chat model name (deprecated: use get_anthropic_model('chat'))"""
+    return get_anthropic_model("chat")
 
 
 def get_ollama_chat_model() -> str:
-    """Get Ollama chat model name"""
-    return get_model_name("ollama", "chat")
+    """Get Ollama chat model name (deprecated: use get_ollama_model('chat'))"""
+    return get_ollama_model("chat")

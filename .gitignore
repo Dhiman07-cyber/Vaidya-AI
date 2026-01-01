@@ -50,3 +50,5 @@ coverage/
 # Build artifacts
 dist/
 *.egg
+
+gemini-access.json

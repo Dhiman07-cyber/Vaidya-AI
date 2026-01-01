@@ -1,16 +1,43 @@
 {
   "gemini": {
-    "chat": "models/gemini-3-flash-preview",
-    "image": "models/gemini-2.5-flash-image",
-    "video": "models/veo-3.1-generate-preview"
+    "chat": "models/gemini-3-flash",
+    "flashcard": "models/gemini-3-flash",
+    "mcq": "models/gemini-3-flash",
+    "highyield": "models/gemini-3-flash",
+    "explain": "models/gemini-3-flash",
+    "map": "models/gemini-3-flash",
+    "clinical": "models/gemini-3-flash",
+    "osce": "models/gemini-3-flash",
+    "image": "models/nano-banana-pro-preview"
   },
   "openai": {
-    "chat": "gpt-4o-mini"
+    "chat": "gpt-4o-mini",
+    "flashcard": "gpt-4o-mini",
+    "mcq": "gpt-4o-mini",
+    "highyield": "gpt-4o-mini",
+    "explain": "gpt-4o-mini",
+    "map": "gpt-4o-mini",
+    "clinical": "gpt-4o-mini",
+    "osce": "gpt-4o-mini"
   },
   "anthropic": {
-    "chat": "claude-3-5-sonnet-20241022"
+    "chat": "claude-3-5-sonnet-20241022",
+    "flashcard": "claude-3-5-sonnet-20241022",
+    "mcq": "claude-3-5-sonnet-20241022",
+    "highyield": "claude-3-5-sonnet-20241022",
+    "explain": "claude-3-5-sonnet-20241022",
+    "map": "claude-3-5-sonnet-20241022",
+    "clinical": "claude-3-5-sonnet-20241022",
+    "osce": "claude-3-5-sonnet-20241022"
   },
   "ollama": {
-    "chat": "llama3.2"
+    "chat": "llama3.2",
+    "flashcard": "llama3.2",
+    "mcq": "llama3.2",
+    "highyield": "llama3.2",
+    "explain": "llama3.2",
+    "map": "llama3.2",
+    "clinical": "llama3.2",
+    "osce": "llama3.2"
   }
 }

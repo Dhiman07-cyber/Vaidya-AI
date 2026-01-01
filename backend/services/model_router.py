@@ -373,7 +373,8 @@ class ModelRouterService:
                     result = await provider_instance.call_gemini(
                         api_key=user_key,
                         prompt=prompt,
-                        system_prompt=system_prompt
+                        system_prompt=system_prompt,
+                        feature=feature
                     )
                     
                     if result["success"]:
@@ -455,7 +456,8 @@ class ModelRouterService:
                     result = await provider_instance.call_gemini(
                         api_key=api_key,
                         prompt=prompt,
-                        system_prompt=system_prompt
+                        system_prompt=system_prompt,
+                        feature=feature
                     )
                     
                     if result["success"]:

@@ -7,7 +7,7 @@ import httpx
 import logging
 from typing import Dict, Any, Optional, AsyncIterator
 import json
-from config.model_config import get_gemini_chat_model
+from config.model_config import get_gemini_model
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +93,8 @@ class GeminiProvider:
         api_key: str,
         prompt: str,
         system_prompt: Optional[str] = None,
-        stream: bool = False
+        stream: bool = False,
+        feature: str = "chat"
     ) -> Dict[str, Any]:
         """
         Call the Gemini API with a prompt
@@ -103,6 +104,7 @@ class GeminiProvider:
             prompt: User prompt/message
             system_prompt: Optional system prompt for context
             stream: Whether to stream the response (not implemented yet)
+            feature: Feature name (chat, flashcard, mcq, image, etc.)
             
         Returns:
             Dict containing:
@@ -120,8 +122,8 @@ class GeminiProvider:
             # Format the request
             request_payload = self.format_request(prompt, system_prompt)
             
-            # Get model name from config
-            model = get_gemini_chat_model()
+            # Get model name from config based on feature
+            model = get_gemini_model(feature)
             url = f"{self.BASE_URL}/{model}:generateContent"
             
             # Add API key as query parameter
@@ -229,7 +231,8 @@ class GeminiProvider:
         self,
         api_key: str,
         prompt: str,
-        system_prompt: Optional[str] = None
+        system_prompt: Optional[str] = None,
+        feature: str = "chat"
     ) -> AsyncIterator[str]:
         """
         Call the Gemini API with streaming response
@@ -238,6 +241,7 @@ class GeminiProvider:
             api_key: Gemini API key
             prompt: User prompt/message
             system_prompt: Optional system prompt for context
+            feature: Feature name (chat, flashcard, mcq, image, etc.)
             
         Yields:
             Text chunks as they arrive from the API
@@ -248,8 +252,8 @@ class GeminiProvider:
             # Format the request
             request_payload = self.format_request(prompt, system_prompt)
             
-            # Get model name from config
-            model = get_gemini_chat_model()
+            # Get model name from config based on feature
+            model = get_gemini_model(feature)
             url = f"{self.BASE_URL}/{model}:streamGenerateContent"
             
             # Add API key as query parameter
