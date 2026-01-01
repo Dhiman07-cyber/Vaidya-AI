@@ -1,0 +1,36 @@
+{
+  "models": [
+    {
+      "id": "claude-3-5-sonnet-20241022",
+      "name": "claude-3-5-sonnet-20241022",
+      "description": "Most intelligent Claude model",
+      "context_window": 200000,
+      "max_output_tokens": 8192,
+      "release_date": "2024-10-22"
+    },
+    {
+      "id": "claude-3-5-haiku-20241022",
+      "name": "claude-3-5-haiku-20241022",
+      "description": "Fast and affordable Claude model",
+      "context_window": 200000,
+      "max_output_tokens": 8192,
+      "release_date": "2024-10-22"
+    },
+    {
+      "id": "claude-3-opus-20240229",
+      "name": "claude-3-opus-20240229",
+      "description": "Most capable Claude 3 model",
+      "context_window": 200000,
+      "max_output_tokens": 4096,
+      "release_date": "2024-02-29"
+    },
+    {
+      "id": "claude-3-sonnet-20240229",
+      "name": "claude-3-sonnet-20240229",
+      "description": "Balanced Claude 3 model",
+      "context_window": 200000,
+      "max_output_tokens": 4096,
+      "release_date": "2024-02-29"
+    }
+  ]
+}

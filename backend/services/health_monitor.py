@@ -43,11 +43,12 @@ class HealthMonitorService:
             # Perform minimal test call based on provider
             if provider == "gemini":
                 # Import here to avoid circular dependency
-                from services.providers.gemini import call_gemini
+                from services.providers.gemini import get_gemini_provider
                 
                 # Minimal test prompt
                 test_prompt = "Test"
-                response = await call_gemini(key, test_prompt)
+                gemini = get_gemini_provider()
+                response = await gemini.call_gemini(key, test_prompt)
                 
                 # Calculate response time
                 response_time_ms = int((datetime.now() - start_time).total_seconds() * 1000)

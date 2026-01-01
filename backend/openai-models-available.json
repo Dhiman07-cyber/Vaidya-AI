@@ -1,0 +1,36 @@
+{
+  "models": [
+    {
+      "id": "gpt-4o",
+      "name": "gpt-4o",
+      "description": "Most capable GPT-4 model with vision",
+      "context_window": 128000,
+      "max_output_tokens": 16384,
+      "training_data": "Up to Oct 2023"
+    },
+    {
+      "id": "gpt-4o-mini",
+      "name": "gpt-4o-mini",
+      "description": "Affordable and intelligent small model",
+      "context_window": 128000,
+      "max_output_tokens": 16384,
+      "training_data": "Up to Oct 2023"
+    },
+    {
+      "id": "gpt-4-turbo",
+      "name": "gpt-4-turbo",
+      "description": "Latest GPT-4 Turbo with vision",
+      "context_window": 128000,
+      "max_output_tokens": 4096,
+      "training_data": "Up to Dec 2023"
+    },
+    {
+      "id": "gpt-3.5-turbo",
+      "name": "gpt-3.5-turbo",
+      "description": "Fast and affordable model",
+      "context_window": 16385,
+      "max_output_tokens": 4096,
+      "training_data": "Up to Sep 2021"
+    }
+  ]
+}

@@ -437,6 +437,68 @@ class SetUserApiKeyRequest(BaseModel):
     key: str
 
 
+@app.get("/api/user/me")
+async def get_current_user_info(authorization: Optional[str] = Header(None)):
+    """
+    Get current user information including role
+    
+    Args:
+        authorization: Authorization header with Bearer token
+        
+    Returns:
+        User information with role
+    """
+    request_id = str(uuid.uuid4())
+    logger.info(f"Request started: GET /api/user/me [Request ID: {request_id}]")
+    start_time = time.time()
+    
+    try:
+        if not authorization or not authorization.startswith('Bearer '):
+            raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
+        
+        token = authorization.replace('Bearer ', '')
+        user_id = await get_current_user_id(token)
+        
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        # Get user data from database
+        response = supabase.table("users").select("*").eq("id", user_id).execute()
+        
+        if not response.data or len(response.data) == 0:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        user_data = response.data[0]
+        
+        duration = time.time() - start_time
+        logger.info(f"Request completed: GET /api/user/me [Request ID: {request_id}] [Status: 200] [Duration: {duration:.3f}s]")
+        
+        return {
+            "id": user_data["id"],
+            "email": user_data["email"],
+            "name": user_data.get("name"),
+            "plan": user_data["plan"],
+            "role": user_data.get("role"),
+            "created_at": user_data["created_at"]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        duration = time.time() - start_time
+        logger.error(f"Failed to get user info: {str(e)}")
+        logger.info(f"Request completed: GET /api/user/me [Request ID: {request_id}] [Status: 500] [Duration: {duration:.3f}s]")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": {
+                    "code": "GET_USER_INFO_FAILED",
+                    "message": "Failed to retrieve user information"
+                }
+            }
+        )
+
+
 @app.get("/api/user/api-key")
 async def get_user_api_key_status(authorization: Optional[str] = Header(None)):
     """

@@ -1,0 +1,160 @@
+{
+  "models": [
+    {
+      "name": "models/gemini-3-pro-preview",
+      "version": "3-pro-preview-11-2025",
+      "displayName": "Gemini 3 Pro Preview",
+      "description": "Current flagship Gemini 3 reasoning and multimodal model (preview).",
+      "inputTokenLimit": 1048576,
+      "outputTokenLimit": 65536,
+      "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+      ],
+      "temperature": 1,
+      "topP": 0.95,
+      "topK": 64,
+      "maxTemperature": 2,
+      "thinking": true
+    },
+    {
+      "name": "models/gemini-3-flash-preview",
+      "version": "3-flash-preview-12-2025",
+      "displayName": "Gemini 3 Flash Preview",
+      "description": "Fast, cost efficient Gemini 3 model for high throughput workloads.",
+      "inputTokenLimit": 1048576,
+      "outputTokenLimit": 65536,
+      "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+      ],
+      "temperature": 1,
+      "topP": 0.95,
+      "topK": 64,
+      "maxTemperature": 2,
+      "thinking": true
+    },
+    {
+      "name": "models/nano-banana-pro-preview",
+      "version": "3.0",
+      "displayName": "Nano Banana Pro",
+      "description": "Gemini 3 Pro based image generation model.",
+      "inputTokenLimit": 131072,
+      "outputTokenLimit": 32768,
+      "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "batchGenerateContent"
+      ],
+      "temperature": 1,
+      "topP": 0.95,
+      "topK": 64,
+      "maxTemperature": 1,
+      "thinking": true
+    },
+    {
+      "name": "models/gemini-2.5-pro",
+      "version": "2.5",
+      "displayName": "Gemini 2.5 Pro",
+      "description": "Stable enterprise Gemini model still supported for production use.",
+      "inputTokenLimit": 1048576,
+      "outputTokenLimit": 65536,
+      "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+      ],
+      "temperature": 1,
+      "topP": 0.95,
+      "topK": 64,
+      "maxTemperature": 2,
+      "thinking": true
+    },
+    {
+      "name": "models/gemini-2.5-flash",
+      "version": "001",
+      "displayName": "Gemini 2.5 Flash",
+      "description": "Mid-size fast multimodal model, still active.",
+      "inputTokenLimit": 1048576,
+      "outputTokenLimit": 65536,
+      "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+      ],
+      "temperature": 1,
+      "topP": 0.95,
+      "topK": 64,
+      "maxTemperature": 2,
+      "thinking": true
+    },
+    {
+      "name": "models/gemini-2.5-flash-lite",
+      "version": "001",
+      "displayName": "Gemini 2.5 Flash-Lite",
+      "description": "Lightweight Gemini 2.5 model optimized for low latency and cost.",
+      "inputTokenLimit": 1048576,
+      "outputTokenLimit": 65536,
+      "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+      ],
+      "temperature": 1,
+      "topP": 0.95,
+      "topK": 64,
+      "maxTemperature": 2,
+      "thinking": true
+    },
+    {
+      "name": "models/gemini-2.5-flash-image",
+      "version": "2.0",
+      "displayName": "Nano Banana",
+      "description": "Gemini 2.5 Flash image generation model.",
+      "inputTokenLimit": 32768,
+      "outputTokenLimit": 32768,
+      "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "batchGenerateContent"
+      ],
+      "temperature": 1,
+      "topP": 0.95,
+      "topK": 64,
+      "maxTemperature": 1
+    },
+    {
+      "name": "models/gemma-3",
+      "version": "003",
+      "displayName": "Gemma 3",
+      "description": "Latest open weight Gemma model family.",
+      "inputTokenLimit": 131072,
+      "outputTokenLimit": 8192,
+      "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens"
+      ],
+      "temperature": 1,
+      "topP": 0.95,
+      "topK": 64
+    },
+    {
+      "name": "models/veo-3.1-generate-preview",
+      "version": "3.1",
+      "displayName": "Veo 3.1",
+      "description": "Latest supported text to video generation model.",
+      "inputTokenLimit": 480,
+      "outputTokenLimit": 8192,
+      "supportedGenerationMethods": [
+        "predictLongRunning"
+      ]
+    }
+  ]
+}
