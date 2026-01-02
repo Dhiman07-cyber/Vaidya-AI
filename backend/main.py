@@ -2968,6 +2968,489 @@ async def delete_study_session(
 
 
 # ============================================================================
+# STUDY TOOLS ENDPOINTS
+# ============================================================================
+
+# Pydantic models for study tools
+class GenerateStudyMaterialRequest(BaseModel):
+    topic: str
+    session_id: Optional[str] = None
+
+
+class StudyMaterialResponse(BaseModel):
+    id: str
+    session_id: str
+    feature: str
+    topic: str
+    content: str
+    tokens_used: int
+    created_at: str
+
+
+class StudyToolSessionResponse(BaseModel):
+    id: str
+    user_id: str
+    feature: str
+    title: str
+    created_at: str
+    updated_at: str
+
+
+@app.post("/api/study-tools/flashcards", response_model=StudyMaterialResponse, status_code=status.HTTP_201_CREATED)
+async def generate_flashcards(
+    request: GenerateStudyMaterialRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """Generate flashcards for a topic"""
+    try:
+        user_id = await get_current_user_id(authorization)
+        
+        # Check rate limits
+        rate_limiter = get_rate_limiter()
+        within_limits = await rate_limiter.check_rate_limit(user_id, "flashcard")
+        
+        if not within_limits:
+            usage = await rate_limiter.get_user_usage(user_id)
+            auth_service = get_auth_service()
+            plan = await auth_service.get_user_plan(user_id)
+            from services.rate_limiter import PLAN_LIMITS
+            limits = PLAN_LIMITS.get(plan, PLAN_LIMITS["free"])
+            
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail={
+                    "error": {
+                        "code": "RATE_LIMIT_EXCEEDED",
+                        "message": f"You've reached your daily limit. Upgrade to continue.",
+                        "details": {
+                            "current_plan": plan,
+                            "flashcards_used": usage.get("flashcards_generated", 0),
+                            "flashcards_limit": limits["flashcards_per_day"],
+                        },
+                        "action": "upgrade",
+                        "upgrade_url": "/pricing"
+                    }
+                }
+            )
+        
+        # Create or get session
+        if not request.session_id:
+            session_data = {
+                "user_id": user_id,
+                "feature": "flashcard",
+                "title": f"Flashcards - {request.topic}"
+            }
+            session_response = supabase.table("study_tool_sessions").insert(session_data).execute()
+            session_id = session_response.data[0]["id"]
+        else:
+            session_id = request.session_id
+        
+        # Generate flashcards
+        from services.commands import get_command_service
+        command_service = get_command_service(supabase)
+        result = await command_service.generate_flashcards(user_id, request.topic)
+        
+        # Store the generated content
+        material_data = {
+            "session_id": session_id,
+            "feature": "flashcard",
+            "topic": request.topic,
+            "content": result["content"],
+            "tokens_used": result["tokens_used"]
+        }
+        material_response = supabase.table("study_materials").insert(material_data).execute()
+        
+        return StudyMaterialResponse(**material_response.data[0])
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to generate flashcards: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": {"code": "GENERATION_FAILED", "message": str(e)}}
+        )
+
+
+@app.post("/api/study-tools/mcqs", response_model=StudyMaterialResponse, status_code=status.HTTP_201_CREATED)
+async def generate_mcqs(
+    request: GenerateStudyMaterialRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """Generate MCQs for a topic"""
+    try:
+        user_id = await get_current_user_id(authorization)
+        
+        # Check rate limits
+        rate_limiter = get_rate_limiter()
+        within_limits = await rate_limiter.check_rate_limit(user_id, "mcq")
+        
+        if not within_limits:
+            usage = await rate_limiter.get_user_usage(user_id)
+            auth_service = get_auth_service()
+            plan = await auth_service.get_user_plan(user_id)
+            from services.rate_limiter import PLAN_LIMITS
+            limits = PLAN_LIMITS.get(plan, PLAN_LIMITS["free"])
+            
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail={
+                    "error": {
+                        "code": "RATE_LIMIT_EXCEEDED",
+                        "message": f"You've reached your daily limit. Upgrade to continue.",
+                        "details": {
+                            "current_plan": plan,
+                            "mcqs_used": usage.get("mcqs_generated", 0),
+                            "mcqs_limit": limits["mcqs_per_day"],
+                        },
+                        "action": "upgrade",
+                        "upgrade_url": "/pricing"
+                    }
+                }
+            )
+        
+        # Create or get session
+        if not request.session_id:
+            session_data = {
+                "user_id": user_id,
+                "feature": "mcq",
+                "title": f"MCQs - {request.topic}"
+            }
+            session_response = supabase.table("study_tool_sessions").insert(session_data).execute()
+            session_id = session_response.data[0]["id"]
+        else:
+            session_id = request.session_id
+        
+        # Generate MCQs
+        from services.commands import get_command_service
+        command_service = get_command_service(supabase)
+        result = await command_service.generate_mcqs(user_id, request.topic)
+        
+        # Store the generated content
+        material_data = {
+            "session_id": session_id,
+            "feature": "mcq",
+            "topic": request.topic,
+            "content": result["content"],
+            "tokens_used": result["tokens_used"]
+        }
+        material_response = supabase.table("study_materials").insert(material_data).execute()
+        
+        return StudyMaterialResponse(**material_response.data[0])
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to generate MCQs: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": {"code": "GENERATION_FAILED", "message": str(e)}}
+        )
+
+
+@app.post("/api/study-tools/highyield", response_model=StudyMaterialResponse, status_code=status.HTTP_201_CREATED)
+async def generate_highyield(
+    request: GenerateStudyMaterialRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """Generate high-yield summary for a topic"""
+    try:
+        user_id = await get_current_user_id(authorization)
+        
+        # Check rate limits
+        rate_limiter = get_rate_limiter()
+        within_limits = await rate_limiter.check_rate_limit(user_id, "highyield")
+        
+        if not within_limits:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail={
+                    "error": {
+                        "code": "RATE_LIMIT_EXCEEDED",
+                        "message": f"You've reached your daily limit. Upgrade to continue.",
+                        "action": "upgrade",
+                        "upgrade_url": "/pricing"
+                    }
+                }
+            )
+        
+        # Create or get session
+        if not request.session_id:
+            session_data = {
+                "user_id": user_id,
+                "feature": "highyield",
+                "title": f"High-Yield - {request.topic}"
+            }
+            session_response = supabase.table("study_tool_sessions").insert(session_data).execute()
+            session_id = session_response.data[0]["id"]
+        else:
+            session_id = request.session_id
+        
+        # Generate high-yield summary
+        from services.commands import get_command_service
+        command_service = get_command_service(supabase)
+        result = await command_service.generate_summary(user_id, request.topic)
+        
+        # Store the generated content
+        material_data = {
+            "session_id": session_id,
+            "feature": "highyield",
+            "topic": request.topic,
+            "content": result["content"],
+            "tokens_used": result["tokens_used"]
+        }
+        material_response = supabase.table("study_materials").insert(material_data).execute()
+        
+        return StudyMaterialResponse(**material_response.data[0])
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to generate high-yield summary: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": {"code": "GENERATION_FAILED", "message": str(e)}}
+        )
+
+
+@app.post("/api/study-tools/explain", response_model=StudyMaterialResponse, status_code=status.HTTP_201_CREATED)
+async def generate_explanation(
+    request: GenerateStudyMaterialRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """Generate detailed explanation for a topic"""
+    try:
+        user_id = await get_current_user_id(authorization)
+        
+        # Check rate limits
+        rate_limiter = get_rate_limiter()
+        within_limits = await rate_limiter.check_rate_limit(user_id, "explain")
+        
+        if not within_limits:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail={
+                    "error": {
+                        "code": "RATE_LIMIT_EXCEEDED",
+                        "message": f"You've reached your daily limit. Upgrade to continue.",
+                        "action": "upgrade",
+                        "upgrade_url": "/pricing"
+                    }
+                }
+            )
+        
+        # Create or get session
+        if not request.session_id:
+            session_data = {
+                "user_id": user_id,
+                "feature": "explain",
+                "title": f"Explanation - {request.topic}"
+            }
+            session_response = supabase.table("study_tool_sessions").insert(session_data).execute()
+            session_id = session_response.data[0]["id"]
+        else:
+            session_id = request.session_id
+        
+        # Generate explanation
+        from services.commands import get_command_service
+        command_service = get_command_service(supabase)
+        result = await command_service.generate_explanation(user_id, request.topic)
+        
+        # Store the generated content
+        material_data = {
+            "session_id": session_id,
+            "feature": "explain",
+            "topic": request.topic,
+            "content": result["content"],
+            "tokens_used": result["tokens_used"]
+        }
+        material_response = supabase.table("study_materials").insert(material_data).execute()
+        
+        return StudyMaterialResponse(**material_response.data[0])
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to generate explanation: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": {"code": "GENERATION_FAILED", "message": str(e)}}
+        )
+
+
+@app.post("/api/study-tools/conceptmap", response_model=StudyMaterialResponse, status_code=status.HTTP_201_CREATED)
+async def generate_concept_map(
+    request: GenerateStudyMaterialRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """Generate concept map for a topic"""
+    try:
+        user_id = await get_current_user_id(authorization)
+        
+        # Check rate limits
+        rate_limiter = get_rate_limiter()
+        within_limits = await rate_limiter.check_rate_limit(user_id, "map")
+        
+        if not within_limits:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail={
+                    "error": {
+                        "code": "RATE_LIMIT_EXCEEDED",
+                        "message": f"You've reached your daily limit. Upgrade to continue.",
+                        "action": "upgrade",
+                        "upgrade_url": "/pricing"
+                    }
+                }
+            )
+        
+        # Create or get session
+        if not request.session_id:
+            session_data = {
+                "user_id": user_id,
+                "feature": "map",
+                "title": f"Concept Map - {request.topic}"
+            }
+            session_response = supabase.table("study_tool_sessions").insert(session_data).execute()
+            session_id = session_response.data[0]["id"]
+        else:
+            session_id = request.session_id
+        
+        # Generate concept map
+        from services.commands import get_command_service
+        command_service = get_command_service(supabase)
+        result = await command_service.generate_concept_map(user_id, request.topic)
+        
+        # Store the generated content
+        material_data = {
+            "session_id": session_id,
+            "feature": "map",
+            "topic": request.topic,
+            "content": result["content"],
+            "tokens_used": result["tokens_used"]
+        }
+        material_response = supabase.table("study_materials").insert(material_data).execute()
+        
+        return StudyMaterialResponse(**material_response.data[0])
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to generate concept map: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": {"code": "GENERATION_FAILED", "message": str(e)}}
+        )
+
+
+@app.get("/api/study-tools/sessions/{feature}", response_model=List[StudyToolSessionResponse])
+async def get_study_tool_sessions(
+    feature: str,
+    authorization: Optional[str] = Header(None)
+):
+    """Get all sessions for a specific study tool feature"""
+    try:
+        user_id = await get_current_user_id(authorization)
+        
+        response = supabase.table("study_tool_sessions")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .eq("feature", feature)\
+            .order("updated_at", desc=True)\
+            .execute()
+        
+        return [StudyToolSessionResponse(**session) for session in response.data]
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get study tool sessions: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": {"code": "RETRIEVAL_FAILED", "message": str(e)}}
+        )
+
+
+@app.get("/api/study-tools/sessions/{session_id}/materials", response_model=List[StudyMaterialResponse])
+async def get_session_materials(
+    session_id: str,
+    authorization: Optional[str] = Header(None)
+):
+    """Get all materials for a specific session"""
+    try:
+        user_id = await get_current_user_id(authorization)
+        
+        # Verify session belongs to user
+        session_response = supabase.table("study_tool_sessions")\
+            .select("id")\
+            .eq("id", session_id)\
+            .eq("user_id", user_id)\
+            .execute()
+        
+        if not session_response.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"error": {"code": "SESSION_NOT_FOUND", "message": "Session not found"}}
+            )
+        
+        # Get materials
+        materials_response = supabase.table("study_materials")\
+            .select("*")\
+            .eq("session_id", session_id)\
+            .order("created_at", desc=False)\
+            .execute()
+        
+        return [StudyMaterialResponse(**material) for material in materials_response.data]
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get session materials: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": {"code": "RETRIEVAL_FAILED", "message": str(e)}}
+        )
+
+
+@app.delete("/api/study-tools/sessions/{session_id}")
+async def delete_study_tool_session(
+    session_id: str,
+    authorization: Optional[str] = Header(None)
+):
+    """Delete a study tool session and all its materials"""
+    try:
+        user_id = await get_current_user_id(authorization)
+        
+        # Verify session belongs to user
+        session_response = supabase.table("study_tool_sessions")\
+            .select("id")\
+            .eq("id", session_id)\
+            .eq("user_id", user_id)\
+            .execute()
+        
+        if not session_response.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"error": {"code": "SESSION_NOT_FOUND", "message": "Session not found"}}
+            )
+        
+        # Delete materials first
+        supabase.table("study_materials")\
+            .delete()\
+            .eq("session_id", session_id)\
+            .execute()
+        
+        # Delete session
+        supabase.table("study_tool_sessions")\
+            .delete()\
+            .eq("id", session_id)\
+            .execute()
+        
+        return {"success": True, "message": "Session deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete study tool session: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": {"code": "DELETE_FAILED", "message": str(e)}}
+        )
+
+
+# ============================================================================
 # PAYMENT ENDPOINTS
 # ============================================================================
 

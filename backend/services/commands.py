@@ -14,6 +14,7 @@ Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.7
 import re
 from typing import Dict, Optional, Any
 from supabase import Client
+from services.text_formatter import clean_markdown
 
 
 class CommandService:
@@ -146,6 +147,9 @@ Focus on key concepts, definitions, and clinical relevance."""
         if not result["success"]:
             raise Exception(f"Failed to generate flashcards: {result.get('error', 'Unknown error')}")
         
+        # Clean markdown formatting from content
+        cleaned_content = clean_markdown(result["content"])
+        
         # Track usage (Requirement 4.7)
         rate_limiter = get_rate_limiter(self.supabase)
         await rate_limiter.increment_usage(
@@ -157,7 +161,7 @@ Focus on key concepts, definitions, and clinical relevance."""
         return {
             "command": "flashcard",
             "topic": topic,
-            "content": result["content"],
+            "content": cleaned_content,
             "tokens_used": result["tokens_used"]
         }
     
@@ -205,6 +209,9 @@ Focus on clinically relevant scenarios and USMLE-style questions."""
         if not result["success"]:
             raise Exception(f"Failed to generate MCQs: {result.get('error', 'Unknown error')}")
         
+        # Clean markdown formatting from content
+        cleaned_content = clean_markdown(result["content"])
+        
         # Track usage (Requirement 4.7)
         rate_limiter = get_rate_limiter(self.supabase)
         await rate_limiter.increment_usage(
@@ -216,7 +223,7 @@ Focus on clinically relevant scenarios and USMLE-style questions."""
         return {
             "command": "mcq",
             "topic": topic,
-            "content": result["content"],
+            "content": cleaned_content,
             "tokens_used": result["tokens_used"]
         }
     
@@ -262,10 +269,13 @@ Focus on the most important, testable information for medical students."""
         if not result["success"]:
             raise Exception(f"Failed to generate summary: {result.get('error', 'Unknown error')}")
         
+        # Clean markdown formatting from content
+        cleaned_content = clean_markdown(result["content"])
+        
         return {
             "command": "highyield",
             "topic": topic,
-            "content": result["content"],
+            "content": cleaned_content,
             "tokens_used": result["tokens_used"]
         }
     
@@ -309,10 +319,13 @@ Use clear language and organize the information logically."""
         if not result["success"]:
             raise Exception(f"Failed to generate explanation: {result.get('error', 'Unknown error')}")
         
+        # Clean markdown formatting from content
+        cleaned_content = clean_markdown(result["content"])
+        
         return {
             "command": "explain",
             "topic": topic,
-            "content": result["content"],
+            "content": cleaned_content,
             "tokens_used": result["tokens_used"]
         }
     
@@ -361,10 +374,13 @@ Show relationships and hierarchies between key concepts."""
         if not result["success"]:
             raise Exception(f"Failed to generate concept map: {result.get('error', 'Unknown error')}")
         
+        # Clean markdown formatting from content
+        cleaned_content = clean_markdown(result["content"])
+        
         return {
             "command": "map",
             "topic": topic,
-            "content": result["content"],
+            "content": cleaned_content,
             "tokens_used": result["tokens_used"]
         }
 

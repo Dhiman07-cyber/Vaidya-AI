@@ -61,14 +61,14 @@ export default function Dashboard() {
       title: 'Flashcards',
       description: 'Generate flashcards for any medical topic',
       icon: '🎴',
-      link: '/study-tools?tool=flashcards',
+      link: '/flashcards',
       color: '#f093fb'
     },
     {
       title: 'MCQ Practice',
       description: 'Practice with AI-generated multiple choice questions',
       icon: '📝',
-      link: '/study-tools?tool=mcq',
+      link: '/mcqs',
       color: '#4facfe'
     },
     {
