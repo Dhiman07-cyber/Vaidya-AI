@@ -1,12 +1,12 @@
 {
   "openrouter": {
-    "chat": "openai/gpt-5.2",
-    "flashcard": "openai/gpt-5.2",
+    "chat": "openai/gpt-5.1",
+    "flashcard": "openai/gpt-5.1",
     "mcq": "openai/gpt-5.2",
-    "highyield": "openai/gpt-5.2",
-    "explain": "openai/gpt-5.2",
-    "map": "openai/gpt-5.2",
-    "clinical": "openai/gpt-5.2-pro",
+    "highyield": "openai/gpt-5.1",
+    "explain": "openai/gpt-5.1",
+    "map": "openai/gpt-5",
+    "clinical": "openai/gpt-5.1-pro",
     "osce": "openai/gpt-5.2-pro",
     "image": "openai/gpt-5-image"
   },

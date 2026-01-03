@@ -78,6 +78,11 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Initialize Supabase client
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key = os.getenv("SUPABASE_SERVICE_KEY")
+supabase = create_client(supabase_url, supabase_key) if supabase_url and supabase_key else None
+
 # Configure CORS for Next.js frontend (Requirement 20.7)
 app.add_middleware(
     CORSMiddleware,
@@ -3053,7 +3058,7 @@ async def generate_flashcards(
             "content": result["content"],
             "tokens_used": result["tokens_used"]
         }
-        material_response = supabase.table("study_materials").insert(material_data).execute()
+        material_response = supabase.table("study_tool_materials").insert(material_data).execute()
         
         return StudyMaterialResponse(**material_response.data[0])
     except HTTPException:
@@ -3128,7 +3133,7 @@ async def generate_mcqs(
             "content": result["content"],
             "tokens_used": result["tokens_used"]
         }
-        material_response = supabase.table("study_materials").insert(material_data).execute()
+        material_response = supabase.table("study_tool_materials").insert(material_data).execute()
         
         return StudyMaterialResponse(**material_response.data[0])
     except HTTPException:
@@ -3192,7 +3197,7 @@ async def generate_highyield(
             "content": result["content"],
             "tokens_used": result["tokens_used"]
         }
-        material_response = supabase.table("study_materials").insert(material_data).execute()
+        material_response = supabase.table("study_tool_materials").insert(material_data).execute()
         
         return StudyMaterialResponse(**material_response.data[0])
     except HTTPException:
@@ -3256,7 +3261,7 @@ async def generate_explanation(
             "content": result["content"],
             "tokens_used": result["tokens_used"]
         }
-        material_response = supabase.table("study_materials").insert(material_data).execute()
+        material_response = supabase.table("study_tool_materials").insert(material_data).execute()
         
         return StudyMaterialResponse(**material_response.data[0])
     except HTTPException:
@@ -3320,7 +3325,7 @@ async def generate_concept_map(
             "content": result["content"],
             "tokens_used": result["tokens_used"]
         }
-        material_response = supabase.table("study_materials").insert(material_data).execute()
+        material_response = supabase.table("study_tool_materials").insert(material_data).execute()
         
         return StudyMaterialResponse(**material_response.data[0])
     except HTTPException:
@@ -3383,7 +3388,7 @@ async def get_session_materials(
             )
         
         # Get materials
-        materials_response = supabase.table("study_materials")\
+        materials_response = supabase.table("study_tool_materials")\
             .select("*")\
             .eq("session_id", session_id)\
             .order("created_at", desc=False)\
@@ -3423,7 +3428,7 @@ async def delete_study_tool_session(
             )
         
         # Delete materials first
-        supabase.table("study_materials")\
+        supabase.table("study_tool_materials")\
             .delete()\
             .eq("session_id", session_id)\
             .execute()
