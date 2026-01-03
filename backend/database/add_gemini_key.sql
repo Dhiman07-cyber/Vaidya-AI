@@ -11,7 +11,7 @@ DELETE FROM public.api_keys;
 -- 3. Click "Add API Key"
 -- 4. Provider: gemini
 -- 5. Feature: chat
--- 6. API Key: AIzaSyAM8bwzEouhQ3IxGMiTXbW16RVpI5A_15w
+-- 6. API Key: API_KEY_HERE
 -- 7. Priority: 100
 -- 8. Click "Add Key"
 
