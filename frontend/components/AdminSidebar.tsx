@@ -21,14 +21,19 @@ export default function AdminSidebar() {
       icon: '👥'
     },
     {
-      label: 'Audit Logs',
-      path: '/admin/audit-logs',
-      icon: '📋'
-    },
-    {
       label: 'API Keys',
       path: '/admin/api-keys',
       icon: '🔑'
+    },
+    {
+      label: 'Model Usage',
+      path: '/admin/model-usage',
+      icon: '📈'
+    },
+    {
+      label: 'Audit Logs',
+      path: '/admin/audit-logs',
+      icon: '📋'
     },
     {
       label: 'Feature Toggles',

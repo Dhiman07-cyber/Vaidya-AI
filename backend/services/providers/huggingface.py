@@ -18,24 +18,37 @@ logger = logging.getLogger(__name__)
 class HuggingFaceProvider:
     """Provider for Hugging Face Inference API"""
     
-    # Medical-specific models available on Hugging Face
+    # Medical-specific models available on Hugging Face Router
+    # Updated for router.huggingface.co/v1 compatibility
+    # Using latest versions and best medical models available
     MEDICAL_MODELS = {
-        "chat": "epfl-llm/meditron-7b",  # Medical reasoning
-        "clinical": "epfl-llm/meditron-7b",  # Clinical reasoning
-        "osce": "epfl-llm/meditron-7b",  # OSCE scenarios
-        "flashcard": "meta-llama/Llama-3-8B-Instruct",  # Content generation
-        "mcq": "meta-llama/Llama-3-8B-Instruct",  # MCQ generation
-        "highyield": "mistralai/Mistral-7B-Instruct-v0.2",  # Summarization
-        "explain": "epfl-llm/meditron-7b",  # Medical explanations
-        "map": "meta-llama/Llama-3-8B-Instruct",  # Concept maps
-        "embedding": "BAAI/bge-small-en-v1.5",  # Embeddings for RAG
-        "image": "microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224"  # Medical image understanding
+        # Medical reasoning - Meditron3-70B is much better than 7B (70B parameters vs 7B)
+        "chat": "epfl-llm/meditron3-70b",  # Best medical model - upgraded from meditron-7b
+        "clinical": "epfl-llm/meditron3-70b",  # Clinical reasoning - upgraded
+        "osce": "epfl-llm/meditron3-70b",  # OSCE scenarios - upgraded
+        "explain": "epfl-llm/meditron3-70b",  # Medical explanations - upgraded
+        
+        # Content generation - Using Llama-3.1 (newer than 3-8B)
+        "flashcard": "meta-llama/Llama-3.1-8B-Instruct",  # Upgraded from Llama-3-8B
+        "mcq": "meta-llama/Llama-3.1-8B-Instruct",  # Upgraded from Llama-3-8B
+        "map": "meta-llama/Llama-3.1-8B-Instruct",  # Concept maps - upgraded
+        
+        # Summarization - Using Mistral v0.3 (newer than v0.2)
+        "highyield": "mistralai/Mistral-7B-Instruct-v0.3",  # Upgraded from v0.2
+        
+        # Specialized medical models
+        "safety": "aaditya/OpenBioLLM-Llama3-8B",  # Safety check - medical safety model
+        "image": "microsoft/llava-med-v1.5-mistral-7b",  # Medical image understanding - upgraded
+        
+        # Embeddings
+        "embedding": "BAAI/bge-small-en-v1.5",  # RAG embeddings
     }
     
     def __init__(self):
         """Initialize Hugging Face provider"""
         self.api_key = os.getenv("HUGGINGFACE_API_KEY")
-        self.base_url = "https://api-inference.huggingface.co/models"
+        # Updated to new Hugging Face router endpoint (OpenAI-compatible)
+        self.base_url = "https://router.huggingface.co/v1"
         
         if not self.api_key:
             logger.warning("HUGGINGFACE_API_KEY not set - Hugging Face provider will not work")
@@ -49,7 +62,7 @@ class HuggingFaceProvider:
         temperature: float = 0.7
     ) -> Dict[str, Any]:
         """
-        Call Hugging Face Inference API
+        Call Hugging Face Inference API (OpenAI-compatible format)
         
         Args:
             feature: Feature name (chat, flashcard, etc.)
@@ -75,26 +88,25 @@ class HuggingFaceProvider:
         logger.info(f"Calling Hugging Face model: {model} for feature: {feature}")
         
         try:
-            # Build the full prompt
+            # Build messages in OpenAI format
+            messages = []
             if system_prompt:
-                full_prompt = f"{system_prompt}\n\nUser: {prompt}\n\nAssistant:"
-            else:
-                full_prompt = f"User: {prompt}\n\nAssistant:"
+                messages.append({"role": "system", "content": system_prompt})
+            messages.append({"role": "user", "content": prompt})
             
-            # Prepare request
-            url = f"{self.base_url}/{model}"
+            # Prepare request (OpenAI-compatible format)
+            url = f"{self.base_url}/chat/completions"
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json"
             }
             
             payload = {
-                "inputs": full_prompt,
-                "parameters": {
-                    "max_new_tokens": max_tokens,
-                    "temperature": temperature,
-                    "return_full_text": False
-                }
+                "model": model,
+                "messages": messages,
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+                "stream": False
             }
             
             # Make request
@@ -104,16 +116,17 @@ class HuggingFaceProvider:
                 if response.status_code == 200:
                     result = response.json()
                     
-                    # Extract generated text
-                    if isinstance(result, list) and len(result) > 0:
-                        generated_text = result[0].get("generated_text", "")
-                    elif isinstance(result, dict):
-                        generated_text = result.get("generated_text", "")
+                    # Extract generated text from OpenAI-compatible response
+                    if "choices" in result and len(result["choices"]) > 0:
+                        generated_text = result["choices"][0]["message"]["content"]
+                        tokens_used = result.get("usage", {}).get("total_tokens", 0)
+                        
+                        # If tokens not provided, estimate
+                        if tokens_used == 0:
+                            tokens_used = len(prompt + generated_text) // 4
                     else:
                         generated_text = str(result)
-                    
-                    # Estimate tokens (rough approximation: 1 token ≈ 4 characters)
-                    tokens_used = len(full_prompt + generated_text) // 4
+                        tokens_used = len(prompt + generated_text) // 4
                     
                     logger.info(f"Hugging Face call succeeded. Model: {model}, Tokens: ~{tokens_used}")
                     

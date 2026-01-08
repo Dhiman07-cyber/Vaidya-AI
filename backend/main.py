@@ -19,6 +19,7 @@ from services.chat import get_chat_service
 from services.rate_limiter import get_rate_limiter
 from services.admin import get_admin_service
 from services.model_usage_logger import get_model_usage_logger
+from services.commands import get_command_service
 
 # Load environment variables
 load_dotenv()
@@ -82,6 +83,89 @@ async def verify_admin(user: Dict[str, Any] = Depends(get_current_user)) -> Dict
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "service": "Medical AI Platform API"}
+
+
+# ============================================================================
+# STUDY TOOLS ENDPOINTS
+# ============================================================================
+
+class StudyToolRequest(BaseModel):
+    topic: str
+
+
+@app.post("/api/study-tools/flashcards")
+async def generate_flashcards(
+    request: StudyToolRequest,
+    user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Generate flashcards for a topic"""
+    try:
+        command_service = get_command_service(supabase)
+        result = await command_service.generate_flashcards(user["id"], request.topic)
+        return result
+    except Exception as e:
+        logger.error(f"Failed to generate flashcards: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/study-tools/mcqs")
+async def generate_mcqs(
+    request: StudyToolRequest,
+    user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Generate MCQs for a topic"""
+    try:
+        command_service = get_command_service(supabase)
+        result = await command_service.generate_mcqs(user["id"], request.topic)
+        return result
+    except Exception as e:
+        logger.error(f"Failed to generate MCQs: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/study-tools/highyield")
+async def generate_highyield(
+    request: StudyToolRequest,
+    user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Generate high-yield summary for a topic"""
+    try:
+        command_service = get_command_service(supabase)
+        result = await command_service.generate_summary(user["id"], request.topic)
+        return result
+    except Exception as e:
+        logger.error(f"Failed to generate summary: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/study-tools/explain")
+async def generate_explanation(
+    request: StudyToolRequest,
+    user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Generate detailed explanation for a topic"""
+    try:
+        command_service = get_command_service(supabase)
+        result = await command_service.generate_explanation(user["id"], request.topic)
+        return result
+    except Exception as e:
+        logger.error(f"Failed to generate explanation: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/study-tools/conceptmap")
+async def generate_conceptmap(
+    request: StudyToolRequest,
+    user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Generate concept map for a topic"""
+    try:
+        command_service = get_command_service(supabase)
+        result = await command_service.generate_concept_map(user["id"], request.topic)
+        return result
+    except Exception as e:
+        logger.error(f"Failed to generate concept map: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ============================================================================
