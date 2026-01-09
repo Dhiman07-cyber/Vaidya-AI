@@ -6,6 +6,22 @@ import DashboardLayout from '@/components/DashboardLayout'
 import ClinicalMapViewer, { parseClinicalMapData, MapNode, MapConnection } from '@/components/ClinicalMapViewer'
 import styles from '@/styles/ConceptMap.module.css'
 
+// Helper to get emoji icon based on topic
+const getTopicIcon = (topic: string): string => {
+  const topicLower = topic.toLowerCase()
+  if (topicLower.includes('pulmonary') || topicLower.includes('lung') || topicLower.includes('respiratory')) return '🫁'
+  if (topicLower.includes('heart') || topicLower.includes('cardiac') || topicLower.includes('cardio')) return '❤️'
+  if (topicLower.includes('brain') || topicLower.includes('neuro') || topicLower.includes('stroke')) return '🧠'
+  if (topicLower.includes('kidney') || topicLower.includes('renal')) return '🫘'
+  if (topicLower.includes('liver') || topicLower.includes('hepat')) return '🫀'
+  if (topicLower.includes('diabetes') || topicLower.includes('glucose')) return '💉'
+  if (topicLower.includes('bone') || topicLower.includes('fracture') || topicLower.includes('ortho')) return '🦴'
+  if (topicLower.includes('skin') || topicLower.includes('derma')) return '🩹'
+  if (topicLower.includes('eye') || topicLower.includes('ophthal')) return '👁️'
+  if (topicLower.includes('stomach') || topicLower.includes('gastro') || topicLower.includes('digest')) return '🫃'
+  return '🏥'
+}
+
 interface ConceptMapSession {
   id: string
   title: string
@@ -220,19 +236,14 @@ export default function ConceptMap() {
   return (
     <>
       <Head>
-        <title>Clinical Map - VaidyaAI</title>
+        <title>Concept Map - VaidyaAI</title>
       </Head>
       <DashboardLayout user={user}>
         <div className={styles.container}>
-          <div className={styles.header}>
-            <h1>Clinical Map</h1>
-            <p>Here is a clinical map summarizing key information about medical topics.</p>
-          </div>
-
           <div className={styles.mainLayout}>
             {/* Left Sidebar - History */}
             <div className={styles.sidebar}>
-              <h3>History</h3>
+              <h3>HISTORY</h3>
               <div className={styles.sessionList}>
                 {sessions.length === 0 ? (
                   <div className={styles.emptyState}>No previous maps</div>
@@ -268,7 +279,7 @@ export default function ConceptMap() {
                   <span className={styles.searchIcon}>🔍</span>
                   <input
                     type="text"
-                    placeholder="Pulmonary Embolism"
+                    placeholder="Enter a medical topic..."
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleGenerate()}
@@ -293,17 +304,11 @@ export default function ConceptMap() {
               {/* Concept Map Display */}
               {currentMaterial ? (
                 <div className={styles.mapContainer}>
-                  <div className={styles.mapHeader}>
-                    <h2>Clinical Map</h2>
-                  </div>
-                  
-                  <div className={styles.mapContent}>
-                    <ClinicalMapViewer
-                      title={currentMaterial.topic}
-                      nodes={mapNodes}
-                      connections={mapConnections}
-                    />
-                  </div>
+                  <ClinicalMapViewer
+                    title={currentMaterial.topic}
+                    nodes={mapNodes}
+                    connections={mapConnections}
+                  />
                 </div>
               ) : (
                 <div className={styles.placeholder}>
@@ -316,69 +321,59 @@ export default function ConceptMap() {
 
             {/* Right Sidebar - Card Summary */}
             <div className={styles.rightSidebar}>
-              <h3>Card Summary</h3>
+              <h3>CARD SUMMARY</h3>
               
               {currentMaterial ? (
                 <div className={styles.summaryCard}>
                   <div className={styles.topicIcon}>
-                    <div className={styles.iconCircle}>🫁</div>
+                    <div className={styles.iconCircle}>{getTopicIcon(currentMaterial.topic)}</div>
                   </div>
                   <h4 className={styles.topicTitle}>{currentMaterial.topic}</h4>
                   
                   <div className={styles.statsSection}>
-                    <div className={styles.statItem}>
-                      <span className={styles.statIcon}>🔵</span>
-                      <span className={styles.statLabel}>System:</span>
-                      <span className={styles.statValue}>Card</span>
-                    </div>
-                    
-                    <div className={styles.statItem}>
-                      <span className={styles.statIcon}>🔺</span>
-                      <span className={styles.statLabel}>Diagnostics:</span>
-                      <div className={styles.statBadges}>
-                        {stats.diagnosis > 0 && (
-                          <span className={styles.badge}>D-Dimer</span>
-                        )}
-                        {stats.diagnosis > 1 && (
-                          <span className={styles.badge}>CTPA</span>
-                        )}
-                        {stats.diagnosis > 2 && (
-                          <span className={styles.badge}>V/Q Scan</span>
-                        )}
+                    {stats.diagnosis > 0 && (
+                      <div className={styles.statItem}>
+                        <span className={styles.statLabel}>🔵 DIAGNOSTICS:</span>
+                        <div className={styles.statBadges}>
+                          {mapNodes.filter(n => n.type === 'diagnosis').slice(0, 4).map((node, idx) => (
+                            <span key={idx} className={styles.badge}>{node.label}</span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                     
-                    <div className={styles.statItem}>
-                      <span className={styles.statIcon}>🟩</span>
-                      <span className={styles.statLabel}>Treatments:</span>
-                      <div className={styles.treatmentList}>
-                        {stats.treatments > 0 && <div className={styles.treatmentItem}>✓ Heparin</div>}
-                        {stats.treatments > 1 && <div className={styles.treatmentItem}>✓ Alteplase</div>}
-                        {stats.treatments > 2 && <div className={styles.treatmentItem}>✓ Warfarin</div>}
+                    {stats.treatments > 0 && (
+                      <div className={styles.statItem}>
+                        <span className={styles.statLabel}>🟩 TREATMENTS:</span>
+                        <div className={styles.treatmentList}>
+                          {mapNodes.filter(n => n.type === 'treatment').slice(0, 4).map((node, idx) => (
+                            <div key={idx} className={styles.treatmentItem}>✓ {node.label}</div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                   
                   <div className={styles.legend}>
-                    <h4>Legend</h4>
+                    <h4>LEGEND</h4>
                     <div className={styles.legendItems}>
                       <div className={styles.legendItem}>
-                        <span className={styles.legendColor} style={{ background: '#f093fb' }}></span>
+                        <span className={styles.legendColor} style={{ background: '#fef3c7', border: '2px solid #f59e0b' }}></span>
                         <span>Symptoms</span>
                         <span className={styles.legendCount}>{stats.symptoms}</span>
                       </div>
                       <div className={styles.legendItem}>
-                        <span className={styles.legendColor} style={{ background: '#4facfe' }}></span>
+                        <span className={styles.legendColor} style={{ background: '#dbeafe', border: '2px solid #3b82f6' }}></span>
                         <span>Diagnosis</span>
                         <span className={styles.legendCount}>{stats.diagnosis}</span>
                       </div>
                       <div className={styles.legendItem}>
-                        <span className={styles.legendColor} style={{ background: '#fa709a' }}></span>
+                        <span className={styles.legendColor} style={{ background: '#fce7f3', border: '2px solid #ec4899' }}></span>
                         <span>Risk Factors</span>
                         <span className={styles.legendCount}>{stats.riskFactors}</span>
                       </div>
                       <div className={styles.legendItem}>
-                        <span className={styles.legendColor} style={{ background: '#43e97b' }}></span>
+                        <span className={styles.legendColor} style={{ background: '#d1fae5', border: '2px solid #10b981' }}></span>
                         <span>Treatment</span>
                         <span className={styles.legendCount}>{stats.treatments}</span>
                       </div>
