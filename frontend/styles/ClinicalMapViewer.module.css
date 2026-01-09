@@ -1,47 +1,16 @@
 .container {
+  width: 100%;
+  min-height: 600px;
+  position: relative;
   background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.header {
-  margin-bottom: 20px;
-}
-
-.header h3 {
-  margin: 0 0 15px 0;
-  color: #212529;
-  font-size: 20px;
-}
-
-.legend {
-  display: flex;
-  gap: 15px;
-  flex-wrap: wrap;
-}
-
-.legendItem {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: #6c757d;
-}
-
-.legendColor {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
+  border-radius: 8px;
 }
 
 .svg {
   width: 100%;
-  height: auto;
-  min-height: 500px;
-  border: 1px solid #e9ecef;
+  height: 600px;
+  background: #fafbfc;
   border-radius: 8px;
-  background: #f8f9fa;
 }
 
 .connections line {
@@ -49,59 +18,94 @@
 }
 
 .connectionLabel {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   pointer-events: none;
-  font-family: system-ui, -apple-system, sans-serif;
 }
 
 .nodes g {
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+}
+
+.nodeRect {
+  transition: all 0.2s ease;
 }
 
 .nodeCircle {
-  transition: all 0.3s ease;
-}
-
-.nodeCircle:hover {
-  transform: scale(1.1);
+  transition: all 0.2s ease;
 }
 
 .nodeText {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   pointer-events: none;
-  font-family: system-ui, -apple-system, sans-serif;
+  user-select: none;
+}
+
+.nodeTypeLabel {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  pointer-events: none;
+  user-select: none;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.nodeSubtext {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  pointer-events: none;
+  user-select: none;
 }
 
 .nodeDetails {
-  margin-top: 20px;
-  padding: 15px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border-left: 4px solid #667eea;
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background: white;
+  border: 2px solid #667eea;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 250px;
+  z-index: 10;
 }
 
 .nodeDetails h4 {
-  margin: 0 0 8px 0;
-  color: #212529;
-  font-size: 16px;
+  margin: 0 0 0.5rem 0;
+  color: #2d3748;
+  font-size: 1.1rem;
 }
 
 .nodeType {
-  margin: 0 0 12px 0;
-  color: #6c757d;
-  font-size: 13px;
-  text-transform: capitalize;
+  color: #718096;
+  font-size: 0.9rem;
+  margin: 0 0 1rem 0;
 }
 
 .closeBtn {
-  padding: 6px 12px;
-  font-size: 13px;
   background: #667eea;
   color: white;
   border: none;
-  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background 0.2s;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  width: 100%;
 }
 
 .closeBtn:hover {
   background: #5568d3;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .svg {
+    height: 400px;
+  }
+
+  .nodeDetails {
+    bottom: 10px;
+    right: 10px;
+    left: 10px;
+    min-width: auto;
+  }
 }

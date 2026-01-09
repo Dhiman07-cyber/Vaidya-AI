@@ -25,6 +25,21 @@ export default function ClinicalMapViewer({ title, nodes, connections }: Clinica
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
   const [hoveredNode, setHoveredNode] = useState<string | null>(null)
 
+  console.log('ClinicalMapViewer rendering with:', { title, nodesCount: nodes?.length || 0, connectionsCount: connections?.length || 0 })
+  console.log('Nodes:', nodes)
+  console.log('Connections:', connections)
+
+  // Safety check
+  if (!nodes || nodes.length === 0) {
+    return (
+      <div className={styles.container}>
+        <div style={{ padding: '2rem', textAlign: 'center', color: '#999' }}>
+          No nodes to display
+        </div>
+      </div>
+    )
+  }
+
   const getNodeColor = (type: string) => {
     switch (type) {
       case 'main': return '#667eea'
@@ -37,38 +52,22 @@ export default function ClinicalMapViewer({ title, nodes, connections }: Clinica
   }
 
   const getNodeSize = (type: string) => {
-    return type === 'main' ? 80 : 60
+    return type === 'main' ? 100 : 70
+  }
+
+  const getNodeLabel = (type: string) => {
+    switch (type) {
+      case 'symptom': return 'Symptoms'
+      case 'diagnosis': return 'Diagnosis'
+      case 'treatment': return 'Treatment'
+      case 'complication': return 'Risk Factors'
+      default: return type
+    }
   }
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <h3>{title}</h3>
-        <div className={styles.legend}>
-          <div className={styles.legendItem}>
-            <div className={styles.legendColor} style={{ background: '#667eea' }} />
-            <span>Main Topic</span>
-          </div>
-          <div className={styles.legendItem}>
-            <div className={styles.legendColor} style={{ background: '#f093fb' }} />
-            <span>Symptoms</span>
-          </div>
-          <div className={styles.legendItem}>
-            <div className={styles.legendColor} style={{ background: '#4facfe' }} />
-            <span>Diagnosis</span>
-          </div>
-          <div className={styles.legendItem}>
-            <div className={styles.legendColor} style={{ background: '#43e97b' }} />
-            <span>Treatment</span>
-          </div>
-          <div className={styles.legendItem}>
-            <div className={styles.legendColor} style={{ background: '#fa709a' }} />
-            <span>Complications</span>
-          </div>
-        </div>
-      </div>
-
-      <svg className={styles.svg} viewBox="0 0 1000 800" preserveAspectRatio="xMidYMid meet">
+      <svg className={styles.svg} viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet">
         <defs>
           <marker
             id="arrowhead"
@@ -108,17 +107,17 @@ export default function ClinicalMapViewer({ title, nodes, connections }: Clinica
                   y1={fromNode.y}
                   x2={toNode.x}
                   y2={toNode.y}
-                  stroke={isHighlighted ? '#667eea' : '#ccc'}
-                  strokeWidth={isHighlighted ? 3 : 2}
+                  stroke={isHighlighted ? '#667eea' : '#d0d0d0'}
+                  strokeWidth={isHighlighted ? 2.5 : 2}
                   markerEnd="url(#arrowhead)"
-                  opacity={isHighlighted ? 1 : 0.6}
+                  opacity={isHighlighted ? 1 : 0.5}
                 />
                 {conn.label && (
                   <text
                     x={(fromNode.x + toNode.x) / 2}
                     y={(fromNode.y + toNode.y) / 2}
                     fill="#666"
-                    fontSize="12"
+                    fontSize="11"
                     textAnchor="middle"
                     className={styles.connectionLabel}
                   >
@@ -148,24 +147,60 @@ export default function ClinicalMapViewer({ title, nodes, connections }: Clinica
                 style={{ cursor: 'pointer' }}
                 filter={isSelected ? 'url(#glow)' : undefined}
               >
-                <circle
-                  r={size / 2}
+                {/* Node background */}
+                <rect
+                  x={-size / 2}
+                  y={-size / 2.5}
+                  width={size}
+                  height={size / 1.5}
+                  rx="8"
                   fill={color}
                   stroke={isSelected || isHovered ? '#fff' : color}
-                  strokeWidth={isSelected || isHovered ? 4 : 2}
-                  opacity={isSelected || isHovered ? 1 : 0.9}
-                  className={styles.nodeCircle}
+                  strokeWidth={isSelected || isHovered ? 3 : 1}
+                  opacity={isSelected || isHovered ? 1 : 0.95}
+                  className={styles.nodeRect}
                 />
+                
+                {/* Node label - type */}
+                {node.type !== 'main' && (
+                  <text
+                    textAnchor="middle"
+                    dy="-0.5em"
+                    fill="white"
+                    fontSize={node.type === 'main' ? '14' : '10'}
+                    fontWeight="600"
+                    className={styles.nodeTypeLabel}
+                  >
+                    {getNodeLabel(node.type)}
+                  </text>
+                )}
+                
+                {/* Node label - content */}
                 <text
                   textAnchor="middle"
-                  dy="0.3em"
+                  dy={node.type === 'main' ? '0.3em' : '0.8em'}
                   fill="white"
-                  fontSize={node.type === 'main' ? '16' : '13'}
-                  fontWeight="600"
+                  fontSize={node.type === 'main' ? '16' : '12'}
+                  fontWeight={node.type === 'main' ? '700' : '600'}
                   className={styles.nodeText}
                 >
-                  {node.label.length > 15 ? node.label.substring(0, 15) + '...' : node.label}
+                  {node.label.length > 20 ? node.label.substring(0, 20) + '...' : node.label}
                 </text>
+                
+                {/* Additional details for multi-line labels */}
+                {node.label.length > 20 && (
+                  <text
+                    textAnchor="middle"
+                    dy="2em"
+                    fill="white"
+                    fontSize="10"
+                    fontWeight="400"
+                    className={styles.nodeSubtext}
+                    opacity="0.9"
+                  >
+                    {node.label.substring(20, 40)}...
+                  </text>
+                )}
               </g>
             )
           })}
@@ -176,7 +211,7 @@ export default function ClinicalMapViewer({ title, nodes, connections }: Clinica
         <div className={styles.nodeDetails}>
           <h4>{nodes.find(n => n.id === selectedNode)?.label}</h4>
           <p className={styles.nodeType}>
-            Type: {nodes.find(n => n.id === selectedNode)?.type}
+            Type: {getNodeLabel(nodes.find(n => n.id === selectedNode)?.type || '')}
           </p>
           <button onClick={() => setSelectedNode(null)} className={styles.closeBtn}>
             Close
@@ -199,6 +234,8 @@ export default function ClinicalMapViewer({ title, nodes, connections }: Clinica
  * CONNECTION: from -> to [label]
  */
 export function parseClinicalMapData(text: string): { nodes: MapNode[], connections: MapConnection[] } {
+  console.log('Parsing clinical map data:', text)
+  
   const lines = text.split('\n').filter(line => line.trim())
   const nodes: MapNode[] = []
   const connections: MapConnection[] = []
@@ -214,30 +251,34 @@ export function parseClinicalMapData(text: string): { nodes: MapNode[], connecti
       const label = match[2].trim()
       const id = `node-${nodeCounter++}`
       
-      // Calculate position based on type
-      let x = 500, y = 400
+      // Calculate position based on type - arranged in a radial pattern around center
+      let x = 600, y = 400
       const typeIndex = nodes.filter(n => n.type === type).length
       
       switch (type) {
         case 'main':
-          x = 500
+          x = 600
           y = 400
           break
         case 'symptom':
-          x = 200 + (typeIndex * 150)
-          y = 200
+          // Top left area
+          x = 250 + (typeIndex * 180)
+          y = 200 + (typeIndex % 2) * 80
           break
         case 'diagnosis':
-          x = 200 + (typeIndex * 200)
-          y = 500
+          // Right side
+          x = 850 + (typeIndex * 120)
+          y = 250 + (typeIndex * 100)
           break
         case 'treatment':
-          x = 700 + (typeIndex * 100)
-          y = 300
+          // Bottom right
+          x = 850 + (typeIndex * 120)
+          y = 550 + (typeIndex % 2) * 60
           break
         case 'complication':
-          x = 700 + (typeIndex * 100)
-          y = 600
+          // Bottom left
+          x = 250 + (typeIndex * 180)
+          y = 600 + (typeIndex % 2) * 60
           break
       }
       
@@ -245,6 +286,8 @@ export function parseClinicalMapData(text: string): { nodes: MapNode[], connecti
       nodePositions[label.toLowerCase()] = { x, y }
     }
   })
+  
+  console.log('Parsed nodes:', nodes)
   
   // Second pass: create connections
   lines.forEach(line => {
@@ -266,6 +309,8 @@ export function parseClinicalMapData(text: string): { nodes: MapNode[], connecti
       }
     }
   })
+  
+  console.log('Parsed connections:', connections)
   
   return { nodes, connections }
 }
