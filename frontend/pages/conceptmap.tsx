@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { supabase, AuthUser } from '@/lib/supabase'
 import DashboardLayout from '@/components/DashboardLayout'
-import ClinicalMapViewer, { parseClinicalMapData } from '@/components/ClinicalMapViewer'
+import ClinicalMapViewer, { parseClinicalMapData, MapNode, MapConnection } from '@/components/ClinicalMapViewer'
 import styles from '@/styles/ConceptMap.module.css'
 
 interface ConceptMapSession {
@@ -87,11 +87,10 @@ export default function ConceptMap() {
         .select('*')
         .eq('session_id', sessionId)
         .order('created_at', { ascending: false })
-
+      
       if (error) throw error
       setMaterials(data || [])
       
-      // Auto-select most recent material
       if (data && data.length > 0) {
         setCurrentMaterial(data[0])
       } else {
@@ -200,21 +199,22 @@ export default function ConceptMap() {
     )
   }
 
-  // Parse map data
-  let mapData = { nodes: [], connections: [] }
+  // Parse map data with proper typing
+  let mapNodes: MapNode[] = []
+  let mapConnections: MapConnection[] = []
+  
   if (currentMaterial?.content) {
-    console.log('Parsing map data for:', currentMaterial.topic)
-    console.log('Content:', currentMaterial.content)
-    mapData = parseClinicalMapData(currentMaterial.content)
-    console.log('Parsed result:', mapData)
+    const parsed = parseClinicalMapData(currentMaterial.content)
+    mapNodes = parsed.nodes
+    mapConnections = parsed.connections
   }
 
   // Calculate stats
   const stats = {
-    symptoms: mapData.nodes.filter(n => n.type === 'symptom').length,
-    diagnosis: mapData.nodes.filter(n => n.type === 'diagnosis').length,
-    riskFactors: mapData.nodes.filter(n => n.type === 'complication').length,
-    treatments: mapData.nodes.filter(n => n.type === 'treatment').length
+    symptoms: mapNodes.filter(n => n.type === 'symptom').length,
+    diagnosis: mapNodes.filter(n => n.type === 'diagnosis').length,
+    riskFactors: mapNodes.filter(n => n.type === 'complication').length,
+    treatments: mapNodes.filter(n => n.type === 'treatment').length
   }
 
   return (
@@ -300,8 +300,8 @@ export default function ConceptMap() {
                   <div className={styles.mapContent}>
                     <ClinicalMapViewer
                       title={currentMaterial.topic}
-                      nodes={mapData.nodes}
-                      connections={mapData.connections}
+                      nodes={mapNodes}
+                      connections={mapConnections}
                     />
                   </div>
                 </div>

@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import styles from '@/styles/ClinicalMapViewer.module.css'
 
-interface MapNode {
+export interface MapNode {
   id: string
   label: string
   type: 'main' | 'symptom' | 'diagnosis' | 'treatment' | 'complication'
@@ -9,7 +9,7 @@ interface MapNode {
   y: number
 }
 
-interface MapConnection {
+export interface MapConnection {
   from: string
   to: string
   label?: string
@@ -25,11 +25,6 @@ export default function ClinicalMapViewer({ title, nodes, connections }: Clinica
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
   const [hoveredNode, setHoveredNode] = useState<string | null>(null)
 
-  console.log('ClinicalMapViewer rendering with:', { title, nodesCount: nodes?.length || 0, connectionsCount: connections?.length || 0 })
-  console.log('Nodes:', nodes)
-  console.log('Connections:', connections)
-
-  // Safety check
   if (!nodes || nodes.length === 0) {
     return (
       <div className={styles.container}>
@@ -51,91 +46,56 @@ export default function ClinicalMapViewer({ title, nodes, connections }: Clinica
     }
   }
 
-  const getNodeSize = (type: string) => {
-    return type === 'main' ? 100 : 70
-  }
-
   const getNodeLabel = (type: string) => {
     switch (type) {
       case 'symptom': return 'Symptoms'
       case 'diagnosis': return 'Diagnosis'
       case 'treatment': return 'Treatment'
       case 'complication': return 'Risk Factors'
-      default: return type
+      default: return ''
     }
   }
 
   return (
     <div className={styles.container}>
-      <svg className={styles.svg} viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet">
+      <svg className={styles.svg} viewBox="0 0 800 500" preserveAspectRatio="xMidYMid meet">
         <defs>
-          <marker
-            id="arrowhead"
-            markerWidth="10"
-            markerHeight="10"
-            refX="9"
-            refY="3"
-            orient="auto"
-          >
-            <polygon points="0 0, 10 3, 0 6" fill="#999" />
-          </marker>
-          
-          {/* Glow filter for selected nodes */}
-          <filter id="glow">
-            <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
-            <feMerge>
-              <feMergeNode in="coloredBlur"/>
-              <feMergeNode in="SourceGraphic"/>
-            </feMerge>
+          <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="2" stdDeviation="2" floodOpacity="0.1"/>
           </filter>
         </defs>
 
         {/* Draw connections */}
-        <g className={styles.connections}>
+        <g>
           {connections.map((conn, idx) => {
             const fromNode = nodes.find(n => n.id === conn.from)
             const toNode = nodes.find(n => n.id === conn.to)
-            
             if (!fromNode || !toNode) return null
-
             const isHighlighted = selectedNode === conn.from || selectedNode === conn.to
 
             return (
-              <g key={idx}>
-                <line
-                  x1={fromNode.x}
-                  y1={fromNode.y}
-                  x2={toNode.x}
-                  y2={toNode.y}
-                  stroke={isHighlighted ? '#667eea' : '#d0d0d0'}
-                  strokeWidth={isHighlighted ? 2.5 : 2}
-                  markerEnd="url(#arrowhead)"
-                  opacity={isHighlighted ? 1 : 0.5}
-                />
-                {conn.label && (
-                  <text
-                    x={(fromNode.x + toNode.x) / 2}
-                    y={(fromNode.y + toNode.y) / 2}
-                    fill="#666"
-                    fontSize="11"
-                    textAnchor="middle"
-                    className={styles.connectionLabel}
-                  >
-                    {conn.label}
-                  </text>
-                )}
-              </g>
+              <line
+                key={idx}
+                x1={fromNode.x}
+                y1={fromNode.y}
+                x2={toNode.x}
+                y2={toNode.y}
+                stroke={isHighlighted ? '#667eea' : '#e0e0e0'}
+                strokeWidth={isHighlighted ? 2 : 1.5}
+              />
             )
           })}
         </g>
 
         {/* Draw nodes */}
-        <g className={styles.nodes}>
+        <g>
           {nodes.map((node) => {
-            const size = getNodeSize(node.type)
             const color = getNodeColor(node.type)
             const isSelected = selectedNode === node.id
             const isHovered = hoveredNode === node.id
+            const isMain = node.type === 'main'
+            const width = isMain ? 110 : 85
+            const height = isMain ? 45 : 38
 
             return (
               <g
@@ -145,62 +105,40 @@ export default function ClinicalMapViewer({ title, nodes, connections }: Clinica
                 onMouseLeave={() => setHoveredNode(null)}
                 onClick={() => setSelectedNode(isSelected ? null : node.id)}
                 style={{ cursor: 'pointer' }}
-                filter={isSelected ? 'url(#glow)' : undefined}
               >
-                {/* Node background */}
                 <rect
-                  x={-size / 2}
-                  y={-size / 2.5}
-                  width={size}
-                  height={size / 1.5}
-                  rx="8"
+                  x={-width / 2}
+                  y={-height / 2}
+                  width={width}
+                  height={height}
+                  rx="6"
                   fill={color}
-                  stroke={isSelected || isHovered ? '#fff' : color}
-                  strokeWidth={isSelected || isHovered ? 3 : 1}
-                  opacity={isSelected || isHovered ? 1 : 0.95}
-                  className={styles.nodeRect}
+                  filter="url(#shadow)"
+                  stroke={isSelected || isHovered ? '#fff' : 'none'}
+                  strokeWidth={2}
                 />
-                
-                {/* Node label - type */}
-                {node.type !== 'main' && (
+                {!isMain && (
                   <text
                     textAnchor="middle"
-                    dy="-0.5em"
+                    dy="-0.2em"
                     fill="white"
-                    fontSize={node.type === 'main' ? '14' : '10'}
+                    fontSize="7"
                     fontWeight="600"
-                    className={styles.nodeTypeLabel}
+                    opacity="0.9"
+                    style={{ textTransform: 'uppercase', letterSpacing: '0.3px' }}
                   >
                     {getNodeLabel(node.type)}
                   </text>
                 )}
-                
-                {/* Node label - content */}
                 <text
                   textAnchor="middle"
-                  dy={node.type === 'main' ? '0.3em' : '0.8em'}
+                  dy={isMain ? '0.35em' : '0.9em'}
                   fill="white"
-                  fontSize={node.type === 'main' ? '16' : '12'}
-                  fontWeight={node.type === 'main' ? '700' : '600'}
-                  className={styles.nodeText}
+                  fontSize={isMain ? '12' : '9'}
+                  fontWeight={isMain ? '700' : '600'}
                 >
-                  {node.label.length > 20 ? node.label.substring(0, 20) + '...' : node.label}
+                  {node.label.length > 18 ? node.label.substring(0, 18) + '...' : node.label}
                 </text>
-                
-                {/* Additional details for multi-line labels */}
-                {node.label.length > 20 && (
-                  <text
-                    textAnchor="middle"
-                    dy="2em"
-                    fill="white"
-                    fontSize="10"
-                    fontWeight="400"
-                    className={styles.nodeSubtext}
-                    opacity="0.9"
-                  >
-                    {node.label.substring(20, 40)}...
-                  </text>
-                )}
               </g>
             )
           })}
@@ -211,7 +149,7 @@ export default function ClinicalMapViewer({ title, nodes, connections }: Clinica
         <div className={styles.nodeDetails}>
           <h4>{nodes.find(n => n.id === selectedNode)?.label}</h4>
           <p className={styles.nodeType}>
-            Type: {getNodeLabel(nodes.find(n => n.id === selectedNode)?.type || '')}
+            {getNodeLabel(nodes.find(n => n.id === selectedNode)?.type || '')}
           </p>
           <button onClick={() => setSelectedNode(null)} className={styles.closeBtn}>
             Close
@@ -224,24 +162,23 @@ export default function ClinicalMapViewer({ title, nodes, connections }: Clinica
 
 /**
  * Parse clinical map data from text format
- * Expected format:
- * MAIN: Topic Name
- * SYMPTOM: Symptom 1
- * SYMPTOM: Symptom 2
- * DIAGNOSIS: Diagnosis method
- * TREATMENT: Treatment option
- * COMPLICATION: Possible complication
- * CONNECTION: from -> to [label]
  */
 export function parseClinicalMapData(text: string): { nodes: MapNode[], connections: MapConnection[] } {
-  console.log('Parsing clinical map data:', text)
+  let contentText = text
+  if (text && text.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(text)
+      contentText = parsed.content || text
+    } catch (e) {
+      // Not valid JSON, use as-is
+    }
+  }
   
-  const lines = text.split('\n').filter(line => line.trim())
+  const lines = contentText.split('\n').filter(line => line.trim())
   const nodes: MapNode[] = []
   const connections: MapConnection[] = []
   
   let nodeCounter = 0
-  const nodePositions: { [key: string]: { x: number, y: number } } = {}
   
   // First pass: create nodes
   lines.forEach(line => {
@@ -251,43 +188,40 @@ export function parseClinicalMapData(text: string): { nodes: MapNode[], connecti
       const label = match[2].trim()
       const id = `node-${nodeCounter++}`
       
-      // Calculate position based on type - arranged in a radial pattern around center
-      let x = 600, y = 400
+      // Better positioning - compact radial layout
+      let x = 400, y = 250
       const typeIndex = nodes.filter(n => n.type === type).length
       
       switch (type) {
         case 'main':
-          x = 600
-          y = 400
+          x = 400
+          y = 250
           break
         case 'symptom':
-          // Top left area
-          x = 250 + (typeIndex * 180)
-          y = 200 + (typeIndex % 2) * 80
+          // Left side, stacked vertically
+          x = 120 + (typeIndex % 2) * 100
+          y = 100 + typeIndex * 55
           break
         case 'diagnosis':
-          // Right side
-          x = 850 + (typeIndex * 120)
-          y = 250 + (typeIndex * 100)
+          // Top right
+          x = 600 + (typeIndex % 2) * 90
+          y = 80 + typeIndex * 55
           break
         case 'treatment':
           // Bottom right
-          x = 850 + (typeIndex * 120)
-          y = 550 + (typeIndex % 2) * 60
+          x = 600 + (typeIndex % 2) * 90
+          y = 350 + typeIndex * 50
           break
         case 'complication':
           // Bottom left
-          x = 250 + (typeIndex * 180)
-          y = 600 + (typeIndex % 2) * 60
+          x = 120 + (typeIndex % 2) * 100
+          y = 380 + typeIndex * 50
           break
       }
       
       nodes.push({ id, label, type, x, y })
-      nodePositions[label.toLowerCase()] = { x, y }
     }
   })
-  
-  console.log('Parsed nodes:', nodes)
   
   // Second pass: create connections
   lines.forEach(line => {
@@ -301,16 +235,10 @@ export function parseClinicalMapData(text: string): { nodes: MapNode[], connecti
       const toNode = nodes.find(n => n.label.toLowerCase() === toLabel)
       
       if (fromNode && toNode) {
-        connections.push({
-          from: fromNode.id,
-          to: toNode.id,
-          label
-        })
+        connections.push({ from: fromNode.id, to: toNode.id, label })
       }
     }
   })
-  
-  console.log('Parsed connections:', connections)
   
   return { nodes, connections }
 }

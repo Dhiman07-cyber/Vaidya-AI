@@ -403,12 +403,15 @@ CONNECTION: Pulmonary Embolism -> Heparin"""
             prompt = f"Generate a clinical concept map for: {topic}"
             
             provider = await self.model_router.select_provider("map")
-            content = await self.model_router.execute_with_fallback(
+            result = await self.model_router.execute_with_fallback(
                 provider=provider,
                 feature="map",
                 prompt=prompt,
                 system_prompt=system_prompt
             )
+            
+            # Extract the actual content from the result
+            content = result.get("content", "") if isinstance(result, dict) else str(result)
             
             await self.rate_limiter.increment_usage(user_id, tokens=120, feature="map")
             
@@ -421,7 +424,7 @@ CONNECTION: Pulmonary Embolism -> Heparin"""
                 "feature": "map",
                 "topic": topic,
                 "content": content,
-                "tokens_used": 120,
+                "tokens_used": result.get("tokens_used", 120) if isinstance(result, dict) else 120,
                 "created_at": now
             }
             
