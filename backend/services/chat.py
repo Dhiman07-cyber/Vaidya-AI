@@ -134,7 +134,6 @@ class ChatService:
         Send a message in a chat session and optionally generate AI response
         
         Integrates with model router to generate AI responses using available providers.
-        Detects and routes slash commands to appropriate handlers.
         
         Args:
             user_id: User's unique identifier
@@ -151,7 +150,7 @@ class ChatService:
         Raises:
             Exception: If message storage or AI generation fails
             
-        Requirements: 3.2, 3.3, 3.4, 4.1, 4.2, 4.3, 4.4, 4.5, 9.1, 21.1
+        Requirements: 3.2, 3.3, 3.4, 9.1, 21.1
         """
         try:
             # Verify session belongs to user
@@ -188,42 +187,13 @@ class ChatService:
                 
                 return user_message_response.data[0]
             
-            # Check if message is a slash command (Requirements 4.1-4.5)
-            from services.commands import get_command_service
-            
-            command_service = get_command_service(self.supabase)
-            parsed_command = command_service.parse_command(message)
-            
-            if parsed_command:
-                # Execute the command
-                command_result = await command_service.execute_command(
-                    user_id=user_id,
-                    command=parsed_command['command'],
-                    topic=parsed_command['topic']
-                )
-                
-                # Store command result as assistant message
-                ai_message_data = {
-                    "session_id": session_id,
-                    "role": "assistant",
-                    "content": command_result["content"],
-                    "tokens_used": command_result["tokens_used"],
-                    "citations": None
-                }
-                
-                ai_message_response = self.supabase.table("messages").insert(ai_message_data).execute()
-                
-                if not ai_message_response.data or len(ai_message_response.data) == 0:
-                    raise Exception("Failed to store command result")
-                
-                # Update session's updated_at timestamp
-                self.supabase.table("chat_sessions")\
-                    .update({"updated_at": datetime.now(timezone.utc).isoformat()})\
-                    .eq("id", session_id)\
-                    .execute()
-                
-                # Return the command result message
-                return ai_message_response.data[0]
+            # Get conversation history for context
+            messages_response = self.supabase.table("messages")\
+                .select("role, content")\
+                .eq("session_id", session_id)\
+                .order("created_at", desc=False)\
+                .limit(20)\
+                .execute()
             
             # Not a command, generate regular AI response using model router (Requirement 21.1)
             from services.model_router import get_model_router_service

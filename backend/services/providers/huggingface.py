@@ -19,41 +19,33 @@ class HuggingFaceProvider:
     """Provider for Hugging Face Inference API"""
     
     # Medical-specific models available on Hugging Face Router
-    # Updated for router.huggingface.co/v1 compatibility
-    # Using latest versions and best medical models available
+    # Using router.huggingface.co/v1 with inference provider suffixes
     MEDICAL_MODELS = {
-        # # Medical reasoning - Meditron-70B-chat (chat-tuned version for router compatibility)
-        # "chat": "malhajar/meditron-70b-chat",  # Chat-tuned Meditron-70B
-        # "clinical": "malhajar/meditron-70b-chat",  # Clinical reasoning
-        # "osce": "malhajar/meditron-70b-chat",  # OSCE scenarios
-        # "explain": "malhajar/meditron-70b-chat",  # Medical explanations
-        # "highyield": "malhajar/meditron-70b-chat", # Summarization
+        # Medical reasoning - Med42-70B via Featherless AI provider
+        "chat": "m42-health/Llama3-Med42-70B:featherless-ai",
+        "clinical": "m42-health/Llama3-Med42-70B:featherless-ai",
+        "osce": "m42-health/Llama3-Med42-70B:featherless-ai",
+        "explain": "m42-health/Llama3-Med42-70B:featherless-ai",
+        "highyield": "m42-health/Llama3-Med42-70B:featherless-ai",
 
-        # Medical reasoning - Meditron-70B-chat (chat-tuned version for router compatibility)
-        "chat": "aaditya/OpenBioLLM-Llama3-8B",  # Chat-tuned Meditron-70B
-        "clinical": "aaditya/OpenBioLLM-Llama3-8B",  # Clinical reasoning
-        "osce": "aaditya/OpenBioLLM-Llama3-8B",  # OSCE scenarios
-        "explain": "aaditya/OpenBioLLM-Llama3-8B",  # Medical explanations
-        "highyield": "aaditya/OpenBioLLM-Llama3-8B", # Summarization
-
-        # Content generation - Using Llama-3.1 (newer than 3-8B)
-        "flashcard": "meta-llama/Llama-3.1-8B-Instruct",  # Upgraded from Llama-3-8B
-        "mcq": "meta-llama/Llama-3.1-8B-Instruct",  # Upgraded from Llama-3-8B
-        "map": "meta-llama/Llama-3.1-8B-Instruct",  # Concept maps - upgraded
+        # Content generation - Using Llama-3.1
+        "flashcard": "meta-llama/Llama-3.1-8B-Instruct",
+        "mcq": "meta-llama/Llama-3.1-8B-Instruct",
+        "map": "meta-llama/Llama-3.1-8B-Instruct",
         
         # Specialized medical models
-        "safety": "aaditya/OpenBioLLM-Llama3-8B",  # Safety check - medical safety model
-        "image": "microsoft/llava-med-v1.5-mistral-7b",  # Medical image understanding - upgraded
+        "safety": "m42-health/Llama3-Med42-70B:featherless-ai",
+        "image": "microsoft/llava-med-v1.5-mistral-7b",
         
         # Embeddings
-        "embedding": "BAAI/bge-small-en-v1.5",  # RAG embeddings
+        "embedding": "BAAI/bge-small-en-v1.5",
     }
     
     def __init__(self):
         """Initialize Hugging Face provider"""
         self.api_key = os.getenv("HUGGINGFACE_API_KEY")
-        # Updated to new Hugging Face router endpoint (OpenAI-compatible)
-        self.base_url = "https://router.huggingface.co/v1"
+        # Router endpoint (OpenAI-compatible) - old inference endpoint is deprecated
+        self.router_url = "https://router.huggingface.co/v1"
         
         if not self.api_key:
             logger.warning("HUGGINGFACE_API_KEY not set - Hugging Face provider will not work")
@@ -67,7 +59,7 @@ class HuggingFaceProvider:
         temperature: float = 0.7
     ) -> Dict[str, Any]:
         """
-        Call Hugging Face Inference API (OpenAI-compatible format)
+        Call Hugging Face Router API (OpenAI-compatible format)
         
         Args:
             feature: Feature name (chat, flashcard, etc.)
@@ -87,20 +79,16 @@ class HuggingFaceProvider:
                 "tokens_used": 0
             }
         
-        # Get model for this feature
         model = self.MEDICAL_MODELS.get(feature, self.MEDICAL_MODELS["chat"])
-        
         logger.info(f"Calling Hugging Face model: {model} for feature: {feature}")
         
         try:
-            # Build messages in OpenAI format
             messages = []
             if system_prompt:
                 messages.append({"role": "system", "content": system_prompt})
             messages.append({"role": "user", "content": prompt})
             
-            # Prepare request (OpenAI-compatible format)
-            url = f"{self.base_url}/chat/completions"
+            url = f"{self.router_url}/chat/completions"
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json"
@@ -114,19 +102,15 @@ class HuggingFaceProvider:
                 "stream": False
             }
             
-            # Make request
             async with httpx.AsyncClient(timeout=60.0) as client:
                 response = await client.post(url, headers=headers, json=payload)
                 
                 if response.status_code == 200:
                     result = response.json()
                     
-                    # Extract generated text from OpenAI-compatible response
                     if "choices" in result and len(result["choices"]) > 0:
                         generated_text = result["choices"][0]["message"]["content"]
                         tokens_used = result.get("usage", {}).get("total_tokens", 0)
-                        
-                        # If tokens not provided, estimate
                         if tokens_used == 0:
                             tokens_used = len(prompt + generated_text) // 4
                     else:
@@ -157,22 +141,18 @@ class HuggingFaceProvider:
                     }
                     
         except httpx.TimeoutException:
-            error_msg = "Hugging Face API timeout"
-            logger.error(error_msg)
             return {
                 "success": False,
-                "error": error_msg,
+                "error": "Hugging Face API timeout",
                 "content": "",
                 "tokens_used": 0,
                 "model": model,
                 "provider": "huggingface"
             }
         except Exception as e:
-            error_msg = f"Hugging Face API error: {str(e)}"
-            logger.error(error_msg)
             return {
                 "success": False,
-                "error": error_msg,
+                "error": f"Hugging Face API error: {str(e)}",
                 "content": "",
                 "tokens_used": 0,
                 "model": model,
@@ -199,19 +179,23 @@ class HuggingFaceProvider:
         model = self.MEDICAL_MODELS["embedding"]
         
         try:
-            url = f"{self.base_url}/{model}"
+            url = f"{self.router_url}/embeddings"
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json"
             }
             
-            payload = {"inputs": text}
+            payload = {
+                "model": model,
+                "input": text
+            }
             
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(url, headers=headers, json=payload)
                 
                 if response.status_code == 200:
-                    embedding = response.json()
+                    result = response.json()
+                    embedding = result.get("data", [{}])[0].get("embedding")
                     
                     return {
                         "success": True,
@@ -263,32 +247,25 @@ class HuggingFaceProvider:
         start_time = time.time()
         
         try:
-            # Simple test prompt
-            test_prompt = "What is diabetes?"
-            
-            url = f"{self.base_url}/{model}"
+            url = f"{self.router_url}/chat/completions"
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json"
             }
             
             payload = {
-                "inputs": test_prompt,
-                "parameters": {
-                    "max_new_tokens": 50,  # Small response for health check
-                    "temperature": 0.7,
-                    "return_full_text": False
-                }
+                "model": model,
+                "messages": [{"role": "user", "content": "What is diabetes?"}],
+                "max_tokens": 50,
+                "temperature": 0.7
             }
             
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(url, headers=headers, json=payload)
-                
                 response_time = int((time.time() - start_time) * 1000)
                 
                 if response.status_code == 200:
                     logger.info(f"Hugging Face health check passed for {model} ({response_time}ms)")
-                    
                     return {
                         "success": True,
                         "model": model,
@@ -296,9 +273,7 @@ class HuggingFaceProvider:
                         "error": None
                     }
                 elif response.status_code == 503:
-                    # Model is loading (cold start)
                     logger.warning(f"Hugging Face model {model} is loading (cold start)")
-                    
                     return {
                         "success": False,
                         "model": model,
@@ -309,7 +284,6 @@ class HuggingFaceProvider:
                 else:
                     error_msg = f"Health check failed: {response.status_code} - {response.text}"
                     logger.error(error_msg)
-                    
                     return {
                         "success": False,
                         "model": model,
@@ -319,25 +293,19 @@ class HuggingFaceProvider:
                     
         except httpx.TimeoutException:
             response_time = int((time.time() - start_time) * 1000)
-            error_msg = "Health check timeout"
-            logger.error(error_msg)
-            
             return {
                 "success": False,
                 "model": model,
                 "response_time_ms": response_time,
-                "error": error_msg
+                "error": "Health check timeout"
             }
         except Exception as e:
             response_time = int((time.time() - start_time) * 1000)
-            error_msg = f"Health check error: {str(e)}"
-            logger.error(error_msg)
-            
             return {
                 "success": False,
                 "model": model,
                 "response_time_ms": response_time,
-                "error": error_msg
+                "error": f"Health check error: {str(e)}"
             }
 
 
