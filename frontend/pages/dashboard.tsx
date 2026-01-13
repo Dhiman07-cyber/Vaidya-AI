@@ -239,14 +239,14 @@ export default function Dashboard() {
           .welcome-header h1 {
             font-size: 32px;
             font-weight: 800;
-            color: #1E293B;
+            color: #0F172A;
             margin: 0 0 8px 0;
             letter-spacing: -0.025em;
           }
 
           .welcome-header p {
             font-size: 16px;
-            color: #64748B;
+            color: #475569;
             margin: 0 0 32px 0;
           }
 
@@ -267,14 +267,14 @@ export default function Dashboard() {
           .section-header h2 {
             font-size: 20px;
             font-weight: 700;
-            color: #1E293B;
+            color: #0F172A;
             margin: 0;
           }
 
           .icon-btn {
             background: none;
             border: none;
-            color: #94A3B8;
+            color: #64748B;
             cursor: pointer;
             padding: 4px;
             border-radius: 6px;
@@ -322,7 +322,7 @@ export default function Dashboard() {
             gap: 8px;
             font-size: 14px;
             font-weight: 600;
-            color: #64748B;
+            color: #475569;
           }
 
           .generate-btn {
@@ -369,7 +369,7 @@ export default function Dashboard() {
           .sidebar-header h3 {
             font-size: 16px;
             font-weight: 700;
-            color: #1E293B;
+            color: #0F172A;
             margin: 0;
           }
 
@@ -392,8 +392,8 @@ export default function Dashboard() {
             align-items: center;
             gap: 8px;
             font-size: 13px;
-            color: #94A3B8;
-            border: 1px dashed #E2E8F0;
+            color: #64748B;
+            border: 1px dashed #CBD5E1;
           }
 
           .chart-placeholder {
@@ -431,7 +431,7 @@ export default function Dashboard() {
             margin-top: auto;
             padding-bottom: 5px;
             font-size: 10px;
-            color: #94A3B8;
+            color: #64748B;
             font-weight: 600;
           }
 
@@ -498,13 +498,13 @@ function StatCard({ icon, value, label, color, bgColor, isProgress }: any) {
         .stat-info h3 {
           font-size: 20px;
           font-weight: 800;
-          color: #1E293B;
+          color: #0F172A;
           margin: 0;
           line-height: 1.2;
         }
         .stat-info p {
           font-size: 13px;
-          color: #64748B;
+          color: #475569;
           margin: 0;
           font-weight: 500;
         }
@@ -570,13 +570,13 @@ function ResumeCard({ icon, title, accuracy, tokens, color, bgColor }: any) {
         .title-area h3 {
           font-size: 15px;
           font-weight: 700;
-          color: #1E293B;
+          color: #0F172A;
           margin: 0 0 2px 0;
         }
         .accuracy {
           font-size: 12px;
           font-weight: 600;
-          color: #64748B;
+          color: #475569;
           margin: 0;
           display: flex;
           align-items: center;
@@ -620,14 +620,14 @@ function HighYieldCard({ title, desc, illustration, accent }: any) {
         .summary-card h3 {
           font-size: 18px;
           font-weight: 800;
-          color: #1E293B;
+          color: #0F172A;
           margin: 0 0 8px 0;
           max-width: 140px;
           line-height: 1.2;
         }
         .summary-card p {
           font-size: 13px;
-          color: #475569;
+          color: #334155;
           margin: 0;
           max-width: 160px;
           line-height: 1.4;
@@ -692,7 +692,7 @@ function TaskItem({ label, color, checked = false }: any) {
           flex: 1;
           font-size: 14px;
           font-weight: 600;
-          color: #334155;
+          color: #1E293B;
         }
         .strikethrough {
           text-decoration: line-through;
@@ -732,7 +732,7 @@ function ProgressCheck({ label, checked }: any) {
         }
         .progress-check span {
           font-size: 13px;
-          color: #64748B;
+          color: #475569;
           font-weight: 500;
         }
       `}</style>
@@ -762,7 +762,7 @@ function StatItem({ label, count, color }: any) {
         .label-group span {
           font-size: 14px;
           font-weight: 600;
-          color: #475569;
+          color: #334155;
         }
       `}</style>
     </div>

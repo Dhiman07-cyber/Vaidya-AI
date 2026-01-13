@@ -126,8 +126,8 @@ export default function OSCE() {
       <DashboardLayout user={user}>
         <div className="max-w-[1200px] mx-auto p-8">
           <div className="mb-8">
-            <h1 className="text-4xl text-slate-700 mb-2">👨‍⚕️ OSCE Simulator</h1>
-            <p className="text-lg text-slate-500">Simulate structured clinical examinations</p>
+            <h1 className="text-4xl font-bold text-slate-800 mb-2">👨‍⚕️ OSCE Simulator</h1>
+            <p className="text-lg text-slate-700">Simulate structured clinical examinations</p>
           </div>
 
           {!sessionActive && (
@@ -136,33 +136,33 @@ export default function OSCE() {
                 <button
                   onClick={startSession}
                   disabled={generating}
-                  className="bg-gradient-to-br from-medical-indigo to-medical-purple text-white border-0 px-12 py-5 rounded-xl text-lg font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(102,126,234,0.4)] disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="bg-gradient-to-br from-medical-indigo to-medical-purple text-white border-0 px-12 py-5 rounded-xl text-lg font-bold cursor-pointer transition-all shadow-md hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(102,126,234,0.4)] disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {generating ? 'Generating Station...' : 'Start OSCE Station'}
                 </button>
               </div>
 
-              <div className="bg-white rounded-xl p-8 shadow-[0_2px_8px_rgba(0,0,0,0.1)]">
-                <h3 className="text-slate-700 mb-4 text-2xl">👨‍⚕️ OSCE Simulator Mode</h3>
-                <p className="text-slate-600 leading-relaxed mb-6">
+              <div className="bg-white rounded-xl p-8 shadow-md border border-slate-300">
+                <h3 className="text-slate-800 font-bold mb-4 text-2xl">👨‍⚕️ OSCE Simulator Mode</h3>
+                <p className="text-slate-700 leading-relaxed mb-6">
                   You will be given an OSCE station scenario. Perform the examination or task as you would in a real OSCE. The AI examiner will respond to your actions and provide feedback.
                 </p>
                 <ul className="list-none p-0">
-                  <li className="py-3 pl-8 relative text-slate-600 before:content-['✓'] before:absolute before:left-0 before:text-medical-indigo before:font-bold">Read the station instructions carefully</li>
-                  <li className="py-3 pl-8 relative text-slate-600 before:content-['✓'] before:absolute before:left-0 before:text-medical-indigo before:font-bold">Introduce yourself to the patient/examiner</li>
-                  <li className="py-3 pl-8 relative text-slate-600 before:content-['✓'] before:absolute before:left-0 before:text-medical-indigo before:font-bold">Perform the required examination or task</li>
-                  <li className="py-3 pl-8 relative text-slate-600 before:content-['✓'] before:absolute before:left-0 before:text-medical-indigo before:font-bold">Communicate clearly throughout</li>
-                  <li className="py-3 pl-8 relative text-slate-600 before:content-['✓'] before:absolute before:left-0 before:text-medical-indigo before:font-bold">Summarize your findings</li>
+                  <li className="py-3 pl-8 relative text-slate-700 before:content-['✓'] before:absolute before:left-0 before:text-medical-indigo before:font-bold before:text-lg">Read the station instructions carefully</li>
+                  <li className="py-3 pl-8 relative text-slate-700 before:content-['✓'] before:absolute before:left-0 before:text-medical-indigo before:font-bold before:text-lg">Introduce yourself to the patient/examiner</li>
+                  <li className="py-3 pl-8 relative text-slate-700 before:content-['✓'] before:absolute before:left-0 before:text-medical-indigo before:font-bold before:text-lg">Perform the required examination or task</li>
+                  <li className="py-3 pl-8 relative text-slate-700 before:content-['✓'] before:absolute before:left-0 before:text-medical-indigo before:font-bold before:text-lg">Communicate clearly throughout</li>
+                  <li className="py-3 pl-8 relative text-slate-700 before:content-['✓'] before:absolute before:left-0 before:text-medical-indigo before:font-bold before:text-lg">Summarize your findings</li>
                 </ul>
               </div>
             </>
           )}
 
           {sessionActive && (
-            <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.1)] overflow-hidden">
+            <div className="bg-white rounded-xl shadow-md border border-slate-300 overflow-hidden">
               <div className="flex justify-between items-center px-8 py-6 bg-gradient-to-br from-medical-indigo to-medical-purple text-white">
-                <h3 className="text-xl">🏥 OSCE Station</h3>
-                <button onClick={endSession} className="bg-white/20 text-white border-0 px-6 py-2 rounded-lg cursor-pointer font-medium transition-colors hover:bg-white/30">
+                <h3 className="text-xl font-bold">🏥 OSCE Station</h3>
+                <button onClick={endSession} className="bg-white/20 text-white border-0 px-6 py-2 rounded-lg cursor-pointer font-bold transition-all hover:bg-white/30 shadow-md">
                   End Session
                 </button>
               </div>
@@ -173,33 +173,33 @@ export default function OSCE() {
                     key={idx}
                     className={`max-w-[80%] px-6 py-4 rounded-xl leading-relaxed ${
                       msg.role === 'user'
-                        ? 'self-end bg-gradient-to-br from-medical-indigo to-medical-purple text-white'
-                        : 'self-start bg-slate-50 text-slate-700 border border-slate-200'
+                        ? 'self-end bg-gradient-to-br from-medical-indigo to-medical-purple text-white shadow-md'
+                        : 'self-start bg-slate-50 text-slate-800 border-2 border-slate-300'
                     }`}
                   >
                     <div className="whitespace-pre-wrap">{msg.content}</div>
                   </div>
                 ))}
                 {generating && (
-                  <div className="max-w-[80%] px-6 py-4 rounded-xl leading-relaxed self-start bg-slate-50 text-slate-700 border border-slate-200">
+                  <div className="max-w-[80%] px-6 py-4 rounded-xl leading-relaxed self-start bg-slate-50 text-slate-800 border-2 border-slate-300">
                     <div className="whitespace-pre-wrap">Thinking...</div>
                   </div>
                 )}
               </div>
 
-              <div className="flex gap-4 px-8 py-6 border-t-2 border-slate-200">
+              <div className="flex gap-4 px-8 py-6 border-t-2 border-slate-300">
                 <input
                   type="text"
                   placeholder="Describe your action or examination..."
                   value={userInput}
                   onChange={(e) => setUserInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                  className="flex-1 px-6 py-4 border-2 border-slate-200 rounded-xl text-base transition-colors focus:outline-none focus:border-medical-indigo"
+                  className="flex-1 px-6 py-4 border-2 border-slate-300 rounded-xl text-base text-slate-800 transition-colors focus:outline-none focus:border-medical-indigo"
                 />
                 <button
                   onClick={sendMessage}
                   disabled={generating || !userInput.trim()}
-                  className="bg-gradient-to-br from-medical-indigo to-medical-purple text-white border-0 px-8 py-4 rounded-xl font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(102,126,234,0.4)] disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="bg-gradient-to-br from-medical-indigo to-medical-purple text-white border-0 px-8 py-4 rounded-xl font-bold cursor-pointer transition-all shadow-md hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(102,126,234,0.4)] disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   Send
                 </button>
