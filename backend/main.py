@@ -172,6 +172,8 @@ async def update_system_settings(
 class StudyToolRequest(BaseModel):
     topic: str
     session_id: Optional[str] = None
+    count: Optional[int] = 5  # Number of items to generate per batch
+    format: Optional[str] = "interactive"  # interactive or static
 
 
 @app.post("/api/study-tools/flashcards")
@@ -185,7 +187,9 @@ async def generate_flashcards(
         result = await study_tools_service.generate_flashcards(
             user_id=user["id"],
             topic=request.topic,
-            session_id=request.session_id
+            session_id=request.session_id,
+            count=request.count or 5,
+            format=request.format or "interactive"
         )
         return result
     except Exception as e:
@@ -613,6 +617,25 @@ async def get_session_materials_history(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ============================================================================
+# DELETE ALL STUDY TOOL SESSIONS (must be before {session_id} route)
+# ============================================================================
+
+@app.delete("/api/study-tools/sessions/all")
+async def delete_all_study_tool_sessions(
+    feature: Optional[str] = None,
+    user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Delete all study tool sessions for a user, optionally filtered by feature"""
+    try:
+        study_tools_service = get_study_tools_service(supabase)
+        result = await study_tools_service.delete_all_sessions(user["id"], feature)
+        return result
+    except Exception as e:
+        logger.error(f"Failed to delete all study tool sessions: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.delete("/api/study-tools/sessions/{session_id}")
 async def delete_study_tool_session(
     session_id: str,
@@ -626,33 +649,6 @@ async def delete_study_tool_session(
     except Exception as e:
         logger.error(f"Failed to delete study tool session: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
-# ============================================================================
-# DELETE ALL STUDY TOOL SESSIONS
-# ============================================================================
-
-@app.delete("/api/study-tools/sessions/all")
-async def delete_all_study_tool_sessions(
-    feature: Optional[str] = None,
-    user: Dict[str, Any] = Depends(get_current_user)
-):
-    """Delete all study tool sessions for a user, optionally filtered by feature"""
-    try:
-        study_tools_service = get_study_tools_service(supabase)
-        sessions = await study_tools_service.get_user_sessions(user["id"], feature)
-        
-        deleted_count = 0
-        for session in sessions:
-            try:
-                await study_tools_service.delete_session(session["id"], user["id"])
-                deleted_count += 1
-            except Exception as e:
-                logger.warning(f"Failed to delete session {session['id']}: {str(e)}")
-        
-        return {"message": f"Deleted {deleted_count} sessions successfully", "deleted_count": deleted_count}
-    except Exception as e:
-        logger.error(f"Failed to delete all study tool sessions: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -1845,36 +1841,78 @@ async def complete_osce_scenario(
         earned_points = 0
         completed_items = []
         missed_items = []
+        critical_items_completed = []
+        critical_items_missed = []
         
         for item in checklist:
-            if item.get("item") in triggered_items:
-                earned_points += item.get("points", 1)
-                completed_items.append(item.get("item"))
+            item_name = item.get("item", "")
+            item_points = item.get("points", 1)
+            is_critical = item.get("critical", False)
+            
+            if item_name in triggered_items:
+                earned_points += item_points
+                completed_items.append({
+                    "item": item_name,
+                    "points": item_points,
+                    "category": item.get("category", "general"),
+                    "critical": is_critical
+                })
+                if is_critical:
+                    critical_items_completed.append(item_name)
             else:
-                missed_items.append(item.get("item"))
+                missed_items.append({
+                    "item": item_name,
+                    "points": item_points,
+                    "category": item.get("category", "general"),
+                    "critical": is_critical
+                })
+                if is_critical:
+                    critical_items_missed.append(item_name)
         
         score = (earned_points / total_points * 100) if total_points > 0 else 0
         
+        # Calculate time taken
+        time_started = scenario.get("time_started")
+        time_limit = scenario.get("time_limit_seconds", 480)
+        
         # Update scenario status
         from datetime import datetime, timezone
+        time_completed = datetime.now(timezone.utc).isoformat()
+        
         supabase.table("osce_scenarios")\
             .update({
                 "status": "completed",
-                "time_completed": datetime.now(timezone.utc).isoformat(),
+                "time_completed": time_completed,
                 "checklist_score": score
             })\
             .eq("id", scenario_id)\
             .execute()
         
+        # Generate performance summary
+        performance_grade = "Excellent" if score >= 85 else "Good" if score >= 70 else "Satisfactory" if score >= 60 else "Needs Improvement"
+        
         return {
             "scenario_id": scenario_id,
+            "scenario_type": scenario.get("scenario_type", ""),
+            "specialty": scenario.get("specialty", ""),
+            "difficulty": scenario.get("difficulty", ""),
             "final_score": round(score, 1),
+            "performance_grade": performance_grade,
             "earned_points": earned_points,
             "total_points": total_points,
             "completed_items": completed_items,
             "missed_items": missed_items,
+            "critical_items_completed": critical_items_completed,
+            "critical_items_missed": critical_items_missed,
             "interaction_count": len(interaction_history),
-            "expected_actions": scenario.get("expected_actions", [])
+            "time_limit_seconds": time_limit,
+            "time_started": time_started,
+            "time_completed": time_completed,
+            "summary": {
+                "strengths": [item["item"] for item in completed_items if item.get("critical")],
+                "areas_for_improvement": [item["item"] for item in missed_items if item.get("critical")],
+                "overall_feedback": f"You scored {round(score, 1)}% ({earned_points}/{total_points} points). {performance_grade} performance."
+            }
         }
     except HTTPException:
         raise

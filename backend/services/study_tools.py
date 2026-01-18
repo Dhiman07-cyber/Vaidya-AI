@@ -147,22 +147,82 @@ class StudyToolsService:
             if not session_result.data:
                 raise Exception("Session not found or access denied")
             
-            # Delete materials first
-            self.supabase.table("study_materials") \
-                .delete() \
-                .eq("session_id", session_id) \
-                .execute()
+            # Delete materials first (foreign key constraint)
+            try:
+                self.supabase.table("study_materials") \
+                    .delete() \
+                    .eq("session_id", session_id) \
+                    .execute()
+            except Exception as mat_error:
+                logger.warning(f"Error deleting materials for session {session_id}: {str(mat_error)}")
+                # Continue anyway to try deleting the session
             
             # Delete session
             self.supabase.table("study_tool_sessions") \
                 .delete() \
                 .eq("id", session_id) \
+                .eq("user_id", user_id) \
                 .execute()
             
             return {"message": "Session deleted successfully"}
             
         except Exception as e:
-            logger.error(f"Failed to delete session: {str(e)}")
+            logger.error(f"Failed to delete session {session_id}: {str(e)}")
+            raise
+    
+    async def delete_all_sessions(self, user_id: str, feature: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Delete all sessions for a user, optionally filtered by feature
+        
+        Args:
+            user_id: User's unique identifier
+            feature: Optional filter by feature
+            
+        Returns:
+            Deletion summary
+        """
+        try:
+            # Get all sessions to delete
+            sessions = await self.get_user_sessions(user_id, feature)
+            
+            if not sessions:
+                return {"message": "No sessions to delete", "deleted_count": 0}
+            
+            session_ids = [s["id"] for s in sessions]
+            
+            # Delete materials first (one by one to avoid issues)
+            materials_deleted = 0
+            for session_id in session_ids:
+                try:
+                    result = self.supabase.table("study_materials") \
+                        .delete() \
+                        .eq("session_id", session_id) \
+                        .execute()
+                    materials_deleted += len(result.data) if result.data else 0
+                except Exception as mat_error:
+                    logger.warning(f"Error deleting materials for session {session_id}: {str(mat_error)}")
+            
+            # Delete sessions one by one
+            deleted_count = 0
+            for session_id in session_ids:
+                try:
+                    self.supabase.table("study_tool_sessions") \
+                        .delete() \
+                        .eq("id", session_id) \
+                        .eq("user_id", user_id) \
+                        .execute()
+                    deleted_count += 1
+                except Exception as sess_error:
+                    logger.warning(f"Error deleting session {session_id}: {str(sess_error)}")
+            
+            return {
+                "message": f"Deleted {deleted_count} sessions successfully",
+                "deleted_count": deleted_count,
+                "materials_deleted": materials_deleted
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to delete all sessions: {str(e)}")
             raise
     
     async def generate_flashcards(
@@ -170,6 +230,7 @@ class StudyToolsService:
         user_id: str,
         topic: str,
         session_id: Optional[str] = None,
+        count: int = 5,
         format: str = "interactive"
     ) -> Dict[str, Any]:
         """
@@ -179,12 +240,16 @@ class StudyToolsService:
             user_id: User's unique identifier
             topic: Topic to generate flashcards for
             session_id: Optional existing session ID
-            format: Output format (interactive or text)
+            count: Number of flashcards to generate (default: 5, max: 20)
+            format: Output format (interactive or static)
             
         Returns:
             Generated flashcards data
         """
         try:
+            # Limit count to reasonable range
+            count = max(1, min(count, 20))
+            
             # Create session if not provided
             if not session_id:
                 session = await self.create_session(user_id, "flashcard", f"Flashcards: {topic}")
@@ -195,18 +260,29 @@ class StudyToolsService:
             if not within_limits:
                 raise Exception("Rate limit exceeded")
             
-            # Generate prompt based on format
-            if format == "interactive":
-                system_prompt = """You are a medical education expert. Generate flashcards in a clear Q&A format.
-Format each flashcard as:
-Q: [Question]
-A: [Answer]
+            # Generate prompt for interactive flashcards (JSON format for frontend rendering)
+            system_prompt = f"""You are a medical education expert. Generate exactly {count} flashcards in JSON format.
 
-Generate 5-10 flashcards covering key concepts. Keep questions concise and answers detailed but focused."""
-            else:
-                system_prompt = "You are a medical education expert. Generate comprehensive flashcards for studying."
+CRITICAL REQUIREMENTS:
+1. Return ONLY valid JSON - no markdown, no code blocks, no extra text
+2. Generate EXACTLY {count} flashcards
+3. Use this EXACT structure:
+
+{{"flashcards":[{{"front":"Term","back":"Explanation"}},{{"front":"Term2","back":"Explanation2"}}]}}
+
+RULES:
+- Front: Short term or concept (1-5 words)
+- Back: Clear explanation (2-4 sentences)
+- No line breaks within strings
+- Use proper JSON escaping for quotes
+- No trailing commas
+
+Example for 2 flashcards:
+{{"flashcards":[{{"front":"ACE Inhibitors","back":"Medications that block angiotensin-converting enzyme, preventing conversion of angiotensin I to II. Used for hypertension and heart failure. Common side effects include dry cough and hyperkalemia."}},{{"front":"Bradykinin","back":"A peptide that causes vasodilation and is normally broken down by ACE. When ACE is inhibited, bradykinin accumulates, leading to the characteristic dry cough."}}]}}
+
+Generate {count} flashcards now. Return ONLY the JSON object, nothing else."""
             
-            prompt = f"Generate flashcards about: {topic}"
+            prompt = f"Generate {count} medical flashcards about: {topic}"
             
             # Get provider and generate content
             provider = await self.model_router.select_provider("flashcard")
@@ -220,6 +296,86 @@ Generate 5-10 flashcards covering key concepts. Keep questions concise and answe
             # Extract content from result
             content = result.get("content", "") if isinstance(result, dict) else str(result)
             tokens_used = result.get("tokens_used", 100) if isinstance(result, dict) else 100
+            
+            # Parse JSON response for interactive format
+            flashcards_data = None
+            if format == "interactive":
+                try:
+                    # Try to parse the JSON response
+                    import json
+                    import re
+                    
+                    logger.info(f"Raw flashcards content (first 500 chars): {content[:500]}")
+                    
+                    # Clean the content
+                    cleaned = content.strip()
+                    if "```json" in cleaned:
+                        start = cleaned.find("```json") + 7
+                        end = cleaned.find("```", start)
+                        if end != -1:
+                            cleaned = cleaned[start:end].strip()
+                    elif "```" in cleaned:
+                        start = cleaned.find("```") + 3
+                        end = cleaned.find("```", start)
+                        if end != -1:
+                            cleaned = cleaned[start:end].strip()
+                    
+                    # Find JSON object
+                    first_brace = cleaned.find('{')
+                    last_brace = cleaned.rfind('}')
+                    if first_brace != -1 and last_brace != -1:
+                        cleaned = cleaned[first_brace:last_brace + 1]
+                    
+                    # Remove trailing commas
+                    cleaned = re.sub(r',(\s*[}\]])', r'\1', cleaned)
+                    
+                    logger.info(f"Cleaned JSON (first 500 chars): {cleaned[:500]}")
+                    
+                    flashcards_data = json.loads(cleaned)
+                    logger.info(f"Successfully parsed {len(flashcards_data.get('flashcards', []))} flashcards")
+                    
+                except Exception as parse_error:
+                    logger.error(f"Failed to parse flashcards JSON: {str(parse_error)}")
+                    logger.error(f"Content that failed to parse: {content}")
+                    
+                    # Fallback: Try to extract flashcards from text format
+                    # Look for patterns like "Front: X" and "Back: Y" or similar
+                    flashcards_list = []
+                    
+                    # Try to find any structured content
+                    lines = content.split('\n')
+                    current_front = None
+                    current_back = None
+                    
+                    for line in lines:
+                        line = line.strip()
+                        if not line:
+                            continue
+                        
+                        # Look for front/back patterns
+                        if line.lower().startswith(('front:', '"front":', '**front')):
+                            if current_front and current_back:
+                                flashcards_list.append({"front": current_front, "back": current_back})
+                            current_front = re.sub(r'^[^:]+:\s*', '', line).strip(' "')
+                            current_back = None
+                        elif line.lower().startswith(('back:', '"back":', '**back')):
+                            current_back = re.sub(r'^[^:]+:\s*', '', line).strip(' "')
+                        elif current_front and not current_back:
+                            # Continuation of front
+                            current_front += " " + line
+                        elif current_back:
+                            # Continuation of back
+                            current_back += " " + line
+                    
+                    # Add last card
+                    if current_front and current_back:
+                        flashcards_list.append({"front": current_front, "back": current_back})
+                    
+                    if flashcards_list:
+                        flashcards_data = {"flashcards": flashcards_list}
+                        logger.info(f"Extracted {len(flashcards_list)} flashcards from text format")
+                    else:
+                        logger.warning("Could not extract flashcards from text format either")
             
             # Record usage
             await self.rate_limiter.increment_usage(user_id, tokens=tokens_used, feature="flashcard")
@@ -240,13 +396,22 @@ Generate 5-10 flashcards covering key concepts. Keep questions concise and answe
             
             self.supabase.table("study_materials").insert(material_data).execute()
             
-            return {
+            response_data = {
                 "id": material_id,
                 "session_id": session_id,
                 "topic": topic,
-                "content": content,
+                "count": count,
+                "format": format,
                 "created_at": now
             }
+            
+            # Add parsed flashcards if available, otherwise raw content
+            if flashcards_data:
+                response_data["flashcards"] = flashcards_data.get("flashcards", [])
+            else:
+                response_data["content"] = content
+            
+            return response_data
             
         except Exception as e:
             logger.error(f"Failed to generate flashcards: {str(e)}")

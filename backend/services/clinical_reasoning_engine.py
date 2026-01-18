@@ -154,7 +154,9 @@ class ClinicalReasoningEngine:
         
 Complexity: {complexity_guidelines.get(difficulty, complexity_guidelines["intermediate"])}
 
-Generate a JSON response with this EXACT structure:
+CRITICAL: Generate COMPLETE JSON with ALL fields filled. Do NOT use placeholders like "...omitted for brevity..." or "..." anywhere.
+
+Generate a JSON response with this EXACT structure (ALL fields must be complete):
 {{
   "demographics": {{
     "age": 45,
@@ -210,11 +212,11 @@ Generate a JSON response with this EXACT structure:
     "metabolic": "glucose 180, creatinine 1.2, K 4.2"
   }},
   "stages": [
-    {{"stage": 1, "title": "Initial Presentation", "content": "Patient presents with chief complaint...", "question": "What additional history would you like to obtain?"}},
-    {{"stage": 2, "title": "History Completed", "content": "Full history reveals...", "question": "What examination findings would you expect?"}},
-    {{"stage": 3, "title": "Examination Completed", "content": "Physical examination shows...", "question": "What is your problem representation?"}},
-    {{"stage": 4, "title": "Problem Representation", "content": "Synthesizing findings...", "question": "What are your differential diagnoses?"}},
-    {{"stage": 5, "title": "Initial Investigations", "content": "Results show...", "question": "What is your working diagnosis and immediate management?"}},
+    {{"stage": 1, "title": "Initial Presentation", "content": "Patient presents with chief complaint", "question": "What additional history would you like to obtain?"}},
+    {{"stage": 2, "title": "History Completed", "content": "Full history reveals details", "question": "What examination findings would you expect?"}},
+    {{"stage": 3, "title": "Examination Completed", "content": "Physical examination shows findings", "question": "What is your problem representation?"}},
+    {{"stage": 4, "title": "Problem Representation", "content": "Synthesizing findings", "question": "What are your differential diagnoses?"}},
+    {{"stage": 5, "title": "Initial Investigations", "content": "Results show data", "question": "What is your working diagnosis and immediate management?"}},
     {{"stage": 6, "title": "Final Assessment", "content": "Complete case synthesis", "question": "Present your final diagnosis and comprehensive management plan"}}
   ],
   "differentials": [
@@ -233,6 +235,13 @@ Generate a JSON response with this EXACT structure:
   "red_flags": ["ST elevation indicates ongoing myocardial damage - time critical", "signs of heart failure (crackles)", "high risk patient profile"],
   "clinical_pearls": ["Time is muscle - every minute of delay increases infarct size", "Anterior STEMI has higher mortality than inferior", "S4 gallop indicates diastolic dysfunction"]
 }}
+
+IMPORTANT: 
+- Do NOT use "..." or "[...]" or "omitted for brevity" anywhere
+- ALL arrays must have complete items
+- ALL strings must be complete
+- Generate COMPLETE, VALID JSON only
+- No markdown formatting
 
 Ensure the case is medically accurate, educational, and appropriate for {difficulty} level students."""
 
@@ -280,6 +289,19 @@ Always respond with valid JSON only. No markdown formatting or explanation text.
         # Remove any trailing commas before closing braces/brackets (common JSON error)
         content = re.sub(r',(\s*[}\]])', r'\1', content)
         
+        # Remove comments (not valid in JSON)
+        content = re.sub(r'//.*?\n', '\n', content)
+        content = re.sub(r'/\*.*?\*/', '', content, flags=re.DOTALL)
+        
+        # Fix common AI mistakes - remove placeholder text like "...omitted for brevity..."
+        content = re.sub(r'\[\.\.\.omitted for brevity\.\.\.\]', '[]', content)
+        content = re.sub(r'\[\.\.\..*?\.\.\.\]', '[]', content)
+        content = re.sub(r'\.\.\.omitted.*?\.\.\.', '', content)
+        content = re.sub(r'\.\.\.', '', content)
+        
+        # Fix unescaped newlines within strings
+        content = re.sub(r'(?<!\\)\n(?=[^"]*"(?:[^"]*"[^"]*")*[^"]*$)', r'\\n', content)
+        
         try:
             return json.loads(content)
         except json.JSONDecodeError as e:
@@ -287,34 +309,39 @@ Always respond with valid JSON only. No markdown formatting or explanation text.
             
             # Log the problematic area around the error position
             error_pos = e.pos if hasattr(e, 'pos') else 0
-            start_pos = max(0, error_pos - 100)
-            end_pos = min(len(content), error_pos + 100)
+            start_pos = max(0, error_pos - 150)
+            end_pos = min(len(content), error_pos + 150)
             logger.error(f"Content around error position {error_pos}:")
             logger.error(f"...{content[start_pos:end_pos]}...")
             logger.error(f"Full content length: {len(content)} chars")
             logger.error(f"Original content length: {len(original_content)} chars")
             
-            # Try to fix common issues
-            # Remove comments (not valid in JSON)
-            content = re.sub(r'//.*?\n', '\n', content)
-            content = re.sub(r'/\*.*?\*/', '', content, flags=re.DOTALL)
-            
-            # Fix unescaped quotes in strings
-            # This is tricky, but we can try to escape quotes that appear to be inside string values
-            
+            # Try more aggressive cleanup
+            # Fix strings with unescaped quotes - replace problematic characters
             try:
-                return json.loads(content)
-            except json.JSONDecodeError as e2:
-                logger.error(f"JSON parsing failed again after cleanup: {e2}")
-                
-                # Last resort: try to use json5 or ast.literal_eval
+                # Try json5 parser which is more lenient
                 try:
                     import json5
                     return json5.loads(content)
-                except:
+                except ImportError:
                     pass
                 
-                raise Exception(f"Failed to parse AI response as JSON: {str(e2)}. Error at position {error_pos}. Check logs for details.")
+                # Last resort: try to manually fix the JSON
+                # This is a fallback for when AI generates slightly malformed JSON
+                logger.warning("Attempting manual JSON repair...")
+                
+                # Try to fix by removing problematic characters around error position
+                if error_pos > 0 and error_pos < len(content):
+                    # Check if it's a quote issue
+                    problem_area = content[max(0, error_pos-50):min(len(content), error_pos+50)]
+                    logger.error(f"Problem area: {problem_area}")
+                
+                # If all else fails, return a minimal valid structure
+                raise Exception(f"Failed to parse AI response as JSON: {str(e)}. Error at position {error_pos}. The AI may have generated malformed JSON. Check logs for details.")
+                
+            except Exception as e3:
+                logger.error(f"All JSON parsing attempts failed: {str(e3)}")
+                raise Exception(f"Failed to parse AI response as JSON: {str(e)}. Error at position {error_pos}. Check logs for details.")
     
     def _sanitize_case_for_user(self, case: Dict[str, Any]) -> Dict[str, Any]:
         """Remove answer fields from case before sending to user"""
@@ -614,8 +641,14 @@ Make the scenario realistic and educationally valuable."""
     def _sanitize_osce_for_user(self, scenario: Dict[str, Any]) -> Dict[str, Any]:
         """Remove examiner-only fields from scenario"""
         sanitized = dict(scenario)
+        # Remove examiner-only fields that should not be visible to students
         sanitized.pop("examiner_checklist", None)
         sanitized.pop("expected_actions", None)
+        # Also clean from patient_script if it contains examiner notes
+        if "patient_script" in sanitized and isinstance(sanitized["patient_script"], dict):
+            patient_script = sanitized["patient_script"]
+            patient_script.pop("examiner_notes", None)
+            patient_script.pop("scoring_guide", None)
         return sanitized
     
     async def osce_interaction(
@@ -643,7 +676,7 @@ Make the scenario realistic and educationally valuable."""
         
         router = get_model_router_service(self.supabase)
         
-        prompt = f"""You are simulating an OSCE patient and examiner.
+        prompt = f"""You are simulating an OSCE patient. Respond ONLY as the patient would respond.
 
 SCENARIO: {scenario.get('scenario_type')}
 PATIENT INFO: {json.dumps(scenario.get('patient_info', {}))}
@@ -655,15 +688,21 @@ RECENT INTERACTIONS:
 STUDENT'S ACTION:
 {user_action}
 
+CRITICAL: Respond with ONLY what the patient would say or do. Do NOT include examiner notes, checklist items, or metadata in the patient_response field.
+
 Respond as JSON:
 {{
-  "patient_response": "What the patient says/does in response",
-  "examiner_notes": "Internal assessment of student's action",
-  "checklist_triggered": ["list of checklist items this action satisfies"],
+  "patient_response": "Only what the patient says - natural dialogue only, no metadata",
+  "examiner_notes": "Internal notes (not shown to student)",
+  "checklist_triggered": ["items satisfied"],
   "feedback_if_needed": null
 }}
 
-Stay in character as the patient. Respond naturally and realistically."""
+Example good patient_response: "Of course, Doctor. I mean, John. Please go ahead and ask me anything. I'm worried about this chest pain and want to understand what's happening."
+
+Example BAD patient_response: {{"patient_response": "text", "examiner_notes": "..."}} - DO NOT nest JSON or include metadata in patient_response.
+
+Stay in character as the patient. Respond naturally."""
 
         provider = await router.select_provider("osce")
         result = await router.execute_with_fallback(
@@ -681,12 +720,30 @@ Stay in character as the patient. Respond naturally and realistically."""
         except:
             interaction_data = {"patient_response": result["content"]}
         
-        # Update interaction history
+        # Clean the patient response - remove any JSON artifacts or examiner notes
+        patient_response = interaction_data.get("patient_response", "")
+        
+        # If the response contains JSON-like structures, extract just the text
+        if isinstance(patient_response, dict):
+            # If it's a dict, try to get the actual response text
+            patient_response = patient_response.get("text", str(patient_response))
+        
+        # Remove any examiner notes or metadata that might have leaked into the response
+        if "examiner_notes" in str(patient_response).lower() or "checklist" in str(patient_response).lower():
+            # Try to extract just the patient dialogue
+            import re
+            # Look for quoted speech or clean text before metadata
+            match = re.search(r'^([^{]*?)(?:\{|examiner_notes|checklist)', patient_response, re.IGNORECASE)
+            if match:
+                patient_response = match.group(1).strip()
+        
+        # Update interaction history (store full data internally)
         interaction_history.append({
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "student": user_action,
-            "patient": interaction_data.get("patient_response", ""),
-            "checklist_items": interaction_data.get("checklist_triggered", [])
+            "patient": patient_response,
+            "checklist_items": interaction_data.get("checklist_triggered", []),
+            "examiner_notes": interaction_data.get("examiner_notes", "")  # Store but don't return
         })
         
         self.supabase.table("osce_scenarios")\
@@ -694,9 +751,10 @@ Stay in character as the patient. Respond naturally and realistically."""
             .eq("id", scenario_id)\
             .execute()
         
+        # Return only patient-facing information
         return {
-            "patient_response": interaction_data.get("patient_response", ""),
-            "feedback": interaction_data.get("feedback_if_needed")
+            "patient_response": patient_response,
+            "feedback": interaction_data.get("feedback_if_needed") if interaction_data.get("feedback_if_needed") else None
         }
     
     # =========================================================================

@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { supabase, AuthUser } from '@/lib/supabase'
 import DashboardLayout from '@/components/DashboardLayout'
-import { parseMarkdown } from '@/lib/markdown'
+import FlashcardViewer from '@/components/FlashcardViewer'
 import { Check, X, ChevronRight, Send, Search, MoreHorizontal, BookOpen, Clock, Activity, ArrowRight, Sparkles, Plus, Trash2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import SessionSidebar, { ChatSession } from '@/components/SessionSidebar'
@@ -284,7 +284,7 @@ export default function Flashcards() {
                 </div>
 
                 <div className={styles.resultCard}>
-                  <div className="flex justify-between items-center mb-6 pb-4 border-b border-[#E2E8F0]">
+                  <div className="flex justify-between items-center mb-8 pb-4 border-b border-[#E2E8F0]">
                     <h3 className="text-lg font-bold text-[#1E293B]">Generated Flashcards</h3>
                     <button
                       onClick={handleNewSession}
@@ -293,9 +293,21 @@ export default function Flashcards() {
                       CLEAR
                     </button>
                   </div>
-                  <div className="prose prose-slate max-w-none">
-                    <div dangerouslySetInnerHTML={{ __html: parseMarkdown(result.content) }} />
-                  </div>
+                  
+                  {result.flashcards && result.flashcards.length > 0 ? (
+                    <FlashcardViewer flashcards={result.flashcards} />
+                  ) : result.content ? (
+                    <div className="text-center py-8 text-gray-600">
+                      <p className="mb-4">Unable to parse flashcards. Here's the raw content:</p>
+                      <div className="text-left bg-gray-50 p-6 rounded-xl border border-gray-200 max-h-96 overflow-y-auto">
+                        <pre className="whitespace-pre-wrap text-sm">{result.content}</pre>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      No flashcards generated
+                    </div>
+                  )}
 
                   {result.citations && (
                     <div className={styles.citations}>
