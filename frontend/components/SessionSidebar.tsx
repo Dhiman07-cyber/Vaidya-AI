@@ -19,6 +19,10 @@ interface SessionSidebarProps {
   loading?: boolean
   error?: string | null
   position?: 'left' | 'right'
+  newSessionLabel?: string
+  untitledLabel?: string
+  isCollapsed?: boolean
+  onToggleCollapsed?: (collapsed: boolean) => void
 }
 
 export default function SessionSidebar({
@@ -31,9 +35,23 @@ export default function SessionSidebar({
   isNewChatDisabled = false,
   loading = false,
   error = null,
-  position = 'left'
+  position = 'left',
+  newSessionLabel = 'New Chat',
+  untitledLabel = 'Untitled Chat',
+  isCollapsed: propIsCollapsed,
+  onToggleCollapsed
 }: SessionSidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [internalIsCollapsed, setInternalIsCollapsed] = useState(false)
+  const isCollapsed = propIsCollapsed ?? internalIsCollapsed
+
+  const setIsCollapsed = (val: boolean) => {
+    if (onToggleCollapsed) {
+      onToggleCollapsed(val)
+    } else {
+      setInternalIsCollapsed(val)
+    }
+  }
+
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [hoveredSessionId, setHoveredSessionId] = useState<string | null>(null)
   const [deleteConfirmationId, setDeleteConfirmationId] = useState<string | null>(null)
@@ -149,7 +167,7 @@ export default function SessionSidebar({
                     boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
                   }}
                 >
-                  <Plus size={20} /> New Chat
+                  <Plus size={20} /> {newSessionLabel}
                 </button>
 
                 <div className="session-list">
@@ -169,7 +187,7 @@ export default function SessionSidebar({
                       }}
                     >
                       <div style={{ flex: 1, overflow: 'hidden' }}>
-                        <div style={{ fontWeight: currentSessionId === session.id ? '700' : '500', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session.title || 'Untitled Chat'}</div>
+                        <div style={{ fontWeight: currentSessionId === session.id ? '700' : '500', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session.title || untitledLabel}</div>
                         <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>{formatDate(session.updated_at)}</div>
                       </div>
                     </div>
@@ -270,8 +288,8 @@ export default function SessionSidebar({
         justifyContent: 'space-between',
         alignItems: 'center'
       }}>
-        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#1e293b', letterSpacing: '-0.02em' }}>
-          Your Chats
+        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#1E293B', letterSpacing: '-0.02em' }}>
+          History
         </h3>
         <button
           onClick={() => setIsCollapsed(true)}
@@ -316,7 +334,7 @@ export default function SessionSidebar({
           }}
         >
           <Plus size={20} />
-          <span>New Chat</span>
+          <span>{newSessionLabel}</span>
         </button>
       </div>
 
@@ -354,7 +372,7 @@ export default function SessionSidebar({
 
         {!loading && (!Array.isArray(sessions) || sessions.length === 0) && !error && (
           <div style={{ padding: '40px 20px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
-            No chats yet
+            No sessions yet
           </div>
         )}
 
@@ -388,7 +406,7 @@ export default function SessionSidebar({
                 overflow: 'hidden',
                 textOverflow: 'ellipsis'
               }}>
-                {session.title || 'Untitled Chat'}
+                {session.title || untitledLabel}
               </div>
               <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '3px', fontWeight: '500' }}>
                 {formatDate(session.updated_at)}
