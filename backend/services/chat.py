@@ -280,9 +280,10 @@ Focus on:
 Always prioritize accuracy, clarity, and clinical applicability in your responses."""
             )
             
-            if not ai_result["success"]:
+            if not isinstance(ai_result, dict) or not ai_result.get("success", False):
                 # AI generation failed, return error
-                raise Exception(f"AI response generation failed: {ai_result.get('error', 'Unknown error')}")
+                error_msg = ai_result.get("error", "Unknown error") if isinstance(ai_result, dict) else str(ai_result)
+                raise Exception(f"AI response generation failed: {error_msg}")
             
             # Store AI response message with citations if available (Requirement 8.3)
             ai_message_data = {

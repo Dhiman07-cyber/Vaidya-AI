@@ -149,8 +149,9 @@ Requirements:
             system_prompt="You are a medical education specialist with expertise in MBBS curriculum and medical licensing exams. Create flashcards that are clinically relevant, evidence-based, and aligned with medical student learning objectives. Focus on information that will help students in their clinical practice and examinations."
         )
         
-        if not result["success"]:
-            raise Exception(f"Failed to generate flashcards: {result.get('error', 'Unknown error')}")
+        if not isinstance(result, dict) or not result.get("success", False):
+            error_msg = result.get("error", "Unknown error") if isinstance(result, dict) else str(result)
+            raise Exception(f"Failed to generate flashcards: {error_msg}")
         
         # Clean markdown formatting from content
         cleaned_content = clean_markdown(result["content"])
@@ -217,8 +218,9 @@ Requirements:
             system_prompt="You are a medical education specialist and exam question writer with expertise in USMLE, NEET-PG, and MBBS curriculum. Create clinically relevant, evidence-based MCQs that test clinical reasoning and application. Use standard medical terminology and follow best practices for medical exam question writing."
         )
         
-        if not result["success"]:
-            raise Exception(f"Failed to generate MCQs: {result.get('error', 'Unknown error')}")
+        if not isinstance(result, dict) or not result.get("success", False):
+            error_msg = result.get("error", "Unknown error") if isinstance(result, dict) else str(result)
+            raise Exception(f"Failed to generate MCQs: {error_msg}")
         
         # Clean markdown formatting from content
         cleaned_content = clean_markdown(result["content"])
@@ -283,8 +285,9 @@ Requirements:
             system_prompt="You are a medical education specialist with expertise in MBBS curriculum and clinical medicine. Create concise, high-yield summaries that emphasize clinically relevant, evidence-based information aligned with medical licensing exam standards and clinical practice requirements."
         )
         
-        if not result["success"]:
-            raise Exception(f"Failed to generate summary: {result.get('error', 'Unknown error')}")
+        if not isinstance(result, dict) or not result.get("success", False):
+            error_msg = result.get("error", "Unknown error") if isinstance(result, dict) else str(result)
+            raise Exception(f"Failed to generate summary: {error_msg}")
         
         # Clean markdown formatting from content
         cleaned_content = clean_markdown(result["content"])
@@ -341,8 +344,9 @@ Requirements:
             system_prompt="You are a medical education specialist and clinician with expertise in teaching MBBS students. Provide clear, detailed, evidence-based explanations that bridge basic science with clinical practice. Focus on clinical reasoning, current guidelines, and information relevant to both medical exams and patient care."
         )
         
-        if not result["success"]:
-            raise Exception(f"Failed to generate explanation: {result.get('error', 'Unknown error')}")
+        if not isinstance(result, dict) or not result.get("success", False):
+            error_msg = result.get("error", "Unknown error") if isinstance(result, dict) else str(result)
+            raise Exception(f"Failed to generate explanation: {error_msg}")
         
         # Clean markdown formatting from content
         cleaned_content = clean_markdown(result["content"])
@@ -402,8 +406,9 @@ Requirements:
             system_prompt="You are a medical education specialist with expertise in MBBS curriculum and clinical medicine. Create concept maps that show clinically relevant relationships and help students understand how basic science connects to clinical practice. Focus on evidence-based medicine and information relevant to both medical exams and patient care."
         )
         
-        if not result["success"]:
-            raise Exception(f"Failed to generate concept map: {result.get('error', 'Unknown error')}")
+        if not isinstance(result, dict) or not result.get("success", False):
+            error_msg = result.get("error", "Unknown error") if isinstance(result, dict) else str(result)
+            raise Exception(f"Failed to generate concept map: {error_msg}")
         
         # Clean markdown formatting from content
         cleaned_content = clean_markdown(result["content"])

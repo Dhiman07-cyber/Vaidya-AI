@@ -116,8 +116,9 @@ Make the case realistic, educational, and clinically relevant for medical studen
                 system_prompt="You are a medical education specialist and experienced clinician creating clinical cases for MBBS students. Generate realistic, evidence-based cases with progressive information disclosure that teach clinical reasoning, diagnostic thinking, and evidence-based medicine. Focus on cases that are educationally valuable and aligned with medical licensing exam standards."
             )
             
-            if not result["success"]:
-                raise Exception(f"Failed to generate clinical case: {result.get('error', 'Unknown error')}")
+            if not isinstance(result, dict) or not result.get("success", False):
+                error_msg = result.get("error", "Unknown error") if isinstance(result, dict) else str(result)
+                raise Exception(f"Failed to generate clinical case: {error_msg}")
             
             # Parse the generated case
             try:
@@ -434,8 +435,9 @@ Format as JSON:
                 system_prompt="You are a medical education specialist and experienced clinician evaluating MBBS students' clinical reasoning. Provide constructive, evidence-based feedback that helps students develop strong clinical reasoning skills. Focus on teaching clinical thinking, diagnostic approach, and evidence-based medicine principles."
             )
             
-            if not result["success"]:
-                raise Exception(f"Failed to evaluate response: {result.get('error', 'Unknown error')}")
+            if not isinstance(result, dict) or not result.get("success", False):
+                error_msg = result.get("error", "Unknown error") if isinstance(result, dict) else str(result)
+                raise Exception(f"Failed to evaluate response: {error_msg}")
             
             # Parse evaluation
             try:
@@ -585,8 +587,9 @@ Make it realistic, clinically relevant, and appropriate for MBBS students."""
                 system_prompt="You are a medical education specialist and OSCE examiner with expertise in creating structured clinical examination scenarios for MBBS students. Generate realistic, evidence-based scenarios that assess clinical skills, communication, and professional behavior. Align with OSCE examination standards and medical licensing requirements."
             )
             
-            if not result["success"]:
-                raise Exception(f"Failed to generate OSCE scenario: {result.get('error', 'Unknown error')}")
+            if not isinstance(result, dict) or not result.get("success", False):
+                error_msg = result.get("error", "Unknown error") if isinstance(result, dict) else str(result)
+                raise Exception(f"Failed to generate OSCE scenario: {error_msg}")
             
             # Parse the generated scenario
             try:
@@ -753,8 +756,9 @@ Be realistic - patients respond naturally with appropriate emotions and body lan
                 system_prompt="You are simulating an OSCE examination with realistic patient and examiner responses for MBBS students. Provide clinically accurate, educationally valuable interactions that help students develop clinical skills, communication abilities, and professional behavior. Maintain realism while ensuring educational value."
             )
             
-            if not result["success"]:
-                raise Exception(f"Failed to simulate interaction: {result.get('error', 'Unknown error')}")
+            if not isinstance(result, dict) or not result.get("success", False):
+                error_msg = result.get("error", "Unknown error") if isinstance(result, dict) else str(result)
+                raise Exception(f"Failed to simulate interaction: {error_msg}")
             
             # Parse response
             try:

@@ -36,6 +36,7 @@ export default function Flashcards() {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
   const [topic, setTopic] = useState('')
+  const [count, setCount] = useState(5)
   const [generating, setGenerating] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
@@ -188,6 +189,7 @@ export default function Flashcards() {
           body: JSON.stringify({
             topic: topic,
             session_id: currentSessionId,
+            count: count,
             format: 'interactive'
           })
         }
@@ -240,6 +242,22 @@ export default function Flashcards() {
                 </div>
                 <h1 className={styles.h1}>Generate flashcards</h1>
                 <p className={styles.p}>Enter any medical topic to create interactive study cards</p>
+                
+                {/* Count selector */}
+                <div className="mb-4 flex items-center justify-center gap-3">
+                  <label className="text-sm font-medium text-gray-600">Number of cards:</label>
+                  <select
+                    value={count}
+                    onChange={(e) => setCount(Number(e.target.value))}
+                    className="px-4 py-2 border-2 border-gray-200 rounded-lg font-medium text-gray-700 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition-all"
+                  >
+                    <option value={5}>5 cards</option>
+                    <option value={10}>10 cards</option>
+                    <option value={15}>15 cards</option>
+                    <option value={20}>20 cards</option>
+                  </select>
+                </div>
+                
                 <div className={styles.largeSearch}>
                   <input
                     type="text"

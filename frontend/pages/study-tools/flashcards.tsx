@@ -375,11 +375,7 @@ export default function FlashcardsPage() {
                   ← Back to List
                 </button>
                 <FlashcardViewer
-                  cards={currentMaterial.flashcards}
-                  onComplete={() => {
-                    setViewMode('list')
-                    setCurrentMaterial(null)
-                  }}
+                  flashcards={currentMaterial.flashcards}
                 />
               </div>
             )}

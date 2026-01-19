@@ -261,28 +261,29 @@ class StudyToolsService:
                 raise Exception("Rate limit exceeded")
             
             # Generate prompt for interactive flashcards (JSON format for frontend rendering)
-            system_prompt = f"""You are a medical education expert. Generate exactly {count} flashcards in JSON format.
+            system_prompt = f"""You are a medical education expert. You MUST generate EXACTLY {count} flashcards.
 
-CRITICAL REQUIREMENTS:
-1. Return ONLY valid JSON - no markdown, no code blocks, no extra text
-2. Generate EXACTLY {count} flashcards
-3. Use this EXACT structure:
+CRITICAL: Generate {count} flashcards. Not {count-1}, not {count+1}, but EXACTLY {count} flashcards.
 
-{{"flashcards":[{{"front":"Term","back":"Explanation"}},{{"front":"Term2","back":"Explanation2"}}]}}
+Return ONLY valid JSON in this format:
+{{"flashcards":[{{"front":"Term1","back":"Explanation1"}},{{"front":"Term2","back":"Explanation2"}},{{"front":"Term3","back":"Explanation3"}}]}}
 
 RULES:
-- Front: Short term or concept (1-5 words)
-- Back: Clear explanation (2-4 sentences)
-- No line breaks within strings
-- Use proper JSON escaping for quotes
-- No trailing commas
+- Front: Concise medical term or concept (1-5 words)
+- Back: Clear, focused explanation (2-4 sentences)
+- Generate EXACTLY {count} items in the flashcards array
+- No markdown, no code blocks, no extra text
+- Valid JSON only
 
-Example for 2 flashcards:
-{{"flashcards":[{{"front":"ACE Inhibitors","back":"Medications that block angiotensin-converting enzyme, preventing conversion of angiotensin I to II. Used for hypertension and heart failure. Common side effects include dry cough and hyperkalemia."}},{{"front":"Bradykinin","back":"A peptide that causes vasodilation and is normally broken down by ACE. When ACE is inhibited, bradykinin accumulates, leading to the characteristic dry cough."}}]}}
+Example structure for {count} flashcards:
+{{"flashcards":[
+{",".join([f'{{"front":"Term{i+1}","back":"Explanation for term {i+1}"}}' for i in range(min(3, count))])}
+{f',{{"front":"Term{count}","back":"Explanation for term {count}"}}' if count > 3 else ''}
+]}}
 
-Generate {count} flashcards now. Return ONLY the JSON object, nothing else."""
+COUNT CHECK: Your response must have EXACTLY {count} objects in the flashcards array."""
             
-            prompt = f"Generate {count} medical flashcards about: {topic}"
+            prompt = f"Create EXACTLY {count} medical flashcards about: {topic}. Remember: {count} flashcards, no more, no less."
             
             # Get provider and generate content
             provider = await self.model_router.select_provider("flashcard")
@@ -309,6 +310,21 @@ Generate {count} flashcards now. Return ONLY the JSON object, nothing else."""
                     
                     # Clean the content
                     cleaned = content.strip()
+                    
+                    # Check if the entire response is a JSON string (wrapped in quotes)
+                    if cleaned.startswith('"') and cleaned.endswith('"'):
+                        # The AI returned the JSON as a string, unescape it
+                        try:
+                            cleaned = json.loads(cleaned)  # This will unescape the string
+                            logger.info("Unescaped JSON string wrapper")
+                        except Exception as e:
+                            logger.warning(f"Failed to unescape JSON string: {e}")
+                    
+                    # Convert to string if it's not already
+                    if not isinstance(cleaned, str):
+                        cleaned = str(cleaned)
+                    
+                    # Remove markdown code blocks
                     if "```json" in cleaned:
                         start = cleaned.find("```json") + 7
                         end = cleaned.find("```", start)
@@ -320,62 +336,101 @@ Generate {count} flashcards now. Return ONLY the JSON object, nothing else."""
                         if end != -1:
                             cleaned = cleaned[start:end].strip()
                     
-                    # Find JSON object
+                    # Find JSON object boundaries
                     first_brace = cleaned.find('{')
                     last_brace = cleaned.rfind('}')
                     if first_brace != -1 and last_brace != -1:
                         cleaned = cleaned[first_brace:last_brace + 1]
+                    else:
+                        raise ValueError("No JSON object found in response")
                     
-                    # Remove trailing commas
+                    # Remove trailing commas before closing braces/brackets
                     cleaned = re.sub(r',(\s*[}\]])', r'\1', cleaned)
+                    
+                    # Fix common issues
+                    # Remove any control characters
+                    cleaned = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', cleaned)
                     
                     logger.info(f"Cleaned JSON (first 500 chars): {cleaned[:500]}")
                     
+                    # Try to parse
                     flashcards_data = json.loads(cleaned)
-                    logger.info(f"Successfully parsed {len(flashcards_data.get('flashcards', []))} flashcards")
+                    
+                    # Validate structure
+                    if "flashcards" in flashcards_data and isinstance(flashcards_data["flashcards"], list):
+                        actual_count = len(flashcards_data["flashcards"])
+                        if actual_count > 0:
+                            logger.info(f"Successfully parsed {actual_count} flashcards (requested: {count})")
+                            if actual_count != count:
+                                logger.warning(f"AI generated {actual_count} flashcards but {count} were requested")
+                        else:
+                            logger.warning("Parsed JSON but flashcards array is empty")
+                            flashcards_data = None
+                    else:
+                        logger.warning("Parsed JSON but missing 'flashcards' array")
+                        flashcards_data = None
                     
                 except Exception as parse_error:
                     logger.error(f"Failed to parse flashcards JSON: {str(parse_error)}")
-                    logger.error(f"Content that failed to parse: {content}")
+                    logger.error(f"Content that failed to parse (first 1000 chars): {content[:1000]}")
                     
-                    # Fallback: Try to extract flashcards from text format
-                    # Look for patterns like "Front: X" and "Back: Y" or similar
+                    # Fallback: Try to manually extract flashcards from the raw JSON-like text
                     flashcards_list = []
                     
-                    # Try to find any structured content
-                    lines = content.split('\n')
-                    current_front = None
-                    current_back = None
-                    
-                    for line in lines:
-                        line = line.strip()
-                        if not line:
-                            continue
+                    try:
+                        # Use regex to extract front/back pairs from JSON-like structure
+                        pattern = r'"front"\s*:\s*"([^"]+)"\s*,\s*"back"\s*:\s*"([^"]+)"'
+                        matches = re.findall(pattern, content, re.DOTALL)
                         
-                        # Look for front/back patterns
-                        if line.lower().startswith(('front:', '"front":', '**front')):
-                            if current_front and current_back:
-                                flashcards_list.append({"front": current_front, "back": current_back})
-                            current_front = re.sub(r'^[^:]+:\s*', '', line).strip(' "')
-                            current_back = None
-                        elif line.lower().startswith(('back:', '"back":', '**back')):
-                            current_back = re.sub(r'^[^:]+:\s*', '', line).strip(' "')
-                        elif current_front and not current_back:
-                            # Continuation of front
-                            current_front += " " + line
-                        elif current_back:
-                            # Continuation of back
-                            current_back += " " + line
+                        for front, back in matches:
+                            # Clean up the text
+                            front = front.strip()
+                            back = back.strip()
+                            # Remove escaped characters
+                            back = back.replace('\\n', ' ').replace('\\t', ' ')
+                            flashcards_list.append({"front": front, "back": back})
+                        
+                        if flashcards_list:
+                            flashcards_data = {"flashcards": flashcards_list}
+                            logger.info(f"Extracted {len(flashcards_list)} flashcards using regex")
+                    except Exception as regex_error:
+                        logger.error(f"Regex extraction also failed: {str(regex_error)}")
                     
-                    # Add last card
-                    if current_front and current_back:
-                        flashcards_list.append({"front": current_front, "back": current_back})
-                    
-                    if flashcards_list:
-                        flashcards_data = {"flashcards": flashcards_list}
-                        logger.info(f"Extracted {len(flashcards_list)} flashcards from text format")
-                    else:
-                        logger.warning("Could not extract flashcards from text format either")
+                    # If regex didn't work, try line-by-line parsing
+                    if not flashcards_list:
+                        lines = content.split('\n')
+                        current_front = None
+                        current_back = None
+                        
+                        for line in lines:
+                            line = line.strip()
+                            if not line:
+                                continue
+                            
+                            # Look for front/back patterns
+                            if line.lower().startswith(('front:', '"front":', '**front', 'front":')):
+                                if current_front and current_back:
+                                    flashcards_list.append({"front": current_front, "back": current_back})
+                                current_front = re.sub(r'^[^:]+:\s*', '', line).strip(' "')
+                                current_back = None
+                            elif line.lower().startswith(('back:', '"back":', '**back', 'back":')):
+                                current_back = re.sub(r'^[^:]+:\s*', '', line).strip(' "')
+                            elif current_front and not current_back:
+                                # Continuation of front
+                                current_front += " " + line
+                            elif current_back:
+                                # Continuation of back
+                                current_back += " " + line
+                        
+                        # Add last card
+                        if current_front and current_back:
+                            flashcards_list.append({"front": current_front, "back": current_back})
+                        
+                        if flashcards_list:
+                            flashcards_data = {"flashcards": flashcards_list}
+                            logger.info(f"Extracted {len(flashcards_list)} flashcards from text format")
+                        else:
+                            logger.warning("Could not extract flashcards from text format either")
             
             # Record usage
             await self.rate_limiter.increment_usage(user_id, tokens=tokens_used, feature="flashcard")

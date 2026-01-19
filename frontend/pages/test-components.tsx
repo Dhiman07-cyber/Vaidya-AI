@@ -120,8 +120,7 @@ CONNECTION: Diabetes Mellitus Type 2 -> Diabetic Nephropathy`
           <div>
             <h2 style={{ marginBottom: '1rem' }}>Interactive Flashcards</h2>
             <FlashcardViewer
-              cards={sampleFlashcards}
-              onComplete={() => alert('All cards completed!')}
+              flashcards={sampleFlashcards}
             />
           </div>
         )}
