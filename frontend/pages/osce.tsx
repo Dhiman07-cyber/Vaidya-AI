@@ -183,6 +183,47 @@ export default function OSCESimulator() {
     }
   }
 
+  const loadScenarioChecklist = async (scenarioId: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/clinical/osce/${scenarioId}`,
+        {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }
+      )
+
+      if (!response.ok) return
+
+      const scenario = await response.json()
+      const examinerChecklist = scenario.examiner_checklist || []
+      const interactionHistory = scenario.interaction_history || []
+      
+      // Collect all triggered items from interaction history
+      const triggeredItems = new Set()
+      interactionHistory.forEach((interaction: any) => {
+        (interaction.checklist_items || []).forEach((item: string) => {
+          triggeredItems.add(item)
+        })
+      })
+      
+      // Build checklist with status based on triggered items
+      const checklistWithStatus = examinerChecklist.map((item: any, index: number) => ({
+        id: `item-${index}`,
+        label: item.item,
+        status: triggeredItems.has(item.item) ? 'completed' : (index === 0 ? 'active' : 'pending'),
+        critical: item.critical || false,
+        notes: item.notes || null
+      }))
+      
+      setChecklist(checklistWithStatus)
+    } catch (error) {
+      console.error('Failed to load checklist:', error)
+    }
+  }
+
   const startScenario = async () => {
     setGenerating(true)
     try {
@@ -217,10 +258,9 @@ export default function OSCESimulator() {
       setTimeRemaining(scenario.time_limit_seconds || 480)
       setShowSetup(false)
       setTimerActive(true)
-      setChecklist(OSCE_CHECKLIST.map((item, index) => ({
-        ...item,
-        status: index === 0 ? 'active' : 'pending'
-      })))
+      
+      // Build checklist from backend's examiner_checklist
+      await loadScenarioChecklist(scenario.id)
 
       // Add initial patient greeting
       if (scenario.patient_info) {
@@ -243,9 +283,6 @@ export default function OSCESimulator() {
     setConversation(prev => [...prev, { role: 'student', content: studentMessage }])
     setSending(true)
 
-    // Update checklist based on message content
-    updateChecklist(studentMessage)
-
     try {
       const { data: { session } } = await supabase.auth.getSession()
       const token = session?.access_token
@@ -265,17 +302,34 @@ export default function OSCESimulator() {
       if (!response.ok) throw new Error('Failed to process interaction')
 
       const result = await response.json()
+      
+      // Add patient response
       setConversation(prev => [...prev, {
         role: 'patient',
         content: result.patient_response
       }])
 
+      // Add feedback if provided
       if (result.feedback) {
         setConversation(prev => [...prev, {
           role: 'examiner',
           content: result.feedback
         }])
       }
+      
+      // Add hint if provided
+      if (result.hint) {
+        setConversation(prev => [...prev, {
+          role: 'examiner',
+          content: `💡 Hint: ${result.hint}`
+        }])
+      }
+      
+      // Reload checklist to show updated status
+      if (activeScenario) {
+        await loadScenarioChecklist(activeScenario.id)
+      }
+      
     } catch (error) {
       console.error('Failed to send message:', error)
       setConversation(prev => [...prev, {
@@ -838,34 +892,40 @@ export default function OSCESimulator() {
                       <span className="label">Interactions</span>
                     </div>
                     <div className={styles.statCard}>
-                      <span className="value">{completionData.completed_items.length}</span>
+                      <span className="value">{completionData.completed_items?.length || 0}</span>
                       <span className="label">Checklist Items</span>
                     </div>
                   </div>
 
-                  {completionData.completed_items.length > 0 && (
+                  {completionData.completed_items && completionData.completed_items.length > 0 && (
                     <div className={`${styles.feedbackSection} ${styles.completed}`}>
                       <h3>✅ Completed Items</h3>
                       <ul>
-                        {completionData.completed_items.map((item, i) => (
-                          <li key={i}>{item}</li>
+                        {completionData.completed_items.map((item: any, i: number) => (
+                          <li key={i}>
+                            {typeof item === 'string' ? item : item.item}
+                            {typeof item === 'object' && item.critical && ' ⭐'}
+                          </li>
                         ))}
                       </ul>
                     </div>
                   )}
 
-                  {completionData.missed_items.length > 0 && (
+                  {completionData.missed_items && completionData.missed_items.length > 0 && (
                     <div className={`${styles.feedbackSection} ${styles.missed}`}>
                       <h3>❌ Missed Items</h3>
                       <ul>
-                        {completionData.missed_items.map((item, i) => (
-                          <li key={i}>{item}</li>
+                        {completionData.missed_items.map((item: any, i: number) => (
+                          <li key={i}>
+                            {typeof item === 'string' ? item : item.item}
+                            {typeof item === 'object' && item.critical && ' ⚠️'}
+                          </li>
                         ))}
                       </ul>
                     </div>
                   )}
 
-                  {completionData.expected_actions.length > 0 && (
+                  {completionData.expected_actions && completionData.expected_actions.length > 0 && (
                     <div className={`${styles.feedbackSection} ${styles.expected}`}>
                       <h3>📋 Expected Actions</h3>
                       <ol>

@@ -4,6 +4,7 @@ Production-grade service for clinical case management, OSCE simulations, and per
 """
 import os
 import json
+import logging
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timezone
 from supabase import Client, create_client
@@ -11,6 +12,7 @@ from dotenv import load_dotenv
 from enum import Enum
 
 load_dotenv()
+logger = logging.getLogger(__name__)
 
 
 class CaseType(str, Enum):
@@ -259,10 +261,8 @@ Always respond with valid JSON only. No markdown formatting or explanation text.
 
     def _parse_json_response(self, content: str) -> Dict[str, Any]:
         """Extract and parse JSON from AI response"""
-        import logging
         import re
         
-        logger = logging.getLogger(__name__)
         original_content = content
         content = content.strip()
         
@@ -278,29 +278,55 @@ Always respond with valid JSON only. No markdown formatting or explanation text.
             if end != -1:
                 content = content[start:end].strip()
         
-        # Try to find JSON object boundaries
-        # Look for the first { and last }
-        first_brace = content.find('{')
-        last_brace = content.rfind('}')
+        # Remove comments BEFORE extracting JSON (they might be after the JSON)
+        # Remove single-line comments (// ...)
+        content = re.sub(r'//.*?(?=\n|$)', '', content)
+        # Remove multi-line comments (/* ... */)
+        content = re.sub(r'/\*.*?\*/', '', content, flags=re.DOTALL)
         
-        if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
-            content = content[first_brace:last_brace + 1]
+        # Try to find JSON object boundaries
+        # Look for the first { and find its matching }
+        first_brace = content.find('{')
+        
+        if first_brace != -1:
+            # Find the matching closing brace by counting braces
+            brace_count = 0
+            in_string = False
+            escape_next = False
+            
+            for i in range(first_brace, len(content)):
+                char = content[i]
+                
+                if escape_next:
+                    escape_next = False
+                    continue
+                
+                if char == '\\':
+                    escape_next = True
+                    continue
+                
+                if char == '"' and not escape_next:
+                    in_string = not in_string
+                    continue
+                
+                if not in_string:
+                    if char == '{':
+                        brace_count += 1
+                    elif char == '}':
+                        brace_count -= 1
+                        if brace_count == 0:
+                            # Found the matching closing brace
+                            content = content[first_brace:i + 1]
+                            break
         
         # Remove any trailing commas before closing braces/brackets (common JSON error)
         content = re.sub(r',(\s*[}\]])', r'\1', content)
-        
-        # Remove comments (not valid in JSON)
-        content = re.sub(r'//.*?\n', '\n', content)
-        content = re.sub(r'/\*.*?\*/', '', content, flags=re.DOTALL)
         
         # Fix common AI mistakes - remove placeholder text like "...omitted for brevity..."
         content = re.sub(r'\[\.\.\.omitted for brevity\.\.\.\]', '[]', content)
         content = re.sub(r'\[\.\.\..*?\.\.\.\]', '[]', content)
         content = re.sub(r'\.\.\.omitted.*?\.\.\.', '', content)
         content = re.sub(r'\.\.\.', '', content)
-        
-        # Fix unescaped newlines within strings
-        content = re.sub(r'(?<!\\)\n(?=[^"]*"(?:[^"]*"[^"]*")*[^"]*$)', r'\\n', content)
         
         try:
             return json.loads(content)
@@ -317,7 +343,6 @@ Always respond with valid JSON only. No markdown formatting or explanation text.
             logger.error(f"Original content length: {len(original_content)} chars")
             
             # Try more aggressive cleanup
-            # Fix strings with unescaped quotes - replace problematic characters
             try:
                 # Try json5 parser which is more lenient
                 try:
@@ -327,7 +352,6 @@ Always respond with valid JSON only. No markdown formatting or explanation text.
                     pass
                 
                 # Last resort: try to manually fix the JSON
-                # This is a fallback for when AI generates slightly malformed JSON
                 logger.warning("Attempting manual JSON repair...")
                 
                 # Try to fix by removing problematic characters around error position
@@ -676,11 +700,18 @@ Make the scenario realistic and educationally valuable."""
         
         router = get_model_router_service(self.supabase)
         
-        prompt = f"""You are simulating an OSCE patient. Respond ONLY as the patient would respond.
+        # Get the examiner checklist to help the model identify triggered items
+        examiner_checklist = scenario.get("examiner_checklist", [])
+        checklist_items_list = [item.get("item", "") for item in examiner_checklist if item.get("item")]
+        
+        prompt = f"""You are simulating an OSCE patient. Respond naturally as the patient would.
 
 SCENARIO: {scenario.get('scenario_type')}
 PATIENT INFO: {json.dumps(scenario.get('patient_info', {}))}
 PATIENT SCRIPT: {json.dumps(scenario.get('patient_script', {}))}
+
+EXAMINER CHECKLIST (items the student should complete):
+{json.dumps(checklist_items_list, indent=2)}
 
 RECENT INTERACTIONS:
 {json.dumps(interaction_history[-5:], indent=2) if interaction_history else "None yet"}
@@ -688,28 +719,35 @@ RECENT INTERACTIONS:
 STUDENT'S ACTION:
 {user_action}
 
-CRITICAL: Respond with ONLY what the patient would say or do. Do NOT include examiner notes, checklist items, or metadata in the patient_response field.
+INSTRUCTIONS:
+1. Respond ONLY with valid JSON - no comments or extra text
+2. patient_response: What the patient says naturally in response to THIS specific action only
+3. checklist_triggered: Array of EXACT item names from the checklist above that THIS action satisfies
+4. examiner_notes: Brief note about what the student did (for internal tracking)
+5. next_step_hint: Optional subtle hint if student seems stuck (keep it realistic)
 
-Respond as JSON:
+IMPORTANT: 
+- Patient should respond ONLY to the current question/action, not reveal everything at once
+- Use EXACT item names from checklist (copy-paste them)
+- Only mark items as triggered if the student's action clearly satisfies them
+- Keep patient responses natural and conversational
+
+JSON format:
 {{
-  "patient_response": "Only what the patient says - natural dialogue only, no metadata",
-  "examiner_notes": "Internal notes (not shown to student)",
-  "checklist_triggered": ["items satisfied"],
-  "feedback_if_needed": null
+  "patient_response": "Natural response to the current action only",
+  "examiner_notes": "What the student did in this interaction",
+  "checklist_triggered": ["Exact item name from checklist"],
+  "next_step_hint": null
 }}
 
-Example good patient_response: "Of course, Doctor. I mean, John. Please go ahead and ask me anything. I'm worried about this chest pain and want to understand what's happening."
-
-Example BAD patient_response: {{"patient_response": "text", "examiner_notes": "..."}} - DO NOT nest JSON or include metadata in patient_response.
-
-Stay in character as the patient. Respond naturally."""
+Example: If student says "Hello, I'm Dr. Smith", patient might say "Hello Doctor" and checklist_triggered would include "Introduces self and confirms patient identity" if that exact phrase is in the checklist."""
 
         provider = await router.select_provider("osce")
         result = await router.execute_with_fallback(
             provider=provider,
             feature="osce",
             prompt=prompt,
-            system_prompt="You are simulating an OSCE examination. Respond as a realistic patient. JSON only."
+            system_prompt="You are simulating an OSCE examination. Respond as a realistic patient. Output ONLY valid JSON with no comments or extra text."
         )
         
         if not result["success"]:
@@ -717,8 +755,57 @@ Stay in character as the patient. Respond naturally."""
         
         try:
             interaction_data = self._parse_json_response(result["content"])
-        except:
-            interaction_data = {"patient_response": result["content"]}
+        except Exception as parse_error:
+            logger.warning(f"Failed to parse JSON response: {parse_error}. Attempting to extract fields from raw content.")
+            # Try to extract fields from the malformed JSON
+            import re
+            raw_content = result.get("content", "")
+            
+            # Initialize with defaults
+            interaction_data = {
+                "patient_response": "I'm not sure how to respond to that. Could you rephrase your question?",
+                "checklist_triggered": [],
+                "examiner_notes": "",
+                "feedback_if_needed": None,
+                "next_step_hint": None
+            }
+            
+            # Try to find "patient_response": "..." pattern
+            match = re.search(r'"patient_response"\s*:\s*"([^"]*(?:\\.[^"]*)*)"', raw_content, re.DOTALL)
+            if match:
+                patient_text = match.group(1)
+                # Unescape JSON string escapes
+                patient_text = patient_text.replace('\\"', '"').replace('\\n', '\n').replace('\\t', '\t')
+                interaction_data["patient_response"] = patient_text
+                logger.info(f"Successfully extracted patient_response from malformed JSON")
+            
+            # Try to find "checklist_triggered": [...] pattern
+            match = re.search(r'"checklist_triggered"\s*:\s*\[(.*?)\]', raw_content, re.DOTALL)
+            if match:
+                items_str = match.group(1)
+                # Extract quoted strings from the array
+                items = re.findall(r'"([^"]*)"', items_str)
+                interaction_data["checklist_triggered"] = items
+                logger.info(f"Successfully extracted {len(items)} checklist items from malformed JSON")
+            
+            # Try to find "examiner_notes": "..." pattern
+            match = re.search(r'"examiner_notes"\s*:\s*"([^"]*(?:\\.[^"]*)*)"', raw_content, re.DOTALL)
+            if match:
+                notes = match.group(1)
+                notes = notes.replace('\\"', '"').replace('\\n', '\n').replace('\\t', '\t')
+                interaction_data["examiner_notes"] = notes
+                logger.info(f"Successfully extracted examiner_notes from malformed JSON")
+        
+        # Ensure interaction_data is a dict
+        if not isinstance(interaction_data, dict):
+            logger.error(f"interaction_data is not a dict, it's a {type(interaction_data)}. Converting to dict.")
+            interaction_data = {
+                "patient_response": "I'm not sure how to respond to that. Could you rephrase your question?",
+                "checklist_triggered": [],
+                "examiner_notes": "",
+                "feedback_if_needed": None,
+                "next_step_hint": None
+            }
         
         # Clean the patient response - remove any JSON artifacts or examiner notes
         patient_response = interaction_data.get("patient_response", "")
@@ -738,12 +825,19 @@ Stay in character as the patient. Respond naturally."""
                 patient_response = match.group(1).strip()
         
         # Update interaction history (store full data internally)
+        checklist_items = []
+        examiner_notes = ""
+        if isinstance(interaction_data, dict):
+            checklist_items = interaction_data.get("checklist_triggered", [])
+            examiner_notes = interaction_data.get("examiner_notes", "")
+            logger.info(f"Checklist items triggered in this interaction: {checklist_items}")
+        
         interaction_history.append({
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "student": user_action,
             "patient": patient_response,
-            "checklist_items": interaction_data.get("checklist_triggered", []),
-            "examiner_notes": interaction_data.get("examiner_notes", "")  # Store but don't return
+            "checklist_items": checklist_items,
+            "examiner_notes": examiner_notes  # Store but don't return
         })
         
         self.supabase.table("osce_scenarios")\
@@ -752,10 +846,23 @@ Stay in character as the patient. Respond naturally."""
             .execute()
         
         # Return only patient-facing information
-        return {
-            "patient_response": patient_response,
-            "feedback": interaction_data.get("feedback_if_needed") if interaction_data.get("feedback_if_needed") else None
+        feedback_value = None
+        next_hint = None
+        if isinstance(interaction_data, dict):
+            feedback_value = interaction_data.get("feedback_if_needed")
+            next_hint = interaction_data.get("next_step_hint")
+        
+        response_data = {
+            "patient_response": patient_response
         }
+        
+        # Only include feedback/hint if they exist
+        if feedback_value:
+            response_data["feedback"] = feedback_value
+        if next_hint:
+            response_data["hint"] = next_hint
+            
+        return response_data
     
     # =========================================================================
     # PERFORMANCE TRACKING

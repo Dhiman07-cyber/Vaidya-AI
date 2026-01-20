@@ -1769,9 +1769,20 @@ async def get_osce_scenario(
         if not response.data:
             raise HTTPException(status_code=404, detail="Scenario not found")
         
-        # Remove examiner-only fields
         scenario = response.data
-        scenario.pop("examiner_checklist", None)
+        
+        # Sanitize examiner checklist - only return item names and critical status
+        # Don't expose notes, points, or other examiner-only information
+        if "examiner_checklist" in scenario and scenario["examiner_checklist"]:
+            sanitized_checklist = []
+            for item in scenario["examiner_checklist"]:
+                sanitized_checklist.append({
+                    "item": item.get("item", ""),
+                    "critical": item.get("critical", False)
+                })
+            scenario["examiner_checklist"] = sanitized_checklist
+        
+        # Remove other examiner-only fields
         scenario.pop("expected_actions", None)
         
         return scenario
