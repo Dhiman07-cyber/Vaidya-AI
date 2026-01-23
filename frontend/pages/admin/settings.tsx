@@ -10,6 +10,7 @@ export default function AdminSettings() {
     const [loading, setLoading] = useState(true)
     const [isAdmin, setIsAdmin] = useState(false)
     const [platformName, setPlatformName] = useState('')
+    const [supportEmail, setSupportEmail] = useState('')
     const [studentPlanPrice, setStudentPlanPrice] = useState(150)
     const [proPlanPrice, setProPlanPrice] = useState(300)
     const [yearlyDiscount, setYearlyDiscount] = useState(10)
@@ -43,6 +44,7 @@ export default function AdminSettings() {
                     if (settingsRes.ok) {
                         const settings = await settingsRes.json()
                         setPlatformName(settings.platform_name)
+                        setSupportEmail(settings.support_email || 'support@vaidya.ai')
                         setStudentPlanPrice(settings.student_plan_price)
                         setProPlanPrice(settings.pro_plan_price)
                         setYearlyDiscount(settings.yearly_discount_percentage)
@@ -77,6 +79,7 @@ export default function AdminSettings() {
                 },
                 body: JSON.stringify({
                     platform_name: platformName,
+                    support_email: supportEmail,
                     student_plan_price: studentPlanPrice,
                     pro_plan_price: proPlanPrice,
                     yearly_discount_percentage: yearlyDiscount
@@ -158,6 +161,24 @@ export default function AdminSettings() {
                             </div>
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                                <div>
+                                    <label style={{
+                                        display: 'block', fontSize: '14px', fontWeight: '600', color: '#475569',
+                                        marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em'
+                                    }}>
+                                        Support Email
+                                    </label>
+                                    <input
+                                        type="email"
+                                        value={supportEmail}
+                                        onChange={(e) => setSupportEmail(e.target.value)}
+                                        placeholder="e.g. support@vaidya.ai"
+                                        style={{
+                                            width: '100%', padding: '12px 16px', borderRadius: '8px',
+                                            border: '1.5px solid #e2e8f0', fontSize: '16px', outline: 'none'
+                                        }}
+                                    />
+                                </div>
                                 <div>
                                     <label style={{
                                         display: 'block', fontSize: '14px', fontWeight: '600', color: '#475569',

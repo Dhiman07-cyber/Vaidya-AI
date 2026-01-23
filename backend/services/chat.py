@@ -319,8 +319,8 @@ Always prioritize accuracy, clarity, and clinical applicability in your response
                 feature="chat"
             )
             
-            # Return the AI response message
-            return ai_message_response.data[0]
+            # Return both messages for better sync
+            return [user_message_response.data[0], ai_message_response.data[0]]
         except Exception as e:
             raise Exception(f"Failed to send message: {str(e)}")
     

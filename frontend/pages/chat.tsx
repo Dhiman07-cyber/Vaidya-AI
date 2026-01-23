@@ -284,6 +284,18 @@ export default function Chat() {
         throw new Error('No authentication token available')
       }
 
+      // Check for greeting BEFORE sending to backend/AI
+      const lowerContent = content.toLowerCase().trim().replace(/[!?.]+$/, '')
+      const greetingPatterns = [
+        /^hi+$/,
+        /^he+l+o+$/,
+        /^he+y+$/,
+        /^yo+$/,
+        /^g(ood)?\s*m(orning)?$/,
+        /^gm$/
+      ]
+      const isGreeting = greetingPatterns.some(pattern => pattern.test(lowerContent))
+
       let activeSessionId = currentSessionId
 
       // If no session is selected, create one automatically
@@ -295,7 +307,7 @@ export default function Chat() {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            title: content.slice(0, 30) || 'New Chat' // Use first few words as title
+            title: content.slice(0, 30) || 'New Chat'
           })
         })
 
@@ -309,7 +321,7 @@ export default function Chat() {
         activeSessionId = newSession.id
       }
 
-      // Add user message to UI immediately for better UX
+      // Add user message to UI immediately (temporary)
       const tempUserMessage: Message = {
         id: `temp-${Date.now()}`,
         role: 'user',
@@ -318,126 +330,133 @@ export default function Chat() {
       }
       setMessages(prev => [...prev, tempUserMessage])
 
-      // If document is active, search for relevant context
-      let documentContext = ''
-      if (activeDocument) {
-        try {
-          const searchResponse = await fetch(
-            `${API_URL}/api/documents/search?query=${encodeURIComponent(content)}&feature=chat&top_k=3`,
-            {
-              headers: {
-                'Authorization': `Bearer ${authToken}`
-              }
-            }
-          )
-
-          if (searchResponse.ok) {
-            const searchResults = await searchResponse.json()
-            if (searchResults.length > 0) {
-              documentContext = '\n\n[Document Context]\n' + searchResults.map((r: any) => r.content).join('\n\n')
-            }
-          }
-        } catch (searchErr) {
-          console.error('Document search failed:', searchErr)
-          // Continue without context
-        }
-      }
-
-      // Send message to backend with document context
-      const messageContent = documentContext ? content + documentContext : content
-
-      const response = await fetch(`${API_URL}/api/chat/sessions/${activeSessionId}/messages`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message: messageContent,
-          role: 'user'
-        })
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.detail || 'Failed to send message')
-      }
-
-      const savedMessage = await response.json()
-
-      // Replace temp message with saved message
-      setMessages(prev => prev.map(msg =>
-        msg.id === tempUserMessage.id ? savedMessage : msg
-      ))
-
-      // Check if the message is a greeting
-      const lowerContent = content.toLowerCase().trim().replace(/[!.]+$/, '')
-      const greetingPatterns = [
-        /^hi+$/,
-        /^he+l+o+$/,
-        /^he+y+$/,
-        /^yo+$/,
-        /^g(ood)?\s*m(orning)?$/,
-        /^gm$/
-      ]
-
-      const isGreeting = greetingPatterns.some(pattern => pattern.test(lowerContent))
-
-      let assistantContent = 'AI response will be implemented when the model router is integrated in Phase 2.'
-
       if (isGreeting) {
+        // 1. Save the user's greeting message to the backend (NO AI generation)
+        const userMessageResponse = await fetch(`${API_URL}/api/chat/sessions/${activeSessionId}/messages`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: content,
+            role: 'user',
+            generate_response: false
+          })
+        })
+
+        if (!userMessageResponse.ok) {
+          const errorData = await userMessageResponse.json().catch(() => ({}))
+          throw new Error(errorData.detail || 'Failed to save message')
+        }
+
+        const savedUserMessage = await userMessageResponse.json()
+        setMessages(prev => prev.map(msg =>
+          msg.id === tempUserMessage.id ? savedUserMessage : msg
+        ))
+
+        // 2. Auto-reply with hardcoded greeting
         const greetingReplies = [
           "Hello! How can I assist you with your medical studies today?",
           "Hi there! Ready to dive into some clinical cases?",
           "Hey! What medical concepts are we exploring today?",
           "Greetings! I'm here to support your learning journey."
         ]
-        assistantContent = greetingReplies[Math.floor(Math.random() * greetingReplies.length)]
-      }
+        const assistantContent = greetingReplies[Math.floor(Math.random() * greetingReplies.length)]
 
-      // Attempt to save assistant message to backend (especially for greetings)
-      try {
-        // Only verify persistence for greetings now as the other is a placeholder
-        // But if the backend supports it, we might as well save both to maintain flow
-        // For now, let's persist the greeting to make it a "real" cheap interaction
-
-        if (isGreeting) {
-          const aiResponse = await fetch(`${API_URL}/api/chat/sessions/${activeSessionId}/messages`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${authToken}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              message: assistantContent,
-              role: 'assistant'
-            })
+        // Save assistant greeting to backend
+        const aiResponse = await fetch(`${API_URL}/api/chat/sessions/${activeSessionId}/messages`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: assistantContent,
+            role: 'assistant',
+            generate_response: false
           })
+        })
 
-          if (aiResponse.ok) {
-            const savedAiMessage = await aiResponse.json()
-            setMessages(prev => [...prev, savedAiMessage])
-            return
+        if (aiResponse.ok) {
+          const savedAiMessage = await aiResponse.json()
+          setMessages(prev => [...prev, savedAiMessage])
+        } else {
+          // Fallback local display if saving assistant message fails
+          const assistantMessage: Message = {
+            id: `assistant-${Date.now()}`,
+            role: 'assistant',
+            content: assistantContent,
+            created_at: new Date().toISOString()
+          }
+          setMessages(prev => [...prev, assistantMessage])
+        }
+      } else {
+        // Regular AI response (not a greeting)
+        // If document is active, we might want to pass it, but the backend handles RAG automatically
+        // based on the message content and session context.
+
+        // However, the original code added [Document Context] to the message content.
+        // Let's keep that but rely on the backend's generate_response=true.
+
+        let documentContext = ''
+        if (activeDocument) {
+          try {
+            const searchResponse = await fetch(
+              `${API_URL}/api/documents/search?query=${encodeURIComponent(content)}&feature=chat&top_k=3`,
+              {
+                headers: {
+                  'Authorization': `Bearer ${authToken}`
+                }
+              }
+            )
+
+            if (searchResponse.ok) {
+              const searchResults = await searchResponse.json()
+              if (searchResults.length > 0) {
+                documentContext = '\n\n[Document Context]\n' + searchResults.map((r: any) => r.content).join('\n\n')
+              }
+            }
+          } catch (searchErr) {
+            console.error('Document search failed:', searchErr)
           }
         }
-      } catch (e) {
-        console.error("Error saving AI response", e)
-      }
 
-      // Fallback / Local display if save failed or for placeholder
-      const assistantMessage: Message = {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: assistantContent,
-        created_at: new Date().toISOString()
+        const messageContent = documentContext ? content + documentContext : content
+
+        // Send user message to backend and request AI generation
+        const response = await fetch(`${API_URL}/api/chat/sessions/${activeSessionId}/messages`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: messageContent,
+            role: 'user',
+            generate_response: true
+          })
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.detail || 'Failed to get AI response')
+        }
+
+        const savedMessages = await response.json() // Expecting an array of [user_message, assistant_message]
+
+        // Update the temporary user message with the real one and add the assistant message
+        setMessages(prev => {
+          const updatedPrev = prev.map(msg =>
+            msg.id === tempUserMessage.id ? savedMessages[0] : msg
+          )
+          return [...updatedPrev, savedMessages[1]]
+        })
       }
-      setMessages(prev => [...prev, assistantMessage])
 
     } catch (err) {
       console.error('Failed to send message:', err)
       setError(err instanceof Error ? err.message : 'Failed to send message')
-
-      // Remove the temporary message on error
       setMessages(prev => prev.filter(msg => !msg.id.startsWith('temp-')))
     } finally {
       setSendingMessage(false)

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { AuthUser } from '@/lib/supabase'
-import { ChevronLeft, Menu } from 'lucide-react'
+import { ChevronLeft, Menu, Shield } from 'lucide-react'
 
 interface SidebarProps {
   user: AuthUser | null
@@ -61,6 +61,8 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
 
   const isActive = (path: string) => currentPath === path
   const sidebarWidth = isCollapsed ? '70px' : '240px'
+  // Admin has the button taking space, so their name gets less width
+  const nameMaxWidth = plan.toLowerCase() === 'admin' ? '70px' : '160px'
 
   return (
     <div className="sidebar-container" data-lenis-prevent>
@@ -118,9 +120,24 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
                 {user ? (user.user_metadata?.name || user.email)?.[0].toUpperCase() : '?'}
               </div>
               <div className="user-text">
-                <p className="user-name">{user ? (user.user_metadata?.name || user.email?.split('@')[0]) : 'Loading...'}</p>
+                <p
+                  className="user-name"
+                  style={{ maxWidth: nameMaxWidth }}
+                  title={user ? (user.user_metadata?.name || user.email) : ''}
+                >
+                  {user ? (user.user_metadata?.name || user.email?.split('@')[0]) : 'Loading...'}
+                </p>
                 <p className="user-subtext">{getPlanLabel(plan)}</p>
               </div>
+
+              {(plan.toLowerCase() === 'admin') && (
+                <button
+                  className="admin-portal-btn"
+                  onClick={() => router.push('/admin/dashboard')}
+                >
+                  Admin Portal
+                </button>
+              )}
             </div>
 
             {/* Token Meter Removed */}
@@ -320,6 +337,7 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
         .user-text {
           display: flex;
           flex-direction: column;
+          min-width: 0; /* Important for text truncation in flex items */
         }
 
         .user-name {
@@ -328,6 +346,9 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
           color: white;
           margin: 0;
           line-height: 1.2;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .user-subtext {
@@ -335,6 +356,29 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
           color: #ADB5BD;
           margin: 0;
           font-weight: 600;
+        }
+
+        .admin-portal-btn {
+          margin-left: auto;
+          background: linear-gradient(135deg, #F3E8FF 0%, #D8B4FE 100%);
+          border: none;
+          border-radius: 6px;
+          padding: 6px 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          color: #6B21A8;
+          font-size: 11px;
+          font-weight: 700;
+          transition: all 0.2s;
+          box-shadow: 0 2px 8px rgba(168, 85, 247, 0.2);
+          white-space: nowrap;
+        }
+
+        .admin-portal-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
         }
 
 /* Token Styles Removed */

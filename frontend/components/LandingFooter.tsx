@@ -1,16 +1,47 @@
 import Link from 'next/link'
-import { Activity, Heart, Shield, ArrowRight } from 'lucide-react'
+import { Activity, Heart, Shield, Send } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 
 export default function LandingFooter() {
     const [isLoggedIn, setIsLoggedIn] = useState(false)
+    const [supportEmail, setSupportEmail] = useState('support@vaidya.ai')
+    const [submitting, setSubmitting] = useState(false)
+    const [sent, setSent] = useState(false)
 
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
             setIsLoggedIn(!!session)
         })
+
+        // Fetch system settings for support email
+        const fetchSettings = async () => {
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+            try {
+                const res = await fetch(`${API_URL}/api/system/settings`)
+                if (res.ok) {
+                    const data = await res.json()
+                    if (data.support_email) {
+                        setSupportEmail(data.support_email)
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch settings:", error)
+            }
+        }
+
+        fetchSettings()
     }, [])
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault()
+        setSubmitting(true)
+        // Simulate API call
+        setTimeout(() => {
+            setSubmitting(false)
+            setSent(true)
+        }, 1500)
+    }
 
     const platformLinks = [
         { name: "Concept Mapping", href: "/conceptmap" },
@@ -22,8 +53,8 @@ export default function LandingFooter() {
     return (
         <footer className="pt-20 pb-12 px-6 border-t border-[var(--cream-accent-soft)] bg-[var(--cream-bg)]">
             <div className="max-w-7xl mx-auto">
-                <div className="grid md:grid-cols-4 gap-16 mb-20">
-                    <div className="col-span-1 md:col-span-1">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-10">
+                    <div className="col-span-1 md:col-span-5 md:pr-24 md:pl-12">
                         <Link href="/" className="flex items-center gap-2 mb-6">
                             <div className="w-8 h-8 bg-[var(--cream-text-main)] rounded-lg flex items-center justify-center">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -44,7 +75,7 @@ export default function LandingFooter() {
                         </div>
                     </div>
 
-                    <div>
+                    <div className="col-span-1 md:col-span-2">
                         <h5 className="font-bold text-[var(--cream-text-main)] uppercase tracking-widest text-xs mb-8">Platform</h5>
                         <ul className="space-y-4 text-[var(--cream-text-muted)] font-medium text-sm">
                             {platformLinks.map((link) => (
@@ -60,7 +91,7 @@ export default function LandingFooter() {
                         </ul>
                     </div>
 
-                    <div>
+                    <div className="col-span-1 md:col-span-2">
                         <h5 className="font-bold text-[var(--cream-text-main)] uppercase tracking-widest text-xs mb-8">Company</h5>
                         <ul className="space-y-4 text-[var(--cream-text-muted)] font-medium text-sm">
                             <li><Link href="/#about" className="hover:text-black">About Us</Link></li>
@@ -70,21 +101,55 @@ export default function LandingFooter() {
                         </ul>
                     </div>
 
-                    <div>
-                        <h5 className="font-bold text-[var(--cream-text-main)] uppercase tracking-widest text-xs mb-8">Subscribe</h5>
-                        <p className="text-[var(--cream-text-muted)] font-medium text-xs leading-relaxed mb-6">Receive the latest medical insights and AI updates.</p>
-                        <div className="relative">
-                            <input type="email" placeholder="Your email" className="w-full bg-[var(--cream-accent-soft)] border border-[var(--cream-accent)] rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-black transition-colors" />
-                            <button className="absolute right-2 top-2 w-8 h-8 bg-black text-white rounded-lg flex items-center justify-center"><ArrowRight size={16} /></button>
+                    <div className="col-span-1 md:col-span-3">
+                        <div className="w-[260px] bg-white p-5 rounded-2xl shadow-sm border border-[var(--cream-accent-soft)]">
+                            {sent ? (
+                                <div className="text-center py-6">
+                                    <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-3">
+                                        <Send size={20} />
+                                    </div>
+                                    <h3 className="text-base font-bold text-slate-800 mb-2">Message Sent!</h3>
+                                    <button
+                                        onClick={() => setSent(false)}
+                                        className="text-indigo-600 text-xs font-bold hover:underline"
+                                    >
+                                        Send another
+                                    </button>
+                                </div>
+                            ) : (
+                                <form onSubmit={handleSubmit} className="space-y-3">
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wide">Topic</label>
+                                        <select className="w-full p-1.5 rounded-lg border border-slate-200 text-xs outline-none focus:border-indigo-500 bg-slate-50">
+                                            <option>General Inquiry</option>
+                                            <option>Technical Support</option>
+                                            <option>Billing Question</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wide">Message</label>
+                                        <textarea
+                                            rows={2}
+                                            required
+                                            placeholder="How can we help?"
+                                            className="w-full p-2 rounded-lg border border-slate-200 text-xs outline-none focus:border-indigo-500 bg-slate-50 resize-none font-sans"
+                                        />
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={submitting}
+                                        className="w-full py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-70 disabled:cursor-not-allowed"
+                                    >
+                                        {submitting ? 'Sending...' : <><Send size={12} /> Send Message</>}
+                                    </button>
+                                </form>
+                            )}
                         </div>
                     </div>
                 </div>
 
-                <div className="flex flex-col md:flex-row justify-between items-center pt-12 border-t border-[var(--cream-accent-soft)]">
+                <div className="flex justify-center pt-8 border-t border-[var(--cream-accent-soft)]">
                     <p className="text-[var(--cream-text-muted)] text-[11px] font-bold uppercase tracking-widest">© 2026 Vaidya AI. All Rights Reserved.</p>
-                    <div className="flex gap-8 mt-6 md:mt-0">
-                        <p className="text-[var(--cream-text-muted)] text-[11px] font-bold uppercase tracking-widest">Designed for Excellence</p>
-                    </div>
                 </div>
             </div>
         </footer>

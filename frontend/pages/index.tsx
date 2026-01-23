@@ -230,64 +230,72 @@ export default function LandingPage() {
       </section>
 
       {/* 2. Methodology Section */}
-      <section id="methodology" className="py-32 px-6 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-24">
+      <section id="methodology" className="py-20 px-6 relative overflow-hidden bg-white/30">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10">
             <h2 className="text-[13px] font-bold text-indigo-600 uppercase tracking-[0.3em] mb-4">Precision Engine</h2>
             <h3 className="text-5xl font-black text-[var(--cream-text-main)] tracking-tight">The Science of Precision.</h3>
-            <p className="mt-6 text-xl text-[var(--cream-text-muted)] max-w-2xl mx-auto font-medium leading-relaxed">
+            <p className="mt-4 text-lg text-[var(--cream-text-muted)] max-w-2xl mx-auto font-medium leading-relaxed">
               Vaidya AI utilizes a multi-layered clinical reasoning engine designed to mimic professional expertise.
             </p>
           </div>
 
-          <div className="relative p-1 md:p-12 bg-white rounded-[60px] border border-slate-100 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.08)] overflow-hidden">
-            {/* Animated Data Path - Background Layer */}
-            <div className="absolute top-1/2 left-0 w-full h-px bg-slate-100 -translate-y-1/2 hidden md:block">
-              <motion.div
-                animate={{ x: ['-100%', '100%'] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                className="w-40 h-full bg-gradient-to-r from-transparent via-indigo-400 to-transparent"
-              />
-            </div>
+          <div className="relative p-1 md:p-4 bg-white rounded-[40px] border border-slate-100 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.06)] overflow-hidden">
+            {/* High-Tech Grid Background */}
+            <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(#4f46e5 1px, transparent 1px), linear-gradient(90deg, #4f46e5 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
 
-            <div className="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100 relative z-10">
+            {/* Neural Scanning Beam */}
+            <motion.div
+              animate={{ x: ['-20%', '120%'] }}
+              transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+              className="absolute top-0 bottom-0 w-32 bg-gradient-to-r from-transparent via-indigo-50/50 to-transparent skew-x-12 z-0"
+            />
+
+            <div className="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-50 relative z-10">
               {[
                 {
                   title: "Evidence Ingestion",
                   desc: "We process millions of peer-reviewed articles and clinical guidelines in real-time.",
-                  icon: <Shield className="text-indigo-600" size={32} />,
-                  accent: "bg-indigo-50"
+                  icon: <Shield className="text-indigo-600" size={28} />,
+                  accent: "bg-indigo-50/50"
                 },
                 {
                   title: "Neural Analysis",
                   desc: "Our proprietary LLM architecture identifies complex clinical correlations instantly.",
-                  icon: <Brain className="text-indigo-600" size={32} />,
-                  accent: "bg-indigo-50"
+                  icon: <Brain className="text-indigo-600" size={28} />,
+                  accent: "bg-indigo-50/50"
                 },
                 {
                   title: "Clinical Validation",
                   desc: "Every output is cross-referenced against gold-standard medical benchmarks.",
-                  icon: <CheckCircle2 className="text-indigo-600" size={32} />,
-                  accent: "bg-indigo-50"
+                  icon: <CheckCircle2 className="text-indigo-600" size={28} />,
+                  accent: "bg-indigo-50/50"
                 }
               ].map((item, i) => (
                 <motion.div
                   key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
-                  transition={{ delay: i * 0.2 }}
-                  className="p-10 md:p-16 flex flex-col items-center text-center group"
+                  transition={{ delay: i * 0.1, duration: 0.5 }}
+                  className="p-8 md:p-10 flex flex-col items-center text-center group"
                 >
-                  <div className={`w-24 h-24 ${item.accent} rounded-[32px] flex items-center justify-center mb-10 transition-all duration-500 group-hover:scale-110 group-hover:shadow-[0_20px_40px_-10px_rgba(79,70,229,0.2)] relative`}>
-                    <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-40 rounded-[32px] transition-opacity duration-500"></div>
-                    {item.icon}
+                  <div className="relative mb-6">
+                    <motion.div
+                      animate={{ opacity: [0.1, 0.2, 0.1] }}
+                      transition={{ duration: 3, repeat: Infinity }}
+                      className="absolute -inset-6 bg-indigo-100 rounded-full blur-2xl"
+                    />
+                    <div className={`w-20 h-20 ${item.accent} rounded-[28px] flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:shadow-[0_15px_30px_-10px_rgba(79,70,229,0.15)] relative z-10 border border-indigo-100/50`}>
+                      <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-40 rounded-[28px] transition-opacity duration-500"></div>
+                      {item.icon}
+                    </div>
                   </div>
 
-                  <h4 className="text-2xl font-black text-[var(--cream-text-main)] mb-6 tracking-tight group-hover:text-indigo-600 transition-colors">
+                  <h4 className="text-xl font-black text-[var(--cream-text-main)] mb-4 tracking-tight group-hover:text-indigo-600 transition-colors">
                     {item.title}
                   </h4>
-                  <p className="text-[var(--cream-text-muted)] font-medium leading-relaxed max-w-[280px]">
+                  <p className="text-sm text-[var(--cream-text-muted)] font-medium leading-relaxed max-w-[240px]">
                     {item.desc}
                   </p>
                 </motion.div>
@@ -315,9 +323,9 @@ export default function LandingPage() {
               },
               {
                 icon: <Activity className="text-indigo-600" size={24} />,
-                value: '2.4M+',
-                label: 'Questions Bank',
-                sub: 'High-yield clinical scenarios'
+                value: '540B+',
+                label: 'Model Parameters',
+                sub: 'Trained on medical gold-standards'
               },
               {
                 icon: <Brain className="text-indigo-600" size={24} />,
