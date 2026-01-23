@@ -296,6 +296,15 @@ export default function Chat() {
       ]
       const isGreeting = greetingPatterns.some(pattern => pattern.test(lowerContent))
 
+      // Add user message to UI immediately (temporary)
+      const tempUserMessage: Message = {
+        id: `temp-${Date.now()}`,
+        role: 'user',
+        content,
+        created_at: new Date().toISOString()
+      }
+      setMessages(prev => [...prev, tempUserMessage])
+
       let activeSessionId = currentSessionId
 
       // If no session is selected, create one automatically
@@ -320,15 +329,6 @@ export default function Chat() {
         setCurrentSessionId(newSession.id)
         activeSessionId = newSession.id
       }
-
-      // Add user message to UI immediately (temporary)
-      const tempUserMessage: Message = {
-        id: `temp-${Date.now()}`,
-        role: 'user',
-        content,
-        created_at: new Date().toISOString()
-      }
-      setMessages(prev => [...prev, tempUserMessage])
 
       if (isGreeting) {
         // 1. Save the user's greeting message to the backend (NO AI generation)
