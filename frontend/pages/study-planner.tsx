@@ -1,11 +1,11 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { supabase, AuthUser } from '@/lib/supabase'
 import DashboardLayout from '@/components/DashboardLayout'
-import DatePicker from '@/components/DatePicker'
 import { Calendar, Clock, Plus, ChevronLeft, ChevronRight, Check, X, Play, Pause, Target, Flame, Zap, Brain, Edit3, Trash2, Download, TrendingUp, Award, Settings } from 'lucide-react'
 import html2canvas from 'html2canvas'
+
 
 interface PlanEntry {
     id: string
@@ -53,13 +53,15 @@ const PRIORITIES = [
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 // Generate time slots dynamically based on start and end hour
-const generateTimeSlots = (startHour: number, endHour: number) => {
+const generateTimeSlots = (startHour: number, endHour: number, use24Hour: boolean = false) => {
     const slots = []
     for (let hour = startHour; hour <= endHour; hour++) {
         slots.push({
             hour,
             label: `${hour.toString().padStart(2, '0')}:00`,
-            display: hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`
+            display: use24Hour
+                ? `${hour.toString().padStart(2, '0')}:00`
+                : (hour < 12 ? `${hour === 0 ? 12 : hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`)
         })
     }
     return slots
@@ -87,7 +89,24 @@ export default function StudyPlanner() {
     const [editingEntry, setEditingEntry] = useState<PlanEntry | null>(null)
     const [selectedCell, setSelectedCell] = useState<{ day: string; hour: number } | null>(null)
     const [activeCellMenu, setActiveCellMenu] = useState<string | null>(null)
+    const [menuPosition, setMenuPosition] = useState<'top' | 'bottom'>('bottom')
     const [showSettings, setShowSettings] = useState(false)
+    const [use24Hour, setUse24Hour] = useState(false)
+    const [dialogConfig, setDialogConfig] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        type: 'alert' | 'confirm';
+        onConfirm?: () => void;
+    } | null>(null)
+
+    const showAlert = (title: string, message: string) => {
+        setDialogConfig({ isOpen: true, title, message, type: 'alert' })
+    }
+
+    const showConfirm = (title: string, message: string, onConfirm: () => void) => {
+        setDialogConfig({ isOpen: true, title, message, type: 'confirm', onConfirm })
+    }
 
     // Timer modal state
     const [timerEntry, setTimerEntry] = useState<PlanEntry | null>(null)
@@ -99,25 +118,96 @@ export default function StudyPlanner() {
     const [startHour, setStartHour] = useState(DEFAULT_START_HOUR)
     const [endHour, setEndHour] = useState(DEFAULT_END_HOUR)
 
-    // Load time config from localStorage on mount
+    // Load time config and scroll mode from localStorage on mount
     useEffect(() => {
         const savedStartHour = localStorage.getItem('studyPlanner_startHour')
         const savedEndHour = localStorage.getItem('studyPlanner_endHour')
+        const savedScrollMode = localStorage.getItem('studyPlanner_scrollMode') as 'mouse' | 'arrows'
+        const saved24Hour = localStorage.getItem('studyPlanner_use24Hour') === 'true'
         if (savedStartHour) setStartHour(parseInt(savedStartHour))
         if (savedEndHour) setEndHour(parseInt(savedEndHour))
+        if (savedScrollMode) setScrollMode(savedScrollMode)
+        setUse24Hour(saved24Hour)
     }, [])
 
+    const [scrollMode, setScrollMode] = useState<'mouse' | 'arrows'>('mouse')
+
+    // Drag to scroll logic
+    const isDragging = useRef(false)
+    const startX = useRef(0)
+    const scrollLeftValue = useRef(0)
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+        if (scrollMode !== 'mouse') return
+        isDragging.current = true
+        // Use currentTarget to refer to the .timetable-wrapper
+        const wrapper = e.currentTarget as HTMLElement
+        startX.current = e.pageX - wrapper.offsetLeft
+        scrollLeftValue.current = wrapper.scrollLeft
+        wrapper.style.cursor = 'grabbing'
+        wrapper.style.userSelect = 'none'
+    }
+
+    const handleMouseLeave = (e: React.MouseEvent) => {
+        if (!isDragging.current) return
+        isDragging.current = false
+        const wrapper = e.currentTarget as HTMLElement
+        wrapper.style.cursor = 'default'
+        wrapper.style.userSelect = 'auto'
+    }
+
+    const handleMouseUp = (e: React.MouseEvent) => {
+        if (!isDragging.current) return
+        isDragging.current = false
+        const wrapper = e.currentTarget as HTMLElement
+        wrapper.style.cursor = 'default'
+        wrapper.style.userSelect = 'auto'
+    }
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (!isDragging.current || scrollMode !== 'mouse') return
+        e.preventDefault()
+        const wrapper = e.currentTarget as HTMLElement
+        const x = e.pageX - wrapper.offsetLeft
+        const walk = (x - startX.current) * 2 // scroll speed multiplier
+        wrapper.scrollLeft = scrollLeftValue.current - walk
+    }
+
+    const handleArrowScroll = (direction: 'left' | 'right') => {
+        if (!timetableRef.current) return
+        const scrollAmount = 120 + 1 // column width + gap
+        timetableRef.current.scrollBy({
+            left: direction === 'left' ? -scrollAmount : scrollAmount,
+            behavior: 'smooth'
+        })
+    }
+
     // Save time config to localStorage when changed
-    const updateTimeConfig = (newStart: number, newEnd: number) => {
+    const updateSettings = (newStart: number, newEnd: number, newMode: 'mouse' | 'arrows', new24h: boolean) => {
         setStartHour(newStart)
         setEndHour(newEnd)
+        setScrollMode(newMode)
+        setUse24Hour(new24h)
         localStorage.setItem('studyPlanner_startHour', newStart.toString())
         localStorage.setItem('studyPlanner_endHour', newEnd.toString())
+        localStorage.setItem('studyPlanner_scrollMode', newMode)
+        localStorage.setItem('studyPlanner_use24Hour', new24h.toString())
         setShowSettings(false)
     }
 
+    const formatTimeDisplay = (timeStr: string) => {
+        if (!timeStr) return ''
+        const [h, m] = timeStr.split(':').map(Number)
+        if (use24Hour) {
+            return `${h.toString().padStart(2, '0')}:${(m || 0).toString().padStart(2, '0')}`
+        }
+        const ampm = h >= 12 ? 'PM' : 'AM'
+        const hour = h % 12 || 12
+        return `${hour}:${(m || 0).toString().padStart(2, '0')} ${ampm}`
+    }
+
     // Generate TIME_SLOTS based on config
-    const TIME_SLOTS = useMemo(() => generateTimeSlots(startHour, endHour), [startHour, endHour])
+    const TIME_SLOTS = useMemo(() => generateTimeSlots(startHour, endHour, use24Hour), [startHour, endHour, use24Hour])
 
     // Form state with duration instead of end_time
     const [formData, setFormData] = useState({
@@ -142,6 +232,20 @@ export default function StudyPlanner() {
             fetchDailyBrief()
         }
     }, [user, currentDate])
+
+    // Keyboard arrow navigation
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (scrollMode !== 'arrows' || showModal || showSettings) return
+            if (e.key === 'ArrowLeft') {
+                handleArrowScroll('left')
+            } else if (e.key === 'ArrowRight') {
+                handleArrowScroll('right')
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [scrollMode, showModal, showSettings])
 
     // Timer effect
     useEffect(() => {
@@ -353,33 +457,34 @@ export default function StudyPlanner() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-
-        // Calculate end_time from start_hour and duration
         const endHour = formData.start_hour + formData.duration
 
-        // Check for conflicts with existing entries
-        const hasConflict = entries.some(entry => {
-            // Skip the entry being edited
+        // Check for conflicts
+        const conflictingEntries = entries.filter(entry => {
             if (editingEntry && entry.id === editingEntry.id) return false
-
-            // Check if same date
             if (entry.scheduled_date !== formData.scheduled_date) return false
-
-            // Parse existing entry times
             const existingStart = parseInt(entry.start_time.split(':')[0])
             const existingEnd = parseInt(entry.end_time.split(':')[0])
             const newStart = formData.start_hour
             const newEnd = endHour
-
-            // Check for overlap: (start1 < end2) && (start2 < end1)
             return (newStart < existingEnd) && (existingStart < newEnd)
         })
 
-        if (hasConflict) {
-            alert('Time slot conflict! Another session already exists during this time period. Please choose a different time.')
+        if (conflictingEntries.length > 0) {
+            const conflictNames = conflictingEntries.map(e => e.subject).join(', ')
+            showConfirm(
+                'Schedule Conflict',
+                `This session overlaps with: ${conflictNames}. Do you want to create it anyway?`,
+                () => performSubmit()
+            )
             return
         }
 
+        performSubmit()
+    }
+
+    const performSubmit = async () => {
+        const endHour = formData.start_hour + formData.duration
         try {
             const token = await getToken()
             const method = editingEntry ? 'PUT' : 'POST'
@@ -399,7 +504,7 @@ export default function StudyPlanner() {
                 color_code: formData.color_code,
             }
 
-            await fetch(url, {
+            const res = await fetch(url, {
                 method,
                 headers: {
                     'Content-Type': 'application/json',
@@ -407,6 +512,12 @@ export default function StudyPlanner() {
                 },
                 body: JSON.stringify(payload)
             })
+
+            if (!res.ok) {
+                const error = await res.json()
+                alert(error.detail || 'Failed to save entry')
+                return
+            }
 
             setShowModal(false)
             setEditingEntry(null)
@@ -435,22 +546,34 @@ export default function StudyPlanner() {
     const handleStart = async (entry: PlanEntry) => {
         try {
             const token = await getToken()
-            await fetch(`http://localhost:8000/api/planner/entries/${entry.id}/start`, {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            fetchEntries()
+            // Only start if not already in progress
+            if (entry.status !== 'in_progress') {
+                await fetch(`http://localhost:8000/api/planner/entries/${entry.id}/start`, {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+                fetchEntries()
+            }
             setActiveCellMenu(null)
 
-            // Calculate timer duration from entry
-            const startParts = entry.start_time.split(':').map(Number)
-            const endParts = entry.end_time.split(':').map(Number)
-            const durationMinutes = (endParts[0] * 60 + endParts[1]) - (startParts[0] * 60 + startParts[1])
+            // Calculate remaining time
+            const now = new Date()
+            const [endH, endM] = entry.end_time.split(':').map(Number)
+            const target = new Date()
+            target.setHours(endH, endM, 0, 0)
 
-            // Open timer modal
+            let diffSeconds = Math.floor((target.getTime() - now.getTime()) / 1000)
+
+            // If the time is in the past or way in filter, use planned duration
+            if (diffSeconds <= 0 || diffSeconds > 86400) {
+                const [startH, startM] = entry.start_time.split(':').map(Number)
+                const durationMinutes = (endH * 60 + endM) - (startH * 60 + startM)
+                diffSeconds = durationMinutes * 60
+            }
+
             setTimerEntry(entry)
-            setTimerSeconds(durationMinutes * 60)
-            setTimerRunning(true)
+            setTimerSeconds(diffSeconds)
+            setTimerRunning(false) // Don't start instantly
         } catch (err) {
             console.error('Failed to start entry:', err)
         }
@@ -466,19 +589,82 @@ export default function StudyPlanner() {
     }
 
     const handleDelete = async (entryId: string) => {
-        if (!confirm('Delete this study session?')) return
-        try {
-            const token = await getToken()
-            await fetch(`http://localhost:8000/api/planner/entries/${entryId}`, {
-                method: 'DELETE',
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            fetchEntries()
-            setActiveCellMenu(null)
-        } catch (err) {
-            console.error('Failed to delete entry:', err)
-        }
+        showConfirm('Delete Session', 'Are you sure you want to delete this study session?', async () => {
+            try {
+                const token = await getToken()
+                await fetch(`http://localhost:8000/api/planner/entries/${entryId}`, {
+                    method: 'DELETE',
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+                fetchEntries()
+                setActiveCellMenu(null)
+            } catch (err) {
+                console.error('Failed to delete entry:', err)
+            }
+        })
     }
+
+    // Check if entry is for today
+    const isEntryToday = (entry: PlanEntry) => {
+        const today = new Date().toISOString().split('T')[0]
+        return entry.scheduled_date === today
+    }
+
+    // Check if this is the CURRENT active time slot (now is between start and end)
+    const isCurrentSlot = (entry: PlanEntry) => {
+        if (entry.status === 'completed') return false
+
+        const now = new Date()
+        const today = now.toISOString().split('T')[0]
+        if (entry.scheduled_date !== today) return false
+
+        const [startH, startM] = entry.start_time.split(':').map(Number)
+        const [endH, endM] = entry.end_time.split(':').map(Number)
+
+        const currentHour = now.getHours()
+        const currentMinute = now.getMinutes()
+        const currentTotalMins = currentHour * 60 + currentMinute
+        const startTotalMins = startH * 60 + (startM || 0)
+        const endTotalMins = endH * 60 + (endM || 0)
+
+        return currentTotalMins >= startTotalMins && currentTotalMins < endTotalMins
+    }
+
+    // Check if this is an UPCOMING slot today (hasn't started yet)
+    const isFutureSlotToday = (entry: PlanEntry) => {
+        if (entry.status === 'completed' || entry.status === 'in_progress') return false
+
+        const now = new Date()
+        const today = now.toISOString().split('T')[0]
+        if (entry.scheduled_date !== today) return false
+
+        const [startH, startM] = entry.start_time.split(':').map(Number)
+        const currentHour = now.getHours()
+        const currentMinute = now.getMinutes()
+        const currentTotalMins = currentHour * 60 + currentMinute
+        const startTotalMins = startH * 60 + (startM || 0)
+
+        return currentTotalMins < startTotalMins
+    }
+
+    // Can start session timer: only for CURRENT slot or UPCOMING slots today
+    // Past slots (even today) should use "Continue Now" if time remains
+    const canStartSession = (entry: PlanEntry) => {
+        if (entry.status === 'completed') return false
+
+        // Can start if it's the current active slot
+        if (isCurrentSlot(entry)) return true
+
+        // Can start if it's an upcoming slot today (allows pre-starting)
+        if (isFutureSlotToday(entry)) return true
+
+        // For future dates, show Start button
+        const today = new Date().toISOString().split('T')[0]
+        if (entry.scheduled_date > today) return true
+
+        return false
+    }
+
 
     const resetForm = () => {
         setFormData({
@@ -507,7 +693,20 @@ export default function StudyPlanner() {
 
     const handleEntryClick = (e: React.MouseEvent, entry: PlanEntry) => {
         e.stopPropagation()
-        setActiveCellMenu(activeCellMenu === entry.id ? null : entry.id)
+        const isOpening = activeCellMenu !== entry.id
+        if (isOpening) {
+            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+            const spaceBelow = window.innerHeight - rect.bottom
+            // Menu height is approx 200px. If less than 250px space below, and more space above, flip it.
+            if (spaceBelow < 250 && rect.top > 250) {
+                setMenuPosition('top')
+            } else {
+                setMenuPosition('bottom')
+            }
+            setActiveCellMenu(entry.id)
+        } else {
+            setActiveCellMenu(null)
+        }
     }
 
     const handleEditEntry = (entry: PlanEntry) => {
@@ -676,105 +875,132 @@ export default function StudyPlanner() {
                     </div>
 
                     {/* Timetable Grid */}
-                    <div className="timetable-wrapper" ref={timetableRef}>
-                        <div className="timetable" style={{ '--slot-count': TIME_SLOTS.length } as React.CSSProperties}>
-                            {/* Header Row - Time Slots */}
-                            <div className="timetable-header">
-                                <div className="time-label-header">Day / Time</div>
-                                {TIME_SLOTS.map(slot => (
-                                    <div key={slot.hour} className="time-slot-header">
-                                        {slot.display}
+                    <div className="timetable-container">
+                        {scrollMode === 'arrows' && (
+                            <>
+                                <button className="scroll-arrow arrow-left" onClick={() => handleArrowScroll('left')}>
+                                    <ChevronLeft size={24} />
+                                </button>
+                                <button className="scroll-arrow arrow-right" onClick={() => handleArrowScroll('right')}>
+                                    <ChevronRight size={24} />
+                                </button>
+                            </>
+                        )}
+                        <div
+                            className={`timetable-wrapper ${scrollMode === 'arrows' ? 'arrows-mode' : ''}`}
+                            ref={timetableRef}
+                            onMouseDown={handleMouseDown}
+                            onMouseLeave={handleMouseLeave}
+                            onMouseUp={handleMouseUp}
+                            onMouseMove={handleMouseMove}
+                        >
+                            <div className="timetable" style={{ '--slot-count': TIME_SLOTS.length } as React.CSSProperties}>
+                                {/* Header Row - Time Slots */}
+                                <div className="timetable-header">
+                                    <div className="time-label-header">Day / Time</div>
+                                    {TIME_SLOTS.map(slot => (
+                                        <div key={slot.hour} className="time-slot-header">
+                                            {slot.display}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Day Rows */}
+                                {weekDates.map(({ dayName, date, isToday }) => (
+                                    <div key={dayName} className={`timetable-row ${isToday ? 'today-row' : ''}`}>
+                                        <div className="day-label">
+                                            <span className="day-name">{dayName.slice(0, 3)}</span>
+                                            <span className="day-date">{new Date(date).getDate()}</span>
+                                        </div>
+                                        {TIME_SLOTS.map(slot => {
+                                            const cellKey = `${date}-${slot.hour}`
+                                            const cellEntries = timetableData[cellKey] || []
+                                            const hasEntry = cellEntries.length > 0
+                                            const entry = cellEntries[0] as PlanEntry & { _duration?: number }
+                                            const typeInfo = entry ? getStudyTypeInfo(entry.study_type) : null
+                                            const priorityInfo = entry ? getPriorityInfo(entry.priority) : null
+                                            const duration = entry?._duration || 1
+
+                                            // Check if this is a past event
+                                            const now = new Date()
+                                            const currentHour = now.getHours()
+                                            const todayStr = now.toISOString().split('T')[0]
+                                            const isPastEvent = hasEntry && entry.status !== 'completed' && (
+                                                date < todayStr ||
+                                                (date === todayStr && parseInt(entry.end_time.split(':')[0]) <= currentHour)
+                                            )
+
+                                            // Check if this is the current active slot
+                                            const isCurrentActive = hasEntry && entry ? isCurrentSlot(entry) : false
+
+                                            return (
+                                                <div
+                                                    key={cellKey}
+                                                    className={`timetable-cell ${hasEntry ? 'has-entry' : ''} ${entry?.status === 'completed' ? 'completed' : ''} ${entry?.status === 'in_progress' ? 'in-progress' : ''} ${isPastEvent ? 'past-event' : ''} ${isCurrentActive ? 'current-slot' : ''}`}
+                                                    style={hasEntry ? {
+                                                        '--entry-color': entry.color_code || typeInfo?.color,
+                                                        '--cell-span': duration
+                                                    } as React.CSSProperties : undefined}
+                                                    onClick={() => !hasEntry && handleCellClick(dayName, slot.hour, date)}
+                                                >
+                                                    {hasEntry ? (
+                                                        <div
+                                                            className="cell-entry"
+                                                            onClick={(e) => handleEntryClick(e, entry)}
+                                                            style={{ width: `calc(${duration * 100}% + ${(duration - 1) * 2}px)` }}
+                                                        >
+                                                            <div className="entry-type-badge" style={{ background: `${typeInfo?.color}20`, color: typeInfo?.color }}>
+                                                                {typeInfo?.icon} {typeInfo?.label}
+                                                            </div>
+                                                            <div className="entry-subject">{entry.subject}</div>
+                                                            {entry.topic && <div className="entry-topic">{entry.topic}</div>}
+                                                            <div className="entry-meta">
+                                                                <span className="priority-dot" style={{ background: priorityInfo?.color }}></span>
+                                                                <span>{formatTimeDisplay(entry.start_time)} - {formatTimeDisplay(entry.end_time)}</span>
+                                                            </div>
+
+                                                            {/* Action Menu */}
+                                                            {activeCellMenu === entry.id && (
+                                                                <div className={`cell-menu ${menuPosition}`} onClick={e => e.stopPropagation()}>
+                                                                    <button onClick={() => handleEditEntry(entry)}>
+                                                                        <Edit3 size={14} /> Edit
+                                                                    </button>
+
+                                                                    {/* Start Timer - only for current or future slots */}
+                                                                    {canStartSession(entry) && (
+                                                                        <button onClick={() => handleStart(entry)}>
+                                                                            <Play size={14} /> {isCurrentSlot(entry) || entry.status === 'in_progress' || isPastEvent ? 'Continue now' : 'Start'}
+                                                                        </button>
+                                                                    )}
+
+                                                                    {/* Mark Done - for today's sessions that aren't completed */}
+                                                                    {entry.status !== 'completed' && isEntryToday(entry) && (
+                                                                        <button onClick={() => handleComplete(entry.id)}>
+                                                                            <Check size={14} /> Mark Done
+                                                                        </button>
+                                                                    )}
+
+                                                                    <button className="delete-action" onClick={() => handleDelete(entry.id)}>
+                                                                        <Trash2 size={14} /> Delete
+                                                                    </button>
+                                                                </div>
+                                                            )}
+
+                                                            {entry.status === 'completed' && (
+                                                                <div className="completed-badge"><Check size={10} /></div>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="empty-cell">
+                                                            <Plus size={14} />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )
+                                        })}
                                     </div>
                                 ))}
                             </div>
-
-                            {/* Day Rows */}
-                            {weekDates.map(({ dayName, date, isToday }) => (
-                                <div key={dayName} className={`timetable-row ${isToday ? 'today-row' : ''}`}>
-                                    <div className="day-label">
-                                        <span className="day-name">{dayName.slice(0, 3)}</span>
-                                        <span className="day-date">{new Date(date).getDate()}</span>
-                                    </div>
-                                    {TIME_SLOTS.map(slot => {
-                                        const cellKey = `${date}-${slot.hour}`
-                                        const cellEntries = timetableData[cellKey] || []
-                                        const hasEntry = cellEntries.length > 0
-                                        const entry = cellEntries[0] as PlanEntry & { _duration?: number }
-                                        const typeInfo = entry ? getStudyTypeInfo(entry.study_type) : null
-                                        const priorityInfo = entry ? getPriorityInfo(entry.priority) : null
-                                        const duration = entry?._duration || 1
-
-                                        // Check if this is a past event
-                                        const now = new Date()
-                                        const currentHour = now.getHours()
-                                        const todayStr = now.toISOString().split('T')[0]
-                                        const isPastEvent = hasEntry && entry.status !== 'completed' && (
-                                            date < todayStr ||
-                                            (date === todayStr && parseInt(entry.end_time.split(':')[0]) <= currentHour)
-                                        )
-
-                                        return (
-                                            <div
-                                                key={cellKey}
-                                                className={`timetable-cell ${hasEntry ? 'has-entry' : ''} ${entry?.status === 'completed' ? 'completed' : ''} ${entry?.status === 'in_progress' ? 'in-progress' : ''} ${isPastEvent ? 'past-event' : ''}`}
-                                                style={hasEntry ? {
-                                                    '--entry-color': entry.color_code || typeInfo?.color,
-                                                    '--cell-span': duration
-                                                } as React.CSSProperties : undefined}
-                                                onClick={() => !hasEntry && handleCellClick(dayName, slot.hour, date)}
-                                            >
-                                                {hasEntry ? (
-                                                    <div
-                                                        className="cell-entry"
-                                                        onClick={(e) => handleEntryClick(e, entry)}
-                                                        style={{ width: `calc(${duration * 100}% + ${(duration - 1) * 2}px)` }}
-                                                    >
-                                                        <div className="entry-type-badge" style={{ background: `${typeInfo?.color}20`, color: typeInfo?.color }}>
-                                                            {typeInfo?.icon} {typeInfo?.label}
-                                                        </div>
-                                                        <div className="entry-subject">{entry.subject}</div>
-                                                        {entry.topic && <div className="entry-topic">{entry.topic}</div>}
-                                                        <div className="entry-meta">
-                                                            <span className="priority-dot" style={{ background: priorityInfo?.color }}></span>
-                                                            <span>{entry.start_time.slice(0, 5)} - {entry.end_time.slice(0, 5)}</span>
-                                                        </div>
-
-                                                        {/* Action Menu */}
-                                                        {activeCellMenu === entry.id && (
-                                                            <div className="cell-menu" onClick={e => e.stopPropagation()}>
-                                                                <button onClick={() => handleEditEntry(entry)}>
-                                                                    <Edit3 size={14} /> Edit
-                                                                </button>
-                                                                {entry.status !== 'completed' && entry.status !== 'in_progress' && (
-                                                                    <button onClick={() => handleStart(entry)}>
-                                                                        <Play size={14} /> Start
-                                                                    </button>
-                                                                )}
-                                                                {entry.status !== 'completed' && (
-                                                                    <button onClick={() => handleComplete(entry.id)}>
-                                                                        <Check size={14} /> Complete
-                                                                    </button>
-                                                                )}
-                                                                <button className="delete-action" onClick={() => handleDelete(entry.id)}>
-                                                                    <Trash2 size={14} /> Delete
-                                                                </button>
-                                                            </div>
-                                                        )}
-
-                                                        {entry.status === 'completed' && (
-                                                            <div className="completed-badge"><Check size={10} /></div>
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    <div className="empty-cell">
-                                                        <Plus size={14} />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                            ))}
                         </div>
                     </div>
 
@@ -793,32 +1019,105 @@ export default function StudyPlanner() {
                 {/* Timer Modal */}
                 {timerEntry && (
                     <div className="timer-overlay">
-                        <div className="timer-modal">
+                        <div className="timer-modal redesigned">
+                            <button className="timer-close-btn" onClick={() => { setTimerEntry(null); setTimerRunning(false); }} title="Close">
+                                <X size={20} />
+                            </button>
                             <div className="timer-header">
-                                <span className="timer-type" style={{ background: `${getStudyTypeInfo(timerEntry.study_type).color}20`, color: getStudyTypeInfo(timerEntry.study_type).color }}>
-                                    {getStudyTypeInfo(timerEntry.study_type).icon} {getStudyTypeInfo(timerEntry.study_type).label}
-                                </span>
+                                <div className="timer-badge">
+                                    <span className="timer-type-icon">{getStudyTypeInfo(timerEntry.study_type).icon}</span>
+                                    <span className="timer-type-label">{getStudyTypeInfo(timerEntry.study_type).label}</span>
+                                </div>
                                 <h3>{timerEntry.subject}</h3>
-                                {timerEntry.topic && <p>{timerEntry.topic}</p>}
+                                {timerEntry.topic && <p className="timer-topic">{timerEntry.topic}</p>}
                             </div>
-                            <div className="timer-display">
-                                {formatTimer(timerSeconds)}
+
+                            <div className="timer-main">
+                                {!timerRunning ? (
+                                    <div className="timer-edit-zone">
+                                        <div className="time-input-group">
+                                            <div className="time-unit">
+                                                <input
+                                                    type="number"
+                                                    value={Math.floor(timerSeconds / 3600)}
+                                                    onChange={(e) => {
+                                                        const h = Math.max(0, parseInt(e.target.value) || 0)
+                                                        const m = Math.floor((timerSeconds % 3600) / 60)
+                                                        const s = timerSeconds % 60
+                                                        setTimerSeconds(h * 3600 + m * 60 + s)
+                                                    }}
+                                                />
+                                                <span>HRS</span>
+                                            </div>
+                                            <span className="time-separator">:</span>
+                                            <div className="time-unit">
+                                                <input
+                                                    type="number"
+                                                    value={Math.floor((timerSeconds % 3600) / 60)}
+                                                    onChange={(e) => {
+                                                        const h = Math.floor(timerSeconds / 3600)
+                                                        const m = Math.min(59, Math.max(0, parseInt(e.target.value) || 0))
+                                                        const s = timerSeconds % 60
+                                                        setTimerSeconds(h * 3600 + m * 60 + s)
+                                                    }}
+                                                />
+                                                <span>MIN</span>
+                                            </div>
+                                            <span className="time-separator">:</span>
+                                            <div className="time-unit">
+                                                <input
+                                                    type="number"
+                                                    value={timerSeconds % 60}
+                                                    onChange={(e) => {
+                                                        const h = Math.floor(timerSeconds / 3600)
+                                                        const m = Math.floor((timerSeconds % 3600) / 60)
+                                                        const s = Math.min(59, Math.max(0, parseInt(e.target.value) || 0))
+                                                        setTimerSeconds(h * 3600 + m * 60 + s)
+                                                    }}
+                                                />
+                                                <span>SEC</span>
+                                            </div>
+                                        </div>
+                                        <p className="timer-hint">Adjust the time if needed before starting</p>
+                                    </div>
+                                ) : (
+                                    <div className="timer-active-zone">
+                                        <div className="timer-display-modern">
+                                            {formatTimer(timerSeconds)}
+                                        </div>
+                                        <div className="timer-progress-container">
+                                            <div
+                                                className="timer-progress-bar"
+                                                style={{ width: `${Math.min(100, (timerSeconds / (60 * 60)) * 100)}%` }}
+                                            ></div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                            <div className="timer-actions">
-                                <button
-                                    className={`timer-btn ${timerRunning ? 'pause' : 'play'}`}
-                                    onClick={() => setTimerRunning(!timerRunning)}
-                                >
-                                    {timerRunning ? <Pause size={20} /> : <Play size={20} />}
-                                    {timerRunning ? 'Pause' : 'Resume'}
-                                </button>
-                                <button className="timer-btn complete" onClick={handleTimerComplete}>
-                                    <Check size={20} />
-                                    Complete
-                                </button>
-                                <button className="timer-btn cancel" onClick={() => { setTimerEntry(null); setTimerRunning(false); }}>
+
+                            <div className="timer-actions-redesigned">
+                                {!timerRunning ? (
+                                    <button className="timer-btn-primary" onClick={() => setTimerRunning(true)}>
+                                        <Play size={24} fill="currentColor" />
+                                        <span>Start Timer</span>
+                                    </button>
+                                ) : (
+                                    <button className="timer-btn-secondary pause" onClick={() => setTimerRunning(false)}>
+                                        <Pause size={20} />
+                                        <span>Pause</span>
+                                    </button>
+                                )}
+
+                                {timerRunning && (
+                                    <button className="timer-btn-primary complete" onClick={handleTimerComplete}>
+                                        <Check size={20} />
+                                        <span>Complete Session</span>
+                                    </button>
+                                )}
+
+                                <button className="timer-btn-discard" onClick={() => { setTimerEntry(null); setTimerRunning(false); }}>
                                     <X size={20} />
-                                    Cancel
+                                    <span>Discard</span>
                                 </button>
                             </div>
                         </div>
@@ -859,14 +1158,7 @@ export default function StudyPlanner() {
                                         </select>
                                     </div>
                                 </div>
-                                <div className="form-group">
-                                    <DatePicker
-                                        value={formData.scheduled_date}
-                                        onChange={(date) => setFormData({ ...formData, scheduled_date: date })}
-                                        label="Date"
-                                        required
-                                    />
-                                </div>
+                                {/* Date removed - auto-determined from cell click in weekly view */}
                                 <div className="form-row">
                                     <div className="form-group">
                                         <label>Start Time</label>
@@ -901,13 +1193,13 @@ export default function StudyPlanner() {
                 {/* Settings Modal */}
                 {showSettings && (
                     <div className="modal-overlay" onClick={() => setShowSettings(false)}>
-                        <div className="modal-content settings-modal" onClick={e => e.stopPropagation()}>
+                        <div className="modal-content settings-modal" onClick={e => e.stopPropagation()} data-lenis-prevent>
                             <button className="close-modal-btn" onClick={() => setShowSettings(false)} title="Close">
                                 <X size={24} />
                             </button>
                             <div className="modal-header">
                                 <h2>Timetable Settings</h2>
-                                <p>Configure your daily time range</p>
+                                <p>Configure your preferences</p>
                             </div>
                             <div className="settings-content">
                                 <div className="form-row">
@@ -919,7 +1211,7 @@ export default function StudyPlanner() {
                                         >
                                             {Array.from({ length: 24 }, (_, i) => (
                                                 <option key={i} value={i} disabled={i >= endHour}>
-                                                    {i < 12 ? `${i} AM` : i === 12 ? '12 PM' : `${i - 12} PM`}
+                                                    {i < 12 ? `${i === 0 ? 12 : i} AM` : i === 12 ? '12 PM' : `${i - 12} PM`}
                                                 </option>
                                             ))}
                                         </select>
@@ -932,15 +1224,53 @@ export default function StudyPlanner() {
                                         >
                                             {Array.from({ length: 24 }, (_, i) => (
                                                 <option key={i} value={i} disabled={i <= startHour}>
-                                                    {i < 12 ? `${i} AM` : i === 12 ? '12 PM' : `${i - 12} PM`}
+                                                    {i < 12 ? `${i === 0 ? 12 : i} AM` : i === 12 ? '12 PM' : `${i - 12} PM`}
                                                 </option>
                                             ))}
                                         </select>
                                     </div>
                                 </div>
+                                <div className="form-group" style={{ marginTop: '20px' }}>
+                                    <label>Time Format</label>
+                                    <div className="toggle-group">
+                                        <button
+                                            className={`toggle-option ${!use24Hour ? 'active' : ''}`}
+                                            onClick={() => setUse24Hour(false)}
+                                        >
+                                            12-Hour
+                                        </button>
+                                        <button
+                                            className={`toggle-option ${use24Hour ? 'active' : ''}`}
+                                            onClick={() => setUse24Hour(true)}
+                                        >
+                                            24-Hour
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="form-group" style={{ marginTop: '20px' }}>
+                                    <label>Navigation Mode</label>
+                                    <div className="toggle-group">
+                                        <button
+                                            className={`toggle-option ${scrollMode === 'mouse' ? 'active' : ''}`}
+                                            onClick={() => setScrollMode('mouse')}
+                                        >
+                                            Scroll
+                                        </button>
+                                        <button
+                                            className={`toggle-option ${scrollMode === 'arrows' ? 'active' : ''}`}
+                                            onClick={() => setScrollMode('arrows')}
+                                        >
+                                            Arrow Keys
+                                        </button>
+                                    </div>
+                                </div>
                                 <div className="form-actions">
                                     <button type="button" className="cancel-btn" onClick={() => setShowSettings(false)}>Cancel</button>
-                                    <button type="button" className="submit-btn" onClick={() => updateTimeConfig(startHour, endHour)}>
+                                    <button
+                                        type="button"
+                                        className="submit-btn"
+                                        onClick={() => updateSettings(startHour, endHour, scrollMode, use24Hour)}
+                                    >
                                         Save Settings
                                     </button>
                                 </div>
@@ -948,6 +1278,37 @@ export default function StudyPlanner() {
                         </div>
                     </div>
                 )}
+
+
+
+                {/* Custom Dialog (Alert/Confirm) */}
+                {dialogConfig?.isOpen && (
+                    <div className="modal-overlay" style={{ zIndex: 2000 }}>
+                        <div className="modal-content" style={{ maxWidth: '400px', textAlign: 'center', padding: '32px' }}>
+                            <div style={{
+                                width: '64px', height: '64px', borderRadius: '50%', background: dialogConfig.type === 'confirm' ? '#EEF2FF' : '#FEF2F2',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px',
+                                color: dialogConfig.type === 'confirm' ? '#5C67F2' : '#EA4335'
+                            }}>
+                                <Zap size={32} />
+                            </div>
+                            <h3 style={{ fontSize: '22px', fontWeight: '800', marginBottom: '12px', color: 'var(--cream-text-main)' }}>{dialogConfig.title}</h3>
+                            <p style={{ color: 'var(--cream-text-muted)', marginBottom: '32px', fontSize: '15px', lineHeight: '1.6' }}>{dialogConfig.message}</p>
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                {dialogConfig.type === 'confirm' && (
+                                    <button className="cancel-btn" onClick={() => setDialogConfig({ ...dialogConfig, isOpen: false })}>Cancel</button>
+                                )}
+                                <button className="submit-btn" onClick={() => {
+                                    dialogConfig.onConfirm?.();
+                                    setDialogConfig({ ...dialogConfig, isOpen: false });
+                                }}>
+                                    {dialogConfig.type === 'confirm' ? 'Confirm' : 'OK'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <style jsx>{`
                     .planner-container { max-width: 1600px; margin: 0 auto; padding-bottom: 40px; }
                     .planner-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
@@ -975,8 +1336,8 @@ export default function StudyPlanner() {
                         background: white;
                         border-radius: 24px; padding: 24px 20px; 
                         display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 24px; 
-                        border: 1px solid rgba(0,0,0,0.06); 
-                        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.02);
+                        border: 1px solid rgba(0,0,0,0.1); 
+                        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.03);
                         transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
                         position: relative;
                         overflow: hidden;
@@ -990,8 +1351,9 @@ export default function StudyPlanner() {
                     }
                     .stat-card:hover { 
                         transform: translateY(-5px); 
-                        box-shadow: 0 20px 30px -10px rgba(0,0,0,0.08);
-                        border-color: rgba(92, 103, 242, 0.2);
+                        box-shadow: 0 25px 40px -12px rgba(0,0,0,0.1);
+                        border-color: rgba(92, 103, 242, 0.4);
+                        background: #FAFBFC;
                     }
                     .stat-icon { 
                         width: 44px; height: 44px; border-radius: 14px; 
@@ -1048,41 +1410,50 @@ export default function StudyPlanner() {
                     .settings-content { padding-top: 16px; }
                     
                     /* Timetable Styles */
+                    .timetable-container {
+                        position: relative;
+                        background: white; border-radius: 24px; padding: 0; 
+                        border: 2px solid #E2E8F0; box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+                        overflow: hidden;
+                        margin-bottom: 32px;
+                    }
                     .timetable-wrapper { 
-                        background: white; border-radius: 24px; padding: 24px; 
-                        border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 8px 32px rgba(0,0,0,0.06);
                         overflow-x: auto;
                         position: relative;
                         scrollbar-width: none; /* Firefox */
                         -ms-overflow-style: none; /* IE/Edge */
                     }
                     .timetable-wrapper::-webkit-scrollbar { display: none; } /* Chrome/Safari */
-                    .timetable { min-width: calc(100px + var(--slot-count, 17) * 120px); border-collapse: separate; border-spacing: 0; }
+                    .timetable-wrapper.arrows-mode { overflow-x: hidden; }
+                    .timetable { 
+                        min-width: calc(100px + var(--slot-count, 17) * 160px); 
+                        border-collapse: separate; border-spacing: 0; 
+                        padding: 0;
+                        width: max-content;
+                    }
                     
                     .timetable-header { 
-                        display: grid; grid-template-columns: 100px repeat(var(--slot-count, 17), minmax(120px, 1fr)); gap: 1px;
-                        margin-bottom: 1px;
+                        display: grid; grid-template-columns: 100px repeat(var(--slot-count, 17), minmax(160px, 1fr)); gap: 2px;
                         background: #E2E8F0;
-                        border-radius: 12px 12px 0 0;
+                        border-bottom: 2px solid #E2E8F0;
                     }
                     .time-label-header { 
                         padding: 14px 8px; font-size: 11px; font-weight: 700; color: var(--cream-text-muted);
                         text-transform: uppercase; letter-spacing: 0.05em; background: #F8FAFC;
                         display: flex; align-items: center; justify-content: center;
-                        position: sticky; left: 0; z-index: 10;
-                        border-right: 2px solid #CBD5E1;
+                        position: sticky; left: 0; z-index: 20;
+                        border-right: 2px solid #E2E8F0;
                     }
                     .time-slot-header { 
                         padding: 14px 4px; font-size: 11px; font-weight: 700; color: var(--cream-text-main);
                         text-align: center; background: #F8FAFC;
-                        border-right: 1px solid #E2E8F0;
                     }
                     .time-slot-header:last-child { border-right: none; }
                     
                     .timetable-row { 
-                        display: grid; grid-template-columns: 100px repeat(var(--slot-count, 17), minmax(120px, 1fr)); gap: 1px;
-                        margin-bottom: 1px;
+                        display: grid; grid-template-columns: 100px repeat(var(--slot-count, 17), minmax(160px, 1fr)); gap: 2px;
                         background: #E2E8F0;
+                        border-bottom: 2px solid #E2E8F0;
                     }
                     .timetable-row:last-child { border-radius: 0 0 12px 12px; }
                     .timetable-row:last-child .day-label { border-radius: 0 0 0 12px; }
@@ -1099,9 +1470,9 @@ export default function StudyPlanner() {
                         padding: 16px 8px; background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); 
                         color: white;
                         display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                        position: sticky; left: 0; z-index: 10;
-                        border-right: 2px solid #CBD5E1;
+                        box-shadow: 4px 0 12px rgba(0,0,0,0.15);
+                        position: sticky; left: 0; z-index: 20;
+                        border-right: 2px solid #E2E8F0;
                     }
                     .day-name { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.8; }
                     .day-date { 
@@ -1110,10 +1481,9 @@ export default function StudyPlanner() {
                     }
                     
                     .timetable-cell { 
-                        min-height: 100px; 
+                        min-height: 120px; 
                         background: linear-gradient(135deg, #FFFFFF 0%, #FAFBFC 100%);
                         padding: 8px;
-                        border-right: 1px solid #E2E8F0;
                         transition: all 0.25s; cursor: pointer;
                         position: relative; overflow: visible;
                     }
@@ -1133,7 +1503,6 @@ export default function StudyPlanner() {
                     }
                     .timetable-cell.past-event .cell-entry {
                         background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
-                        border-left-color: #F59E0B;
                     }
                     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.9; } }
                     
@@ -1147,13 +1516,13 @@ export default function StudyPlanner() {
                         background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.92) 100%);
                         backdrop-filter: blur(10px);
                         border-radius: 12px; padding: 12px; height: 100%;
-                        border-left: 5px solid var(--entry-color); cursor: pointer;
+                        cursor: pointer;
                         box-shadow: 0 4px 16px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04);
                         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
                         position: relative; z-index: 1;
                     }
                     .cell-entry:hover { 
-                        transform: translateY(-4px) scale(1.02); 
+                        transform: translateY(-2px) scale(1.008); 
                         box-shadow: 0 12px 32px rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.05); 
                         z-index: 10; 
                     }
@@ -1174,50 +1543,124 @@ export default function StudyPlanner() {
                     }
                     
                     .cell-menu { 
-                        position: absolute; top: 100%; left: 0; right: 0; background: white; 
-                        border-radius: 12px; padding: 8px; box-shadow: 0 12px 32px rgba(0,0,0,0.15);
-                        z-index: 100; margin-top: 4px; border: 1px solid rgba(0,0,0,0.08);
+                        position: absolute; left: 0; min-width: 200px; background: white; 
+                        border-radius: 12px; padding: 8px; box-shadow: 0 12px 48px rgba(0,0,0,0.25);
+                        z-index: 100; border: 1.5px solid #E2E8F0;
+                    }
+                    .cell-menu.bottom {
+                        top: 100%; margin-top: 8px;
+                        animation: fadeInScaleBottom 0.2s ease-out;
+                    }
+                    .cell-menu.top {
+                        bottom: 100%; margin-bottom: 8px;
+                        animation: fadeInScaleTop 0.2s ease-out;
+                    }
+                    @keyframes fadeInScaleBottom {
+                        from { opacity: 0; transform: scale(0.95) translateY(-10px); }
+                        to { opacity: 1; transform: scale(1) translateY(0); }
+                    }
+                    @keyframes fadeInScaleTop {
+                        from { opacity: 0; transform: scale(0.95) translateY(10px); }
+                        to { opacity: 1; transform: scale(1) translateY(0); }
                     }
                     .cell-menu button { 
                         width: 100%; display: flex; align-items: center; gap: 8px; padding: 10px 12px;
                         border: none; background: none; font-size: 13px; font-weight: 600; color: var(--cream-text-main);
                         cursor: pointer; border-radius: 8px; transition: all 0.15s;
                     }
-                    .cell-menu button:hover { background: #F1F5F9; }
+                    .cell-menu button:hover { background: #EEF2FF; color: #5C67F2; }
                     .cell-menu button.delete-action { color: #EA4335; }
                     .cell-menu button.delete-action:hover { background: #FEF2F2; }
                     
-                    /* Timer Modal */
+                    /* Timer Modal - Redesigned */
                     .timer-overlay { 
-                        position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px);
-                        display: flex; align-items: center; justify-content: center; z-index: 1000;
+                        position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px);
+                        display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px;
                     }
-                    .timer-modal { 
-                        background: white; border-radius: 32px; padding: 48px; text-align: center;
-                        box-shadow: 0 32px 64px rgba(0,0,0,0.2); min-width: 360px;
+                    .timer-modal.redesigned { 
+                        background: white; border-radius: 40px; padding: 48px; text-align: center;
+                        box-shadow: 0 40px 100px -20px rgba(0,0,0,0.5); width: 100%; max-width: 560px;
+                        border: 1px solid rgba(255,255,255,0.1);
+                        position: relative; overflow: hidden;
                     }
-                    .timer-header h3 { font-size: 24px; font-weight: 800; color: var(--cream-text-main); margin: 16px 0 4px; }
-                    .timer-header p { font-size: 14px; color: var(--cream-text-muted); margin: 0 0 24px; }
-                    .timer-type { 
-                        display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; 
-                        border-radius: 10px; font-size: 13px; font-weight: 700;
+                    .timer-modal.redesigned::before {
+                        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 8px;
+                        background: linear-gradient(90deg, #5C67F2, #10B981, #F59E0B, #EA4335);
                     }
-                    .timer-display { 
-                        font-size: 64px; font-weight: 800; color: var(--cream-text-main); 
-                        font-family: 'SF Mono', 'Fira Code', monospace; margin: 32px 0;
-                        letter-spacing: 0.05em;
+                    .timer-close-btn {
+                        position: absolute; top: 24px; right: 24px; width: 40px; height: 40px;
+                        border-radius: 50%; background: #F8FAFC; border: 1px solid #E2E8F0;
+                        display: flex; align-items: center; justify-content: center;
+                        color: #94A3B8; cursor: pointer; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                        z-index: 10;
                     }
-                    .timer-actions { display: flex; gap: 12px; justify-content: center; }
-                    .timer-btn { 
-                        display: flex; align-items: center; gap: 8px; padding: 14px 24px; 
-                        border-radius: 14px; font-weight: 700; font-size: 14px; cursor: pointer; 
-                        border: none; transition: all 0.2s;
+                    .timer-close-btn:hover {
+                        background: #fee2e2; color: #EA4335; transform: rotate(90deg);
+                        border-color: #fecaca;
                     }
-                    .timer-btn.play, .timer-btn.pause { background: #5C67F2; color: white; }
-                    .timer-btn.pause { background: #F59E0B; }
-                    .timer-btn.complete { background: #10B981; color: white; }
-                    .timer-btn.cancel { background: #F1F5F9; color: var(--cream-text-main); }
-                    .timer-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+                    .timer-badge {
+                        display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; 
+                        background: #F1F5F9; border-radius: 100px; margin-bottom: 24px;
+                    }
+                    .timer-type-icon { font-size: 16px; }
+                    .timer-type-label { font-size: 12px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 1px; }
+                    
+                    .timer-modal h3 { font-size: 32px; font-weight: 900; color: var(--cream-text-main); margin: 0 0 8px; letter-spacing: -1px; }
+                    .timer-topic { font-size: 16px; color: var(--cream-text-muted); font-weight: 500; margin-bottom: 40px; }
+                    
+                    .timer-main { margin-bottom: 48px; }
+
+                    /* Edit Zone */
+                    .timer-edit-zone { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+                    .time-input-group { display: flex; align-items: center; gap: 12px; }
+                    .time-unit { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+                    .time-unit input {
+                        width: 90px; height: 90px; background: #F8FAFC; border: 3px solid #E2E8F0;
+                        border-radius: 24px; font-size: 36px; font-weight: 800; color: var(--cream-text-main);
+                        text-align: center; transition: all 0.2s;
+                    }
+                    .time-unit input:focus { outline: none; border-color: #5C67F2; background: white; box-shadow: 0 12px 24px rgba(92, 103, 242, 0.15); }
+                    .time-unit span { font-size: 10px; font-weight: 800; color: #94A3B8; letter-spacing: 1px; }
+                    .time-separator { font-size: 48px; font-weight: 300; color: #E2E8F0; margin-top: -24px; }
+                    .timer-hint { font-size: 13px; color: #94A3B8; font-weight: 500; font-style: italic; }
+
+                    /* Active Zone */
+                    .timer-display-modern { 
+                        font-size: 96px; font-weight: 900; color: var(--cream-text-main); 
+                        font-family: 'Inter', system-ui, sans-serif; margin-bottom: 12px;
+                        letter-spacing: -2px; font-variant-numeric: tabular-nums;
+                    }
+                    .timer-progress-container { width: 100%; height: 12px; background: #F1F5F9; border-radius: 100px; overflow: hidden; }
+                    .timer-progress-bar { height: 100%; background: linear-gradient(90deg, #5C67F2, #7C3AED); transition: width 1s linear; }
+
+                    /* Actions */
+                    .timer-actions-redesigned { display: flex; flex-direction: column; gap: 12px; }
+                    .timer-btn-primary {
+                        display: flex; align-items: center; justify-content: center; gap: 12px;
+                        padding: 18px 32px; background: var(--cream-text-main); color: white;
+                        border: none; border-radius: 20px; font-size: 18px; font-weight: 800;
+                        cursor: pointer; transition: all 0.2s;
+                    }
+                    .timer-btn-primary:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(92, 103, 242, 0.3); background: #5C67F2; }
+                    .timer-btn-primary.complete { background: #10B981; }
+                    .timer-btn-primary.complete:hover { background: #059669; }
+
+                    .timer-btn-secondary {
+                        display: flex; align-items: center; justify-content: center; gap: 8px;
+                        padding: 14px 24px; background: #F1F5F9; color: var(--cream-text-main);
+                        border: none; border-radius: 16px; font-size: 15px; font-weight: 700;
+                        cursor: pointer; transition: all 0.2s;
+                    }
+                    .timer-btn-secondary.pause { background: #FFF7ED; color: #D97706; }
+                    .timer-btn-secondary:hover { transform: translateY(-2px); background: #E2E8F0; }
+
+                    .timer-btn-discard {
+                        display: flex; align-items: center; justify-content: center; gap: 6px;
+                        padding: 14px 24px; background: #fee2e2; color: #991b1b;
+                        border: 2px solid #fecaca; border-radius: 16px; font-size: 14px; font-weight: 700;
+                        cursor: pointer; transition: all 0.2s; margin-top: 12px;
+                    }
+                    .timer-btn-discard:hover { background: #fecaca; transform: translateY(-2px); border-color: #f87171; }
                     
                     /* AI Recommendation */
                     .ai-recommendation { 
@@ -1240,15 +1683,18 @@ export default function StudyPlanner() {
                     .modal-content { 
                         position: relative; background: white; border-radius: 32px; padding: 40px; 
                         max-width: 540px; width: 100%; max-height: 90vh; overflow-y: auto;
-                        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                        box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.35);
+                        border: 1px solid rgba(0,0,0,0.05);
                         -ms-overflow-style: none; scrollbar-width: none;
                     }
                     .modal-content::-webkit-scrollbar { display: none; }
                     .close-modal-btn { 
-                        position: absolute; top: 24px; right: 24px; background: transparent; border: none;
-                        color: var(--cream-text-muted); cursor: pointer; transition: all 0.3s; padding: 8px; border-radius: 50%;
+                        position: absolute; top: 24px; right: 24px; background: #F1F5F9; border: none;
+                        color: var(--cream-text-muted); cursor: pointer; transition: all 0.3s; 
+                        padding: 6px; border-radius: 50%; width: 36px; height: 36px;
+                        display: flex; align-items: center; justify-content: center;
                     }
-                    .close-modal-btn:hover { color: var(--cream-text-main); background: #F1F5F9; transform: rotate(90deg); }
+                    .close-modal-btn:hover { color: #DC2626; background: #FEE2E2; transform: rotate(90deg); }
                     .modal-header { margin-bottom: 32px; text-align: center; }
                     .modal-content h2 { font-size: 28px; font-weight: 800; margin: 0; color: var(--cream-text-main); }
                     .modal-header p { color: var(--cream-text-muted); font-size: 15px; margin-top: 8px; }
@@ -1291,13 +1737,92 @@ export default function StudyPlanner() {
                     }
                     @media (max-width: 768px) {
                         .stats-row { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-                        .timetable-wrapper { padding: 12px; }
+                        .timetable-wrapper { padding: 0; }
+                        .timetable { padding: 0 12px 0 0; }
                         .form-row { grid-template-columns: 1fr; }
                         .modal-content { padding: 24px; border-radius: 24px; }
                         .week-nav { flex-wrap: wrap; gap: 10px; }
                     }
+
+                    /* Scroll Arrow Styles */
+                    .scroll-arrow {
+                        position: absolute; top: 50%; transform: translateY(-50%);
+                        width: 48px; height: 48px; border-radius: 50%;
+                        background: white; border: 1px solid rgba(0,0,0,0.1);
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                        display: flex; align-items: center; justify-content: center;
+                        cursor: pointer; z-index: 30; transition: all 0.2s;
+                        color: var(--cream-text-main);
+                    }
+                    .scroll-arrow:hover { background: var(--cream-text-main); color: white; transform: translateY(-50%) scale(1.1); }
+                    .arrow-left { left: 110px; }
+                    .arrow-right { right: 10px; }
+
+                    /* Toggle Group Styles */
+                    .toggle-group {
+                        display: flex; background: #F1F5F9; padding: 4px; border-radius: 12px;
+                        border: 2px solid #E2E8F0;
+                    }
+                    .toggle-option {
+                        flex: 1; padding: 10px; border: none; background: transparent;
+                        border-radius: 8px; font-size: 13px; font-weight: 700;
+                        color: var(--cream-text-muted); cursor: pointer; transition: all 0.2s;
+                    }
+                    .toggle-option.active {
+                        background: white; color: #5C67F2;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+                    }
+
+                     /* =========================================================================
+                        STUDY PLANNER - Entry State Styles
+                        ========================================================================= */
+                    
+                    /* Past event indicator */
+                    .timetable-cell.past-event .cell-entry {
+                        opacity: 0.7;
+                    }
+                    .timetable-cell.past-event .cell-entry::after {
+                        content: '⚠️ Missed';
+                        position: absolute;
+                        top: 4px;
+                        right: 4px;
+                        font-size: 9px;
+                        background: #FEE2E2;
+                        color: #B91C1C;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        font-weight: 700;
+                    }
+                    
+                    /* Current active slot - pulsing border */
+                    .timetable-cell.current-slot {
+                        position: relative;
+                    }
+                    .timetable-cell.current-slot .cell-entry {
+                        box-shadow: 0 0 0 3px #10B981, 0 8px 24px rgba(16, 185, 129, 0.25);
+                        animation: pulse-border 2s ease-in-out infinite;
+                    }
+                    .timetable-cell.current-slot .cell-entry::before {
+                        content: '🔴 LIVE';
+                        position: absolute;
+                        top: -10px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+                        color: white;
+                        font-size: 10px;
+                        padding: 3px 10px;
+                        border-radius: 10px;
+                        font-weight: 700;
+                        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+                        z-index: 10;
+                    }
+                    @keyframes pulse-border {
+                        0%, 100% { box-shadow: 0 0 0 3px #10B981, 0 8px 24px rgba(16, 185, 129, 0.25); }
+                        50% { box-shadow: 0 0 0 5px #10B981, 0 8px 32px rgba(16, 185, 129, 0.4); }
+                    }
                 `}</style>
-            </DashboardLayout>
+            </DashboardLayout >
         </>
     )
 }

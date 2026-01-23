@@ -93,12 +93,14 @@ async def get_system_settings():
     try:
         admin_service = get_admin_service(supabase)
         platform_name = await admin_service.get_system_flag("platform_name", "Vaidya AI")
+        support_email = await admin_service.get_system_flag("support_email", "support@vaidya.ai")
         student_plan_price = await admin_service.get_system_flag("student_plan_price", "150")
         pro_plan_price = await admin_service.get_system_flag("pro_plan_price", "300")
         yearly_discount = await admin_service.get_system_flag("yearly_discount_percentage", "10")
         
         return {
             "platform_name": platform_name,
+            "support_email": support_email,
             "student_plan_price": int(student_plan_price) if student_plan_price.isdigit() else 150,
             "pro_plan_price": int(pro_plan_price) if pro_plan_price.isdigit() else 300,
             "yearly_discount_percentage": int(yearly_discount) if yearly_discount.isdigit() else 10
@@ -107,6 +109,7 @@ async def get_system_settings():
         logger.error(f"Failed to get system settings: {str(e)}")
         return {
             "platform_name": "Vaidya AI",
+            "support_email": "support@vaidya.ai",
             "student_plan_price": 150,
             "pro_plan_price": 300,
             "yearly_discount_percentage": 10
@@ -134,6 +137,7 @@ async def get_audit_logs(
 
 class UpdateSystemSettingsRequest(BaseModel):
     platform_name: str
+    support_email: Optional[str] = "support@vaidya.ai"
     student_plan_price: Optional[int] = 150
     pro_plan_price: Optional[int] = 300
     yearly_discount_percentage: Optional[int] = 10
@@ -149,6 +153,9 @@ async def update_system_settings(
         admin_service = get_admin_service(supabase)
         await admin_service.set_system_flag(admin["id"], "platform_name", request.platform_name)
         
+        if request.support_email:
+            await admin_service.set_system_flag(admin["id"], "support_email", request.support_email)
+
         if request.student_plan_price is not None:
              await admin_service.set_system_flag(admin["id"], "student_plan_price", str(request.student_plan_price))
         
@@ -161,6 +168,7 @@ async def update_system_settings(
         return {
             "message": "Settings updated successfully", 
             "platform_name": request.platform_name,
+            "support_email": request.support_email,
             "student_plan_price": request.student_plan_price,
             "pro_plan_price": request.pro_plan_price,
             "yearly_discount_percentage": request.yearly_discount_percentage
@@ -529,6 +537,7 @@ async def delete_chat_session(
 class SendMessageRequest(BaseModel):
     message: str
     role: str = "user"
+    generate_response: bool = True
 
 
 @app.post("/api/chat/sessions/{session_id}/messages", status_code=201)
@@ -555,7 +564,8 @@ async def send_chat_message(
             user_id=user["id"],
             session_id=session_id,
             message=request.message,
-            role=request.role
+            role=request.role,
+            generate_response=request.generate_response
         )
         return message
     except HTTPException:
@@ -1283,7 +1293,6 @@ async def complete_plan_entry(
         logger.error(f"Failed to complete plan entry: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @app.post("/api/planner/entries/{entry_id}/start")
 async def start_plan_entry(
     entry_id: str,
@@ -1297,53 +1306,6 @@ async def start_plan_entry(
     except Exception as e:
         logger.error(f"Failed to start plan entry: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/api/planner/entries/{entry_id}/skip")
-async def skip_plan_entry(
-    entry_id: str,
-    reason: Optional[str] = None,
-    user: Dict[str, Any] = Depends(get_current_user)
-):
-    """Mark a study plan entry as skipped"""
-    try:
-        planner_service = get_enhanced_study_planner_service(supabase)
-        entry = await planner_service.skip_entry(user["id"], entry_id, reason)
-        return entry
-    except Exception as e:
-        logger.error(f"Failed to skip plan entry: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-class ReschedulePlanEntryRequest(BaseModel):
-    new_date: str
-    new_start_time: str
-    new_end_time: str
-    reason: Optional[str] = None
-
-
-@app.post("/api/planner/entries/{entry_id}/reschedule")
-async def reschedule_plan_entry(
-    entry_id: str,
-    request: ReschedulePlanEntryRequest,
-    user: Dict[str, Any] = Depends(get_current_user)
-):
-    """Reschedule a study plan entry"""
-    try:
-        planner_service = get_enhanced_study_planner_service(supabase)
-        entry = await planner_service.reschedule_entry(
-            user_id=user["id"],
-            entry_id=entry_id,
-            new_date=request.new_date,
-            new_start_time=request.new_start_time,
-            new_end_time=request.new_end_time,
-            reason=request.reason
-        )
-        return entry
-    except Exception as e:
-        logger.error(f"Failed to reschedule plan entry: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
 
 @app.delete("/api/planner/entries/{entry_id}")
 async def delete_plan_entry(
@@ -1521,11 +1483,13 @@ async def get_daily_brief(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+
 # ============================================================================
 # CLINICAL REASONING ENGINE ENDPOINTS
 # ============================================================================
 
 from services.clinical_reasoning_engine import get_clinical_reasoning_engine
+
 
 
 class CreateClinicalCaseRequest(BaseModel):

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { AuthUser } from '@/lib/supabase'
-import { ChevronLeft, Menu } from 'lucide-react'
+import { ChevronLeft, Menu, Shield } from 'lucide-react'
 
 interface SidebarProps {
   user: AuthUser | null
@@ -61,6 +61,7 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
 
   const isActive = (path: string) => currentPath === path
   const sidebarWidth = isCollapsed ? '70px' : '240px'
+  const nameMaxWidth = '160px'
 
   return (
     <div className="sidebar-container" data-lenis-prevent>
@@ -118,9 +119,17 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
                 {user ? (user.user_metadata?.name || user.email)?.[0].toUpperCase() : '?'}
               </div>
               <div className="user-text">
-                <p className="user-name">{user ? (user.user_metadata?.name || user.email?.split('@')[0]) : 'Loading...'}</p>
+                <p
+                  className="user-name"
+                  style={{ maxWidth: nameMaxWidth }}
+                  title={user ? (user.user_metadata?.name || user.email) : ''}
+                >
+                  {user ? (user.user_metadata?.name || user.email?.split('@')[0]) : 'Loading...'}
+                </p>
                 <p className="user-subtext">{getPlanLabel(plan)}</p>
               </div>
+
+
             </div>
 
             {/* Token Meter Removed */}
@@ -320,6 +329,7 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
         .user-text {
           display: flex;
           flex-direction: column;
+          min-width: 0; /* Important for text truncation in flex items */
         }
 
         .user-name {
@@ -328,6 +338,9 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
           color: white;
           margin: 0;
           line-height: 1.2;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .user-subtext {
@@ -336,6 +349,8 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
           margin: 0;
           font-weight: 600;
         }
+
+
 
 /* Token Styles Removed */
 

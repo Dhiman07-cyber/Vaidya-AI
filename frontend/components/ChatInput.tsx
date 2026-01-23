@@ -68,7 +68,6 @@ export default function ChatInput({
         onChange={(e) => setMessage(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        disabled={disabled}
         rows={1}
         style={{
           flex: 1,
@@ -81,7 +80,7 @@ export default function ChatInput({
           lineHeight: '1.4',
           minHeight: '22px',
           backgroundColor: 'transparent',
-          cursor: disabled ? 'not-allowed' : 'text',
+          cursor: 'text',
           color: '#1e293b'
         }}
       />
