@@ -357,7 +357,7 @@ Your cases must be:
 Always respond with valid JSON only. No markdown formatting or explanation text."""
 
     def _parse_json_response(self, content: str) -> Dict[str, Any]:
-        """Extract and parse JSON from AI response"""
+        """Extract and parse JSON from AI response with robust error handling"""
         import re
         
         original_content = content
@@ -425,6 +425,23 @@ Always respond with valid JSON only. No markdown formatting or explanation text.
         content = re.sub(r'\.\.\.omitted.*?\.\.\.', '', content)
         content = re.sub(r'\.\.\.', '', content)
         
+        # Fix unquoted property names (JavaScript-style to JSON)
+        # Pattern: ,timing: "value" should be ,"timing": "value"
+        # Pattern: {timing: "value" should be {"timing": "value"
+        content = re.sub(r'([,{]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:', r'\1"\2":', content)
+        
+        # Fix missing commas between string values and keys (the main issue)
+        # Pattern: "value""key" should be "value","key"
+        content = re.sub(r'"\s*"([a-zA-Z_][a-zA-Z0-9_]*)"', r'","\\1"', content)
+        
+        # Fix missing commas between closing brace/bracket and opening quote
+        # Pattern: }"key" should be },"key"  or ]"key" should be ],"key"
+        content = re.sub(r'([}\]])\s*"', r'\1,"', content)
+        
+        # Fix missing commas between number and opening quote
+        # Pattern: 123"key" should be 123,"key"
+        content = re.sub(r'(\d)\s*"([a-zA-Z_])', r'\1,"\2', content)
+        
         try:
             return json.loads(content)
         except json.JSONDecodeError as e:
@@ -444,9 +461,12 @@ Always respond with valid JSON only. No markdown formatting or explanation text.
                 # Try json5 parser which is more lenient
                 try:
                     import json5
+                    logger.info("Attempting to parse with json5...")
                     return json5.loads(content)
                 except ImportError:
-                    pass
+                    logger.warning("json5 not available, trying manual repair")
+                except Exception as json5_error:
+                    logger.warning(f"json5 parsing also failed: {json5_error}")
                 
                 # Last resort: try to manually fix the JSON
                 logger.warning("Attempting manual JSON repair...")
@@ -456,6 +476,15 @@ Always respond with valid JSON only. No markdown formatting or explanation text.
                     # Check if it's a quote issue
                     problem_area = content[max(0, error_pos-50):min(len(content), error_pos+50)]
                     logger.error(f"Problem area: {problem_area}")
+                    
+                    # Try to fix the specific area around the error
+                    # Look for patterns like: "text""key" and fix to "text","key"
+                    fixed_content = content[:error_pos] + ',' + content[error_pos:]
+                    try:
+                        logger.info("Attempting to add comma at error position...")
+                        return json.loads(fixed_content)
+                    except:
+                        pass
                 
                 # If all else fails, return a minimal valid structure
                 raise Exception(f"Failed to parse AI response as JSON: {str(e)}. Error at position {error_pos}. The AI may have generated malformed JSON. Check logs for details.")
