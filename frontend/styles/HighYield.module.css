@@ -120,7 +120,7 @@
 }
 
 .generateBtn {
-    background: linear-gradient(135deg, var(--hy-primary) 0%, #7C3AED 100%);
+    background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
     color: white;
     border: none;
     padding: 12px 28px;
@@ -136,7 +136,7 @@
 
 .generateBtn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35);
 }
 
 .generateBtn:disabled {

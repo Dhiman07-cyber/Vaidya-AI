@@ -138,21 +138,32 @@ export default function Dashboard() {
   })
 
   const fetchWithAuth = useCallback(async (endpoint: string) => {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) throw new Error('No session')
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('No session')
 
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json'
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      }).catch(err => {
+        console.warn(`Network error fetching ${endpoint}:`, err)
+        return null
+      })
+
+      if (!response) {
+        throw new Error('Network unreachable')
       }
-    })
 
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status} `)
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} `)
+      }
+
+      return response.json()
+    } catch (err) {
+      throw err
     }
-
-    return response.json()
   }, [])
 
   const fetchDashboardData = useCallback(async () => {

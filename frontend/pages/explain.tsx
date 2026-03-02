@@ -13,20 +13,20 @@ import SessionSidebar, { ChatSession } from '@/components/SessionSidebar'
 const styles = {
   container: "max-w-[1200px] mx-auto",
   mainArea: "flex-1 flex flex-col overflow-y-auto p-4 pt-20 sm:p-10 custom-scrollbar bg-[#fdfbf7]", // Matches chat theme color
-  searchOnlyState: "bg-white rounded-[24px] sm:rounded-[32px] p-6 sm:p-20 text-center shadow-[0_20px_50px_rgba(0,0,0,0.06)] border border-[#E2E8F0] mt-4 sm:mt-10 w-full max-w-[850px] mx-auto",
-  sparkleIcon: "w-12 h-12 sm:w-16 sm:h-16 bg-[#F0FDF4] rounded-xl sm:rounded-2xl mx-auto mb-4 sm:mb-6 flex items-center justify-center",
-  h1: "text-2xl sm:text-3xl font-[800] mb-2 sm:mb-3 text-[#064E3B]",
-  p: "text-sm sm:text-base text-[#64748B] mb-6 sm:mb-8",
-  largeSearch: "bg-white border-[1.5px] border-[#E2E8F0] p-1.5 pl-4 sm:p-2 sm:pl-6 rounded-xl sm:rounded-2xl flex items-center gap-2 sm:gap-4 shadow-sm focus-within:border-[#10B981] focus-within:ring-4 focus-within:ring-[#10B981]/5 transition-all outline-none",
+  searchOnlyState: "bg-white rounded-[24px] sm:rounded-[32px] p-6 sm:p-10 text-center border border-[#E2E8F0] mt-4 sm:mt-0 w-full max-w-[750px] mx-auto",
+  sparkleIcon: "w-10 h-10 sm:w-14 sm:h-14 bg-[#F0FDF4] rounded-xl sm:rounded-2xl mx-auto mb-3 sm:mb-4 flex items-center justify-center",
+  h1: "text-2xl sm:text-2xl font-[800] mb-1 sm:mb-2 text-[#064E3B]",
+  p: "text-sm sm:text-base text-[#64748B] mb-5 sm:mb-6",
+  largeSearch: "bg-white border-[1.5px] border-[#E2E8F0] p-1.5 pl-4 sm:p-1.5 sm:pl-5 rounded-xl sm:rounded-2xl flex items-center gap-2 sm:gap-3 focus-within:border-[#10B981] focus-within:ring-4 focus-within:ring-[#10B981]/5 transition-all outline-none",
   topicInput: "border-none bg-transparent flex-1 text-sm sm:text-base font-medium outline-none text-[#1E293B] placeholder:text-slate-400 min-w-0",
-  generateBtn: "bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-none px-4 py-2.5 sm:px-6 sm:py-3 rounded-lg sm:rounded-xl font-bold cursor-pointer hover:shadow-lg hover:shadow-[#10B981]/25 hover:translate-y-[-2px] transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm sm:text-base",
+  generateBtn: "bg-gradient-to-br from-[#6366F1] to-[#4F46E5] text-white border-none px-4 py-2.5 sm:px-6 sm:py-3 rounded-lg sm:rounded-xl font-bold cursor-pointer hover:translate-y-[-2px] transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm sm:text-base",
   activeHeader: "flex flex-col gap-3 mb-6 sm:mb-10 w-full",
   breadcrumb: "flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-[#94A3B8] pl-1 tracking-wider uppercase",
-  miniSearch: "flex items-center justify-between bg-white px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-[#10B981]/20 shadow-sm w-full",
+  miniSearch: "flex items-center justify-between bg-white px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-[#10B981]/20 w-full",
   aiMessage: "flex flex-col gap-3 mb-6 sm:mb-10 items-start",
   aiAvatar: "hidden",
-  aiBubble: "bg-white p-6 sm:p-10 rounded-2xl sm:rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.04)] border border-[#E2E8F0] w-full text-[#1E293B] leading-relaxed text-sm sm:text-[17px]",
-  resultCard: "bg-[#FFFFFF] rounded-2xl sm:rounded-3xl p-6 sm:p-12 shadow-[0_25px_60px_-12px_rgba(0,0,0,0.08)] border border-[#DCFCE7] border-2",
+  aiBubble: "bg-white p-6 sm:p-10 rounded-2xl sm:rounded-3xl border border-[#E2E8F0] w-full text-[#1E293B] leading-relaxed text-sm sm:text-[17px]",
+  resultCard: "bg-[#FFFFFF] rounded-2xl sm:rounded-3xl p-6 sm:p-12 border border-[#E2E8F0] border-2",
   citations: "mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-[#F1F5F9]",
   citation: "bg-[#FBFDFB] px-3 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl mb-2 text-[#64748B] font-medium border border-[#F1F5F9] flex items-center gap-2 text-xs sm:text-sm"
 }
@@ -70,14 +70,21 @@ export default function Explain() {
   }, [router.query.document])
 
   const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
-      router.push('/')
-      return
+    try {
+      const { data, error } = await supabase.auth.getSession()
+      if (error || !data.session) {
+        console.warn('Auth session missing or Supabase unreachable (explain)')
+        router.push('/')
+        return
+      }
+      setUser(data.session.user as AuthUser)
+      loadSessions(data.session.access_token)
+    } catch (err) {
+      console.error('Supabase auth failure (explain):', err)
+      setError('Connection failed: Identity service unreachable.')
+    } finally {
+      setLoading(false)
     }
-    setUser(session.user as AuthUser)
-    setLoading(false)
-    loadSessions(session.access_token)
   }
 
   const getAuthToken = async () => {
@@ -88,19 +95,25 @@ export default function Explain() {
   const loadSessions = async (token?: string) => {
     try {
       setSessionsLoading(true)
+      setSessionsError(null)
       const authToken = token || await getAuthToken()
       if (!authToken) return
 
       const response = await fetch(`${API_URL}/api/study-tools/sessions?feature=explain`, {
         headers: { 'Authorization': `Bearer ${authToken}` }
+      }).catch(err => {
+        throw new Error('Connection failed: Backend server unreachable.')
       })
 
-      if (response.ok) {
+      if (response && response.ok) {
         const data = await response.json()
         setSessions(data)
+      } else {
+        setSessionsError('Failed to load sessions')
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load sessions:', err)
+      setSessionsError(err.message || 'Connection failed: Backend server unreachable.')
     } finally {
       setSessionsLoading(false)
     }
@@ -299,8 +312,8 @@ export default function Explain() {
             >
               <BookOpen size={16} color="#EF4444" />
               <span style={{ fontSize: '13px', fontWeight: 600, color: '#EF4444' }}>
-                {activeDocument.filename.length > 20 
-                  ? activeDocument.filename.substring(0, 20) + '...' 
+                {activeDocument.filename.length > 20
+                  ? activeDocument.filename.substring(0, 20) + '...'
                   : activeDocument.filename}
               </span>
               <button
@@ -326,7 +339,7 @@ export default function Explain() {
               </button>
             </div>
           )}
-          
+
           {/* Main Content Area */}
           <div className="content-area">
             {!result && !generating ? (
@@ -352,7 +365,7 @@ export default function Explain() {
                   <button
                     className={styles.generateBtn}
                     onClick={handleGenerate}
-                    disabled={generating}
+                    disabled={generating || !topic.trim()}
                   >
                     Explain
                   </button>
@@ -401,7 +414,7 @@ export default function Explain() {
                       New Topic
                     </button>
                   </div>
-                  
+
                   <div className="explanation-content">
                     <div dangerouslySetInnerHTML={{ __html: parseMarkdown(result.content) }} />
                   </div>

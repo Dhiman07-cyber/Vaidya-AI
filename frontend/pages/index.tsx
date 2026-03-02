@@ -20,13 +20,18 @@ export default function LandingPage() {
     }
     window.addEventListener('scroll', handleScroll)
 
-    // Check auth status
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        router.push('/dashboard')
-      }
-      setIsLoggedIn(!!session)
-    })
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        if (session) {
+          router.push('/dashboard')
+        }
+        setIsLoggedIn(!!session)
+      })
+      .catch(err => {
+        console.warn('Supabase session check failed:', err)
+        // Ensure user can still see landing page even if Supabase is offline
+        setIsLoggedIn(false)
+      })
 
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])

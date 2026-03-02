@@ -131,13 +131,19 @@ export default function ClinicalCases() {
   }, [activeCase, lastEvaluation])
 
   const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
-      router.push('/login')
-      return
+    try {
+      const { data, error } = await supabase.auth.getSession()
+      if (error || !data.session) {
+        console.warn('Auth session missing or Supabase unreachable (clinical-cases)')
+        router.push('/login')
+        return
+      }
+      setUser(data.session.user as AuthUser)
+    } catch (err) {
+      console.error('Supabase auth check failed:', err)
+    } finally {
+      setLoading(false)
     }
-    setUser(session.user as AuthUser)
-    setLoading(false)
   }
 
   const startTimer = () => {
@@ -158,7 +164,7 @@ export default function ClinicalCases() {
       alert('Please enter a condition or select random case')
       return
     }
-    
+
     setGenerating(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
@@ -177,11 +183,14 @@ export default function ClinicalCases() {
           use_custom_condition: useCustomCondition,
           custom_condition: useCustomCondition ? customCondition : null
         })
+      }).catch(err => {
+        throw new Error('Connection failed. Backend server might be offline.')
       })
 
-      if (!response.ok) throw new Error('Failed to create case')
+      if (response && !response.ok) throw new Error('Failed to create case')
 
-      const caseData = await response.json()
+      const caseData = response ? await response.json() : null
+      if (!caseData) throw new Error('Failed to create case')
 
       // Fetch the case stage data
       const stageResponse = await fetch(
@@ -189,9 +198,9 @@ export default function ClinicalCases() {
         {
           headers: { 'Authorization': `Bearer ${token}` }
         }
-      )
+      ).catch(() => null)
 
-      if (!stageResponse.ok) throw new Error('Failed to get case stage')
+      if (!stageResponse || !stageResponse.ok) throw new Error('Failed to get case stage')
 
       const stageData = await stageResponse.json()
       setActiveCase(stageData)
@@ -226,11 +235,14 @@ export default function ClinicalCases() {
             user_input: userInput
           })
         }
-      )
+      ).catch(err => {
+        throw new Error('Connection failed. Backend server might be offline.')
+      })
 
-      if (!response.ok) throw new Error('Failed to submit step')
+      if (response && !response.ok) throw new Error('Failed to submit step')
 
-      const result: StepResult = await response.json()
+      const result: StepResult = response ? await response.json() : null
+      if (!result) throw new Error('Failed to submit step')
       setLastEvaluation(result.evaluation)
       setShowEvaluation(true)
       setUserInput('')

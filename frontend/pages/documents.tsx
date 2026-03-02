@@ -50,10 +50,18 @@ export default function DocumentsPage() {
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/documents`, {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
+      }).catch(err => {
+        console.warn('Network error fetching documents:', err)
+        return null
       })
 
+      if (!response) {
+        setDocuments([])
+        return
+      }
+
       if (!response.ok) throw new Error('Failed to fetch documents')
-      
+
       const result = await response.json()
       setDocuments(result.documents || [])
     } catch (err) {
@@ -69,9 +77,11 @@ export default function DocumentsPage() {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/documents/${docToDelete}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${session?.access_token}` }
+      }).catch(err => {
+        throw new Error('Connection failed. Backend server might be offline.')
       })
 
-      if (response.ok) {
+      if (response && response.ok) {
         setDocuments(documents.filter(doc => doc.id !== docToDelete))
         setSuccess('Archive successfully purged')
         setDocToDelete(null)

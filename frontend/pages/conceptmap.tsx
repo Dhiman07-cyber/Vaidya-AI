@@ -17,11 +17,11 @@ const styles = {
   searchBox: "flex-1 flex items-center bg-white/50 border border-slate-200 rounded-xl px-4 transition-all focus-within:border-medical-indigo focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(102,126,234,0.1)] h-12",
   searchIcon: "text-slate-400",
   topicInput: "flex-1 py-1 border-0 bg-transparent text-[15px] outline-none text-slate-900 placeholder:text-slate-400 font-medium ml-2",
-  generateBtn: "bg-gradient-to-br from-medical-indigo to-[#5a67d8] text-white border-0 px-8 h-12 rounded-xl text-[14px] font-bold cursor-pointer transition-all whitespace-nowrap hover:shadow-[0_8px_20px_rgba(102,126,234,0.3)] hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed max-[640px]:w-full",
+  generateBtn: "bg-gradient-to-br from-[#6366F1] to-[#4F46E5] text-white border-none px-6 h-12 rounded-[14px] text-[15px] font-bold cursor-pointer transition-all whitespace-nowrap hover:shadow-[0_8px_24px_rgba(99,102,241,0.35)] hover:-translate-y-[2px] disabled:opacity-60 disabled:cursor-not-allowed max-[640px]:w-full flex items-center justify-center",
   error: "bg-red-50 text-red-700 px-4 py-3 rounded-lg mb-4 border-l-[3px] border-red-600 text-sm font-medium flex-shrink-0",
   mapContainer: "flex-1 min-h-0 flex flex-col rounded-xl overflow-hidden border border-slate-100",
-  placeholder: "flex-1 flex flex-col items-center justify-center text-slate-500 bg-slate-50/50 rounded-xl border-2 border-dashed border-slate-200 p-8",
-  placeholderIcon: "w-20 h-20 bg-white rounded-2xl shadow-sm flex items-center justify-center text-[2.5rem] mb-4 border border-slate-100 flex-shrink-0",
+  placeholder: "flex-1 flex flex-col items-center justify-center text-slate-500 bg-slate-50/50 rounded-xl border-2 border-dashed border-slate-200 p-8", // Reverted transparency
+  placeholderIcon: "w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-[2.5rem] mb-4 border border-slate-100 flex-shrink-0 animate-pulse",
 
   rightSidebar: "bg-[#F7F7F6] rounded-xl shadow-sm border border-slate-200 flex flex-col h-full overflow-hidden flex-shrink-0 max-[1024px]:order-3 max-[1024px]:!w-full max-[1024px]:h-auto max-[1024px]:overflow-visible",
   rightSidebarHeader: "p-3.5 flex items-center gap-2 flex-shrink-0",
@@ -349,7 +349,7 @@ export default function ConceptMap() {
                 </div>
                 <button
                   onClick={handleGenerate}
-                  disabled={generating}
+                  disabled={generating || !topic.trim()}
                   className={styles.generateBtn}
                 >
                   {generating ? 'Generating...' : 'Generate'}
