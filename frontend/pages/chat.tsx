@@ -98,7 +98,14 @@ export default function Chat() {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
+      }).catch(err => {
+        console.warn('Network error fetching sessions:', err)
+        return null
       })
+
+      if (!response) {
+        throw new Error('Connection failed. Backend server might be offline.')
+      }
 
       if (!response.ok) {
         throw new Error('Failed to load sessions')
@@ -130,7 +137,14 @@ export default function Chat() {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
+      }).catch(err => {
+        console.warn('Network error fetching messages:', err)
+        return null
       })
+
+      if (!response) {
+        throw new Error('Connection failed. Backend server might be offline.')
+      }
 
       if (!response.ok) {
         throw new Error('Failed to load messages')
@@ -167,9 +181,11 @@ export default function Chat() {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
+      }).catch(err => {
+        throw new Error('Connection failed. Backend server might be offline.')
       })
 
-      if (!response.ok) throw new Error('Failed to delete session')
+      if (response && !response.ok) throw new Error('Failed to delete session')
 
       // Remove from state
       setSessions(prev => prev.filter(s => s.id !== sessionId))
@@ -212,9 +228,11 @@ export default function Chat() {
         body: JSON.stringify({
           title: 'New Chat'
         })
+      }).catch(err => {
+        throw new Error('Connection failed. Backend server might be offline.')
       })
 
-      if (!response.ok) {
+      if (response && !response.ok) {
         throw new Error('Failed to create session')
       }
 
@@ -314,9 +332,11 @@ export default function Chat() {
           body: JSON.stringify({
             title: content.slice(0, 30) || 'New Chat'
           })
+        }).catch(err => {
+          throw new Error('Connection failed. Backend server might be offline.')
         })
 
-        if (!createResponse.ok) {
+        if (createResponse && !createResponse.ok) {
           throw new Error('Failed to create new session')
         }
 
@@ -339,9 +359,11 @@ export default function Chat() {
             role: 'user',
             generate_response: false
           })
+        }).catch(err => {
+          throw new Error('Connection failed. Backend server might be offline.')
         })
 
-        if (!userMessageResponse.ok) {
+        if (userMessageResponse && !userMessageResponse.ok) {
           const errorData = await userMessageResponse.json().catch(() => ({}))
           throw new Error(errorData.detail || 'Failed to save message')
         }
@@ -372,9 +394,9 @@ export default function Chat() {
             role: 'assistant',
             generate_response: false
           })
-        })
+        }).catch(() => null)
 
-        if (aiResponse.ok) {
+        if (aiResponse && aiResponse.ok) {
           const savedAiMessage = await aiResponse.json()
           setMessages(prev => [...prev, savedAiMessage])
         } else {
@@ -432,9 +454,11 @@ export default function Chat() {
             role: 'user',
             generate_response: true
           })
+        }).catch(err => {
+          throw new Error('Connection failed. Backend server might be offline.')
         })
 
-        if (!response.ok) {
+        if (response && !response.ok) {
           const errorData = await response.json().catch(() => ({}))
           throw new Error(errorData.detail || 'Failed to get AI response')
         }

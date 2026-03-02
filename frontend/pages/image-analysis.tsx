@@ -71,11 +71,20 @@ export default function ImageAnalysis() {
       const authToken = await getAuthToken()
       if (!authToken) return
 
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
+
       const response = await fetch(`${API_URL}/api/image/sessions`, {
-        headers: { 'Authorization': `Bearer ${authToken}` }
+        headers: { 'Authorization': `Bearer ${authToken}` },
+        signal: controller.signal
+      }).catch(err => {
+        console.warn('Network error fetching sessions:', err)
+        return null
       })
 
-      if (response.ok) {
+      clearTimeout(timeoutId)
+
+      if (response && response.ok) {
         const data = await response.json()
         setSessions(data)
       }
@@ -101,11 +110,20 @@ export default function ImageAnalysis() {
       const authToken = await getAuthToken()
       if (!authToken) return
 
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
+
       const response = await fetch(`${API_URL}/api/image/sessions/${sessionId}`, {
-        headers: { 'Authorization': `Bearer ${authToken}` }
+        headers: { 'Authorization': `Bearer ${authToken}` },
+        signal: controller.signal
+      }).catch(err => {
+        console.warn('Network error fetching session details:', err)
+        return null
       })
 
-      if (response.ok) {
+      clearTimeout(timeoutId)
+
+      if (response && response.ok) {
         const data = await response.json()
         setCurrentSessionId(sessionId)
         setCurrentAnalysis({
@@ -119,10 +137,14 @@ export default function ImageAnalysis() {
         setImagePreview(data.image_preview || null)
         setAdditionalContext(data.context || '')
         setSelectedImage(null)
+      } else if (response) {
+        setError('Failed to load selected analysis')
+      } else {
+        setError('Server unreachable. Please check your connection.')
       }
     } catch (err) {
       console.error('Failed to load session:', err)
-      setError('Failed to load selected analysis')
+      setError('An unexpected error occurred')
     } finally {
       setSessionsLoading(false)
     }
@@ -136,9 +158,9 @@ export default function ImageAnalysis() {
       const response = await fetch(`${API_URL}/api/image/sessions/${sessionId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${authToken}` }
-      })
+      }).catch(() => null)
 
-      if (response.ok) {
+      if (response && response.ok) {
         setSessions(prev => prev.filter(s => s.id !== sessionId))
         if (currentSessionId === sessionId) {
           handleNewAnalysis()
@@ -157,9 +179,9 @@ export default function ImageAnalysis() {
       const response = await fetch(`${API_URL}/api/image/sessions/all`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${authToken}` }
-      })
+      }).catch(() => null)
 
-      if (response.ok) {
+      if (response && response.ok) {
         setSessions([])
         handleNewAnalysis()
       }
@@ -229,9 +251,11 @@ export default function ImageAnalysis() {
           'Authorization': `Bearer ${authToken}`
         },
         body: formData
+      }).catch(err => {
+        throw new Error('Connection failed. Backend server might be offline.')
       })
 
-      if (!response.ok) {
+      if (response && !response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.detail || 'Failed to analyze image')
       }

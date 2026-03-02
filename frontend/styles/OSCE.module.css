@@ -1416,7 +1416,7 @@
     align-items: center;
     gap: 12px;
     padding: 12px 36px;
-    background: linear-gradient(135deg, var(--osce-primary) 0%, #7C3AED 100%);
+    background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
     color: white;
     border: none;
     border-radius: var(--osce-radius);
@@ -1424,12 +1424,12 @@
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 8px 32px rgba(79, 70, 229, 0.3);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35);
 }
 
 .startButton:hover:not(:disabled) {
     transform: translateY(-3px);
-    box-shadow: 0 12px 40px rgba(79, 70, 229, 0.4);
+    box-shadow: 0 12px 32px rgba(99, 102, 241, 0.45);
 }
 
 .startButton:disabled {

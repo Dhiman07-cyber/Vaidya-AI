@@ -61,6 +61,7 @@ export default function MCQs() {
   // Quiz state
   const [topic, setTopic] = useState('')
   const [mcqCount, setMcqCount] = useState(5)  // Number of MCQs to generate
+  const [isCustomCount, setIsCustomCount] = useState(false)
   const [questions, setQuestions] = useState<MCQuestion[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
@@ -141,9 +142,12 @@ export default function MCQs() {
 
       const response = await fetch(`${API_URL}/api/study-tools/sessions?feature=mcq`, {
         headers: { 'Authorization': `Bearer ${authToken}` }
+      }).catch(err => {
+        console.warn('Network error fetching sessions:', err)
+        return null
       })
 
-      if (response.ok) {
+      if (response && response.ok) {
         const data = await response.json()
         setSessions(data)
       }
@@ -206,9 +210,12 @@ export default function MCQs() {
 
       const response = await fetch(`${API_URL}/api/study-tools/sessions/${sessionId}/materials`, {
         headers: { 'Authorization': `Bearer ${authToken}` }
+      }).catch(err => {
+        console.warn('Network error fetching session materials:', err)
+        return null
       })
 
-      if (response.ok) {
+      if (response && response.ok) {
         const materials = await response.json()
         if (materials && materials.length > 0) {
           const material = materials[0]
@@ -245,10 +252,10 @@ export default function MCQs() {
 
       lines.forEach((line, index) => {
         const trimmedLine = line.trim()
-        
+
         // Skip if this is the question line
         if (index === 0) return
-        
+
         // Match correct answer BEFORE matching options (to avoid capturing it as an option)
         const correctMatch = trimmedLine.match(/^Correct(?:\s+Answer)?:\s*([A-Da-d])/i)
         if (correctMatch) {
@@ -272,7 +279,7 @@ export default function MCQs() {
         if (optionMatch && !trimmedLine.match(/^Correct/i)) {
           const optionId = optionMatch[1].toLowerCase()
           const optionText = optionMatch[2].trim()
-          
+
           // Only add if we don't already have this option ID
           if (!options.find(o => o.id === optionId)) {
             options.push({
@@ -382,6 +389,11 @@ export default function MCQs() {
       return
     }
 
+    let finalCount = mcqCount;
+    if (finalCount < 1) finalCount = 1;
+    if (finalCount > 100) finalCount = 100;
+    setMcqCount(finalCount);
+
     setGenerating(true)
     setError(null)
     setQuestions([])
@@ -424,9 +436,11 @@ export default function MCQs() {
           count: mcqCount,
           document_context: documentContext || undefined
         })
+      }).catch(err => {
+        throw new Error('Connection failed. Backend server might be offline.')
       })
 
-      if (!response.ok) {
+      if (response && !response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.detail || 'Failed to generate MCQs')
       }
@@ -674,8 +688,8 @@ export default function MCQs() {
             >
               <BookOpen size={16} color="#10B981" />
               <span style={{ fontSize: '13px', fontWeight: 600, color: '#10B981' }}>
-                {activeDocument.filename.length > 20 
-                  ? activeDocument.filename.substring(0, 20) + '...' 
+                {activeDocument.filename.length > 20
+                  ? activeDocument.filename.substring(0, 20) + '...'
                   : activeDocument.filename}
               </span>
               <button
@@ -701,7 +715,7 @@ export default function MCQs() {
               </button>
             </div>
           )}
-          
+
           <div className={`${styles.contentArea} ${isSidebarCollapsed ? styles.contentAreaCollapsed : styles.contentAreaExpanded}`}>
             <div className={(questions.length > 0 || generating || quizComplete) ? styles.mainContainer : styles.mainContainerFull}>
               {/* Main Content Area */}
@@ -735,6 +749,62 @@ export default function MCQs() {
                       </div>
                     )}
 
+                    <div className={styles.countSelectorWrapper}>
+                      <span className={styles.countLabel}>Number of questions:</span>
+                      {!isCustomCount ? (
+                        <select
+                          value={[5, 10, 15, 20].includes(mcqCount) ? mcqCount : 'custom'}
+                          onChange={(e) => {
+                            if (e.target.value === 'custom') {
+                              setIsCustomCount(true)
+                            } else {
+                              setMcqCount(Number(e.target.value))
+                            }
+                          }}
+                          className={styles.countSelectExternal}
+                        >
+                          <option value={5}>5 MCQs</option>
+                          <option value={10}>10 MCQs</option>
+                          <option value={15}>15 MCQs</option>
+                          <option value={20}>20 MCQs</option>
+                          <option value="custom">Custom...</option>
+                        </select>
+                      ) : (
+                        <div className={styles.customCountWrapper}>
+                          <input
+                            type="number"
+                            min={1}
+                            max={100}
+                            value={mcqCount || ''}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value)
+                              setMcqCount(isNaN(val) ? 0 : val)
+                            }}
+                            onBlur={() => {
+                              if (mcqCount < 1) setMcqCount(1)
+                              if (mcqCount > 100) setMcqCount(100)
+                            }}
+                            placeholder="Max 100"
+                            className={styles.customCountInput}
+                          />
+                          <button
+                            onClick={() => {
+                              setIsCustomCount(false)
+                              const presetMap = [5, 10, 15, 20]
+                              const closest = presetMap.reduce((prev, curr) =>
+                                Math.abs(curr - mcqCount) < Math.abs(prev - mcqCount) ? curr : prev
+                              )
+                              setMcqCount(closest)
+                            }}
+                            className={styles.cancelCustomBtn}
+                            title="Back to Presets"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
                     <div className={styles.searchContainer}>
                       <input
                         type="text"
@@ -744,26 +814,6 @@ export default function MCQs() {
                         onKeyPress={(e) => e.key === 'Enter' && handleGenerate()}
                         className={styles.searchInput}
                       />
-                      <select
-                        value={mcqCount}
-                        onChange={(e) => setMcqCount(Number(e.target.value))}
-                        className={styles.countSelect}
-                        style={{
-                          padding: '12px 16px',
-                          borderRadius: '12px',
-                          border: '2px solid #E5E7EB',
-                          fontSize: '14px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          minWidth: '100px',
-                          background: 'white'
-                        }}
-                      >
-                        <option value={5}>5 MCQs</option>
-                        <option value={10}>10 MCQs</option>
-                        <option value={15}>15 MCQs</option>
-                        <option value={20}>20 MCQs</option>
-                      </select>
                       <button
                         className={styles.generateButton}
                         onClick={handleGenerate}

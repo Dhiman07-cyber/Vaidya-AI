@@ -438,11 +438,11 @@ export default function StudyPlanner() {
             const res = await fetch(`${API_URL}/api/planner/entries/weekly/${weekStart}`, {
                 headers: { Authorization: `Bearer ${token}` }
             })
-            
+
             if (!res.ok) {
                 throw new Error('Failed to fetch entries')
             }
-            
+
             const data = await res.json()
             setEntries(data.entries || [])
         } catch (err) {
@@ -457,11 +457,11 @@ export default function StudyPlanner() {
             const res = await fetch(`${API_URL}/api/planner/daily-brief`, {
                 headers: { Authorization: `Bearer ${token}` }
             })
-            
+
             if (!res.ok) {
                 throw new Error('Failed to fetch daily brief')
             }
-            
+
             const data = await res.json()
             setDailyBrief(data)
         } catch (err) {
@@ -538,10 +538,10 @@ export default function StudyPlanner() {
             setShowModal(false)
             setEditingEntry(null)
             resetForm()
-            
+
             // Refresh data without resetting the week view
             await Promise.all([fetchEntries(), fetchDailyBrief()])
-            
+
             showAlert('Success', editingEntry ? 'Entry updated successfully' : 'Entry created successfully')
         } catch (err) {
             console.error('Failed to save entry:', err)
@@ -556,17 +556,17 @@ export default function StudyPlanner() {
             const token = await getToken()
             const res = await fetch(`${API_URL}/api/planner/entries/${entryId}/complete`, {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({})
             })
-            
+
             if (!res.ok) {
                 throw new Error('Failed to complete entry')
             }
-            
+
             // Refresh data
             await Promise.all([fetchEntries(), fetchDailyBrief()])
             setActiveCellMenu(null)
@@ -586,11 +586,11 @@ export default function StudyPlanner() {
                     method: 'POST',
                     headers: { Authorization: `Bearer ${token}` }
                 })
-                
+
                 if (!res.ok) {
                     throw new Error('Failed to start entry')
                 }
-                
+
                 await fetchEntries()
             }
             setActiveCellMenu(null)
@@ -636,11 +636,11 @@ export default function StudyPlanner() {
                     method: 'DELETE',
                     headers: { Authorization: `Bearer ${token}` }
                 })
-                
+
                 if (!res.ok) {
                     throw new Error('Failed to delete entry')
                 }
-                
+
                 // Refresh data
                 await Promise.all([fetchEntries(), fetchDailyBrief()])
                 setActiveCellMenu(null)
@@ -1683,11 +1683,11 @@ export default function StudyPlanner() {
                     }
                     .cancel-btn:hover { background: #F1F5F9; border-color: #E2E8F0; }
                     .submit-btn { 
-                        flex: 1.5; padding: 16px; border: none; background: #5C67F2; color: white; 
+                        flex: 1.5; padding: 16px; border: none; background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%); color: white; 
                         border-radius: 16px; font-weight: 700; font-size: 16px; cursor: pointer; transition: all 0.2s;
-                        box-shadow: 0 8px 20px rgba(92, 103, 242, 0.3);
+                        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35);
                     }
-                    .submit-btn:hover { background: #4F46E5; transform: translateY(-2px); box-shadow: 0 12px 24px rgba(92, 103, 242, 0.4); }
+                    .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(99, 102, 241, 0.45); }
                     
                     @media (max-width: 1200px) {
                         .stats-row { grid-template-columns: repeat(3, 1fr); }
