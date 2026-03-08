@@ -324,24 +324,27 @@ class ModelRouterService:
         system_prompt: Optional[str] = None,
         max_retries: int = 3,
         user_id: Optional[str] = None,
-        image_data: Optional[str] = None
+        image_data: Optional[str] = None,
+        session_preference: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Execute a request with automatic fallback to next available key on failure
         
+        Uses health-based multi-provider selection to choose the best API.
         Tries up to max_retries times with different keys before giving up.
         Falls back to Hugging Face medical models if all paid API keys fail.
         Records failures for each failed key and logs all attempts.
         User-supplied keys have priority over shared keys.
         
         Args:
-            provider: Provider name (gemini, openai, etc.)
+            provider: Provider name (gemini, openai, etc.) - may be overridden by health selection
             feature: Feature name (chat, flashcard, etc.)
             prompt: User prompt/message
             system_prompt: Optional system prompt for context
             max_retries: Maximum number of retry attempts (default: 3)
             user_id: Optional user ID to check for personal API key
             image_data: Optional base64-encoded image data for vision models
+            session_preference: Optional provider preference from session cache
             
         Returns:
             Dict containing:
@@ -353,13 +356,16 @@ class ModelRouterService:
                 - attempts: Number of attempts made
                 - used_user_key: bool indicating if user's personal key was used
                 - used_fallback_model: bool indicating if Hugging Face fallback was used
+                - provider_used: Actual provider used (may differ from input)
                 
         Requirements: 21.2, 21.3, 27.2, 27.7
         """
         from services.model_usage_logger import get_model_usage_logger
+        from services.health_tracker import get_health_tracker_service
         import time
         
         usage_logger = get_model_usage_logger(self.supabase)
+        health_tracker = get_health_tracker_service(self.supabase)
         
         # Check if user has a personal API key (Requirement 27.2)
         user_key = None
@@ -454,9 +460,12 @@ class ModelRouterService:
                 )
                 # Continue to shared keys below
         
-        # If no user key or user key failed, use shared keys
+        # If no user key or user key failed, use health-based multi-provider selection
+        # Get ALL healthy keys across ALL providers for this feature
+        keys = await health_tracker.get_all_healthy_keys_for_feature(feature)
+        
         if not keys:
-            logger.warning(f"No active keys available for provider '{provider}', feature '{feature}'. Trying Hugging Face fallback...")
+            logger.warning(f"No healthy keys available for feature '{feature}'. Trying Hugging Face fallback...")
             
             # Try Hugging Face as fallback
             return await self._try_huggingface_fallback(
@@ -465,6 +474,30 @@ class ModelRouterService:
                 system_prompt=system_prompt,
                 user_id=user_id,
                 attempt_number=1 if user_key else 0
+            )
+        
+        # Select best provider based on health and session preference
+        best_key = await health_tracker.select_best_provider(
+            feature=feature,
+            session_preference=session_preference
+        )
+        
+        if not best_key:
+            logger.warning(f"No best key selected for feature '{feature}'. Trying Hugging Face fallback...")
+            return await self._try_huggingface_fallback(
+                feature=feature,
+                prompt=prompt,
+                system_prompt=system_prompt,
+                user_id=user_id,
+                attempt_number=1 if user_key else 0
+            )
+        
+        # Use the selected provider (may differ from input provider)
+        actual_provider = best_key["provider"]
+        if actual_provider != provider:
+            logger.info(
+                f"Health-based selection chose '{actual_provider}' instead of '{provider}' "
+                f"for feature '{feature}'"
             )
         
         # Limit attempts to available keys or max_retries, whichever is smaller
@@ -484,26 +517,28 @@ class ModelRouterService:
             key = keys[attempt]
             key_id = key["id"]
             api_key = key["key_value"]
+            key_provider = key["provider"]  # Use actual provider from key
             
             # Calculate actual attempt number (including user key attempt if it happened)
             actual_attempt = starting_attempt + attempt + 1
             
             logger.info(
                 f"Attempt {actual_attempt}/{starting_attempt + max_attempts}: Trying key {key_id} "
-                f"(priority: {key['priority']})"
+                f"(provider: {key_provider}, priority: {key['priority']}, health: {key.get('health_score', 1.0):.2f})"
             )
             
             start_time = time.time()
             
             try:
                 # Route to appropriate provider
-                if provider == "huggingface":
+                if key_provider == "huggingface":
                     # Use HuggingFace provider directly
                     from services.providers.huggingface import get_huggingface_provider
                     provider_instance = get_huggingface_provider()
                     
-                    # Call HuggingFace
+                    # Call HuggingFace with DB key
                     result = await provider_instance.call_huggingface(
+                        api_key=api_key,
                         feature=feature,
                         prompt=prompt,
                         system_prompt=system_prompt,
@@ -519,7 +554,7 @@ class ModelRouterService:
                     # Call OpenRouter
                     result = await provider_instance.call_openrouter(
                         api_key=api_key,
-                        provider=provider,
+                        provider=key_provider,  # Use actual provider
                         feature=feature,
                         prompt=prompt,
                         system_prompt=system_prompt,
@@ -528,10 +563,17 @@ class ModelRouterService:
                 
                 response_time = int((time.time() - start_time) * 1000)
                 
+                # Update health tracking
+                await health_tracker.update_key_health(
+                    key_id=key_id,
+                    success=result["success"],
+                    response_time_ms=response_time
+                )
+                
                 # Log the attempt
                 await usage_logger.log_model_call(
                     user_id=user_id,
-                    provider=provider,
+                    provider=key_provider,  # Use actual provider
                     model=result.get("model", "unknown"),
                     feature=feature,
                     success=result["success"],
@@ -545,7 +587,7 @@ class ModelRouterService:
                 
                 if result["success"]:
                     logger.info(
-                        f"Request succeeded with key {key_id} on attempt {actual_attempt}. "
+                        f"Request succeeded with key {key_id} (provider: {key_provider}) on attempt {actual_attempt}. "
                         f"Tokens used: {result['tokens_used']}"
                     )
                     
@@ -562,7 +604,7 @@ class ModelRouterService:
                             await notification_service.notify_fallback(
                                 from_key_id=from_key_id,
                                 to_key_id=key_id,
-                                provider=provider,
+                                provider=key_provider,
                                 feature=feature
                             )
                         except Exception as notif_error:
@@ -573,6 +615,7 @@ class ModelRouterService:
                     result["attempts"] = actual_attempt
                     result["used_user_key"] = False
                     result["used_fallback_model"] = False
+                    result["provider_used"] = key_provider
                     
                     return result
                 else:
@@ -739,10 +782,25 @@ class ModelRouterService:
         reason_msg = f" (reason: {reason})" if reason else ""
         logger.info(f"Attempting Hugging Face fallback for feature: {feature}{reason_msg}")
         
+        # Get HuggingFace key from database
+        hf_key = await self.get_active_key("huggingface", feature)
+        
+        if not hf_key:
+            logger.error(f"No HuggingFace key found for feature: {feature}")
+            return {
+                "success": False,
+                "error": "No HuggingFace API key available",
+                "tokens_used": 0,
+                "attempts": attempt_number + 1,
+                "used_user_key": False,
+                "used_fallback_model": True
+            }
+        
         start_time = time.time()
         
         try:
             result = await hf_provider.call_huggingface(
+                api_key=hf_key["key_value"],  # Pass DB key
                 feature=feature,
                 prompt=prompt,
                 system_prompt=system_prompt

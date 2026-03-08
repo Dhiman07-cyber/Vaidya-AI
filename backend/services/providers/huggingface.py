@@ -42,26 +42,17 @@ class HuggingFaceProvider:
     
     def __init__(self):
         """Initialize Hugging Face provider"""
-        self.api_key = os.getenv("HUGGINGFACE_API_KEY")
         # Router endpoint for chat models (OpenAI-compatible)
         self.router_url = "https://router.huggingface.co/v1"
         # Inference API endpoint for embeddings
         self.inference_url = "https://api-inference.huggingface.co/models"
         
-        # Initialize InferenceClient for embeddings
-        self.inference_client = None
-        if self.api_key:
-            try:
-                from huggingface_hub import InferenceClient
-                self.inference_client = InferenceClient(token=self.api_key)
-                logger.info("HuggingFace InferenceClient initialized")
-            except ImportError:
-                logger.warning("huggingface_hub not installed. Install with: pip install huggingface_hub")
-        else:
-            logger.warning("HUGGINGFACE_API_KEY not set - Hugging Face provider will not work")
+        # No default API key - will be passed per request from database
+        logger.info("HuggingFace provider initialized (API keys from database)")
     
     async def call_huggingface(
         self,
+        api_key: str,
         feature: str,
         prompt: str,
         system_prompt: Optional[str] = None,
@@ -73,6 +64,7 @@ class HuggingFaceProvider:
         Call Hugging Face Router API (OpenAI-compatible format)
         
         Args:
+            api_key: HuggingFace API key from database
             feature: Feature name (chat, flashcard, etc.)
             prompt: User prompt
             system_prompt: Optional system prompt
@@ -83,10 +75,10 @@ class HuggingFaceProvider:
         Returns:
             Dict with success, content, error, tokens_used
         """
-        if not self.api_key:
+        if not api_key:
             return {
                 "success": False,
-                "error": "Hugging Face API key not configured",
+                "error": "Hugging Face API key not provided",
                 "content": "",
                 "tokens_used": 0
             }
@@ -125,7 +117,7 @@ class HuggingFaceProvider:
             
             url = f"{self.router_url}/chat/completions"
             headers = {
-                "Authorization": f"Bearer {self.api_key}",
+                "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json"
             }
             
@@ -274,21 +266,37 @@ class HuggingFaceProvider:
                 "provider": "huggingface"
             }
     
-    async def generate_embedding(self, text: str, prepend_instruction: bool = True) -> Dict[str, Any]:
+    async def generate_embedding(self, text: str, api_key: Optional[str] = None, prepend_instruction: bool = True) -> Dict[str, Any]:
         """
         Generate embeddings using Hugging Face Inference API
         
         Args:
             text: Text to embed
+            api_key: Optional HuggingFace API key (falls back to env if not provided)
             prepend_instruction: Whether to prepend BGE instruction for queries (default: True)
             
         Returns:
             Dict with success, embedding, error, model
         """
-        if not self.api_key or not self.inference_client:
+        # Use provided key or fall back to environment variable
+        if not api_key:
+            api_key = os.getenv("HUGGINGFACE_API_KEY")
+        
+        if not api_key:
             return {
                 "success": False,
-                "error": "Hugging Face API key not configured or InferenceClient not available",
+                "error": "Hugging Face API key not configured",
+                "embedding": None
+            }
+        
+        # Initialize InferenceClient with the provided key
+        try:
+            from huggingface_hub import InferenceClient
+            inference_client = InferenceClient(token=api_key)
+        except ImportError:
+            return {
+                "success": False,
+                "error": "huggingface_hub not installed. Install with: pip install huggingface_hub",
                 "embedding": None
             }
         
@@ -308,7 +316,7 @@ class HuggingFaceProvider:
             
             try:
                 # Try Router API first
-                embedding = self.inference_client.feature_extraction(
+                embedding = inference_client.feature_extraction(
                     text=text_to_embed,
                     model=model
                 )
@@ -319,7 +327,7 @@ class HuggingFaceProvider:
                     # Use a free embedding model
                     free_embedding_model = "sentence-transformers/all-MiniLM-L6-v2"
                     logger.info(f"Using free embedding model: {free_embedding_model}")
-                    embedding = self.inference_client.feature_extraction(
+                    embedding = inference_client.feature_extraction(
                         text=text_to_embed,
                         model=free_embedding_model
                     )
@@ -357,20 +365,21 @@ class HuggingFaceProvider:
                 "embedding": None,
                 "model": model
             }
-    async def health_check(self, feature: str = "chat") -> Dict[str, Any]:
+    async def health_check(self, api_key: str, feature: str = "chat") -> Dict[str, Any]:
         """
         Perform a health check on Hugging Face models
         
         Args:
+            api_key: HuggingFace API key from database
             feature: Feature to test (default: chat)
             
         Returns:
             Dict with success, model, response_time_ms, error
         """
-        if not self.api_key:
+        if not api_key:
             return {
                 "success": False,
-                "error": "Hugging Face API key not configured",
+                "error": "Hugging Face API key not provided",
                 "model": None,
                 "response_time_ms": 0
             }
@@ -386,7 +395,7 @@ class HuggingFaceProvider:
         try:
             url = f"{self.router_url}/chat/completions"
             headers = {
-                "Authorization": f"Bearer {self.api_key}",
+                "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json"
             }
             
