@@ -4,15 +4,24 @@ interface ChatInputProps {
   onSendMessage: (message: string) => void
   disabled?: boolean
   placeholder?: string
+  initialValue?: string
 }
 
 export default function ChatInput({
   onSendMessage,
   disabled = false,
-  placeholder = 'Ask anything medical...'
+  placeholder = 'Ask anything medical...',
+  initialValue = ''
 }: ChatInputProps) {
-  const [message, setMessage] = useState('')
+  const [message, setMessage] = useState(initialValue)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Update message when initialValue changes
+  useEffect(() => {
+    if (initialValue) {
+      setMessage(initialValue)
+    }
+  }, [initialValue])
 
   // Auto-resize textarea
   useEffect(() => {

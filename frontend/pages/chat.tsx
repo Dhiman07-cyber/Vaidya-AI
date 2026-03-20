@@ -23,6 +23,20 @@ export default function Chat() {
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
+  // Check for pre-filled question from query parameter
+  useEffect(() => {
+    const question = router.query.q as string
+    if (question && user && !sendingMessage) {
+      // Clear the query parameter immediately
+      router.replace('/chat', undefined, { shallow: true })
+      
+      // Auto-send the question after a brief delay to ensure UI is ready
+      setTimeout(() => {
+        handleSendMessage(question)
+      }, 300)
+    }
+  }, [router.query.q, user])
+
   // Check for document context on mount
   useEffect(() => {
     const documentId = router.query.document as string

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/router'
 
 export interface MapNode {
   id: string
@@ -68,6 +69,7 @@ const renderIcon = (iconType: string) => {
 }
 
 export default function ClinicalMapViewer({ title, nodes, connections }: ClinicalMapViewerProps) {
+  const router = useRouter()
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
   const [hoveredNode, setHoveredNode] = useState<string | null>(null)
 
@@ -312,6 +314,42 @@ export default function ClinicalMapViewer({ title, nodes, connections }: Clinica
         const node = displayNodes.find(n => n.id === selectedNode)
         if (!node) return null
         const style = getNodeStyle(node.type)
+        
+        const handleLearnMore = () => {
+          // Create a contextual question based on node type
+          let question = ''
+          const mainNodeLabel = displayNodes.find(n => n.type === 'main')?.label || title
+          
+          switch (node.type) {
+            case 'main':
+              question = `Tell me more about ${node.label}`
+              break
+            case 'symptom':
+              question = `Explain the symptom "${node.label}" in the context of ${mainNodeLabel}`
+              break
+            case 'diagnosis':
+              question = `How is "${node.label}" used to diagnose ${mainNodeLabel}?`
+              break
+            case 'treatment':
+              question = `Explain the treatment "${node.label}" for ${mainNodeLabel}`
+              break
+            case 'complication':
+              question = `What is the relationship between "${node.label}" and ${mainNodeLabel}?`
+              break
+            case 'category':
+              question = `Tell me about ${node.label.toLowerCase()} related to ${mainNodeLabel}`
+              break
+            default:
+              question = `Tell me more about ${node.label}`
+          }
+          
+          // Navigate to chat with pre-filled question
+          router.push({
+            pathname: '/chat',
+            query: { q: question }
+          })
+        }
+        
         return (
           <div className="absolute bottom-4 right-4 bg-white border-2 rounded-xl p-4 shadow-[0_8px_24px_rgba(0,0,0,0.12)] min-w-[200px] max-w-[280px] z-10 animate-[slideIn_0.15s_ease-out] max-[640px]:bottom-2 max-[640px]:right-2 max-[640px]:left-2 max-[640px]:max-w-none" style={{ borderColor: style.stroke }}>
             <span className="inline-block py-1 px-2.5 rounded-xl text-[0.7rem] font-semibold uppercase tracking-wide border mb-2" style={{ background: style.fill, color: style.textColor, borderColor: style.stroke }}>
@@ -319,7 +357,20 @@ export default function ClinicalMapViewer({ title, nodes, connections }: Clinica
             </span>
             <h4 className="m-0 mb-2 text-slate-800 text-base font-semibold">{node.label}</h4>
             {node.description && <p className="text-slate-500 text-[0.85rem] m-0 mb-3 leading-snug">{node.description}</p>}
-            <button onClick={() => setSelectedNode(null)} className="bg-gradient-to-br from-medical-indigo to-[#5a67d8] text-white border-0 py-2 px-4 rounded-md cursor-pointer text-xs font-semibold w-full transition-all hover:bg-gradient-to-br hover:from-[#5a67d8] hover:to-[#4c51bf]">Close</button>
+            <div className="flex gap-2">
+              <button 
+                onClick={handleLearnMore} 
+                className="bg-gradient-to-br from-medical-indigo to-[#5a67d8] text-white border-0 py-2 px-4 rounded-md cursor-pointer text-xs font-semibold flex-1 transition-all hover:shadow-lg hover:-translate-y-0.5"
+              >
+                Learn More
+              </button>
+              <button 
+                onClick={() => setSelectedNode(null)} 
+                className="bg-slate-100 text-slate-600 border-0 py-2 px-4 rounded-md cursor-pointer text-xs font-semibold transition-all hover:bg-slate-200"
+              >
+                Close
+              </button>
+            </div>
           </div>
         )
       })()}
