@@ -513,7 +513,7 @@ export default function OSCESimulator() {
           <div className={styles.mainContent}>
             {/* Setup View */}
             {showSetup && !activeScenario && (
-              <div className={styles.setupView} data-lenis-prevent>
+              <div className={styles.setupView}>
                 <div className={styles.setupHeader} style={{ display: 'none' }}>
                   <div className={styles.setupIcon}>🏥</div>
                   <h1>OSCE Simulator</h1>
@@ -773,7 +773,7 @@ export default function OSCESimulator() {
                       <h4 className={styles.checklistTitle}>
                         📋 Checklist
                       </h4>
-                      <div className={styles.checklistItems} data-lenis-prevent>
+                      <div className={styles.checklistItems}>
                         {checklist.map(item => (
                           <div key={item.id} className={`${styles.checklistItem} ${styles[item.status]}`}>
                             <div className={`${styles.checklistIcon} ${styles[item.status]}`}>
@@ -789,7 +789,7 @@ export default function OSCESimulator() {
                   {/* Main Interaction Canvas */}
                   <div className={styles.interactionCanvas}>
                     {/* Clinical Transcript */}
-                    <div className={styles.clinicalTranscript} ref={chatContainerRef} data-lenis-prevent>
+                    <div className={styles.clinicalTranscript} ref={chatContainerRef}>
                       {conversation.map((msg, i) => (
                         msg.role === 'examiner' ? (
                           <div key={i} className={styles.examinerNote}>

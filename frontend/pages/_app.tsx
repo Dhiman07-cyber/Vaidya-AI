@@ -9,7 +9,7 @@ export default function App({ Component, pageProps }: AppProps) {
   
   useEffect(() => {
     // Disable Lenis on pages with custom scrolling
-    const disableLenisPages = ['/highyield', '/image-analysis']
+    const disableLenisPages = ['/highyield', '/image-analysis', '/osce']
     const shouldDisableLenis = disableLenisPages.includes(router.pathname)
     
     if (shouldDisableLenis) {
