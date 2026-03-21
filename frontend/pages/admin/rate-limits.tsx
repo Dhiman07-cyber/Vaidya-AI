@@ -6,6 +6,7 @@ import AdminLayout from '@/components/AdminLayout'
 
 interface PlanLimits {
   document_retention_days: number
+  document_upload_size_mb: number
   chat_daily_limit: number
   mcq_daily_limit: number
   flashcard_daily_limit: number
@@ -292,6 +293,34 @@ export default function RateLimits() {
                       />
                       <p style={{ fontSize: '13px', color: '#6c757d', marginTop: '8px' }}>
                         Maximum document uploads per user per day
+                      </p>
+                    </div>
+                    <div>
+                      <label style={{
+                        display: 'block',
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        marginBottom: '8px'
+                      }}>
+                        Document Upload Size (MB)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="50"
+                        value={limits[plan.id as keyof AllPlanLimits].document_upload_size_mb}
+                        onChange={(e) => updateLimit(plan.id as keyof AllPlanLimits, 'document_upload_size_mb', parseInt(e.target.value) || 10)}
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          border: '2px solid #ced4da',
+                          borderRadius: '8px',
+                          fontSize: '16px',
+                          fontWeight: '600'
+                        }}
+                      />
+                      <p style={{ fontSize: '13px', color: '#6c757d', marginTop: '8px' }}>
+                        Maximum file size per upload (1-50 MB)
                       </p>
                     </div>
                   </div>

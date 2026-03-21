@@ -36,7 +36,7 @@ BEGIN
             'huggingface',
             feature,
             hf_key,  -- Will be encrypted by trigger if exists
-            10,      -- Low priority (fallback)
+            100,      -- Low priority (fallback)
             'active',
             'healthy',
             1.0,
@@ -47,7 +47,7 @@ BEGIN
         ON CONFLICT (provider, feature, key_value) 
         DO UPDATE SET
             status = 'active',
-            priority = 10,
+            priority = 100,
             health_status = 'healthy',
             health_score = 1.0,
             recent_attempts = 0,

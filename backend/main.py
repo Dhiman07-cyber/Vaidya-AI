@@ -912,12 +912,33 @@ async def upload_document(
             logger.warning(f"Invalid file type: {file.content_type} - User: {user['id'][:8]}...")
             raise HTTPException(status_code=400, detail="Invalid file type. Only PDF and images are supported.")
         
-        # Validate file size (10MB max)
+        # Get user's plan and role to determine upload size limit
+        user_result = supabase.table("users").select("plan, role").eq("id", user["id"]).execute()
+        user_data = user_result.data[0] if user_result.data else {}
+        user_plan = user_data.get("plan", "free")
+        user_role = user_data.get("role")
+        
+        # Admin users have no file size limit (up to 50MB max)
+        if user_role in ["super_admin", "admin", "ops"]:
+            max_size_mb = 50
+            max_size_bytes = max_size_mb * 1024 * 1024
+        else:
+            # Get plan-specific upload size limit (default to 10MB)
+            admin_service = get_admin_service(supabase)
+            max_size_mb_str = await admin_service.get_system_flag(f"document_upload_size_mb_{user_plan}", "10")
+            max_size_mb = int(max_size_mb_str) if max_size_mb_str.isdigit() else 10
+            max_size_mb = max(1, min(50, max_size_mb))  # Enforce 1-50 MB range
+            max_size_bytes = max_size_mb * 1024 * 1024
+        
+        # Validate file size
         file_content = await file.read()
         file_size_mb = len(file_content) / (1024 * 1024)
-        if len(file_content) > 10 * 1024 * 1024:
-            logger.warning(f"File too large: {file_size_mb:.2f}MB - User: {user['id'][:8]}...")
-            raise HTTPException(status_code=400, detail="File too large. Maximum size is 10MB.")
+        if len(file_content) > max_size_bytes:
+            logger.warning(f"File too large: {file_size_mb:.2f}MB (limit: {max_size_mb}MB) - User: {user['id'][:8]}...")
+            raise HTTPException(
+                status_code=400, 
+                detail=f"File too large. Maximum size for your plan is {max_size_mb}MB. Current file: {file_size_mb:.1f}MB"
+            )
         
         # Upload document
         document_service = get_document_service(supabase)
@@ -1086,6 +1107,7 @@ async def get_rate_limits(
             # Document retention
             retention = await admin_service.get_system_flag(f"document_retention_{plan}", "14")
             doc_uploads = await admin_service.get_system_flag(f"document_uploads_daily_{plan}", "5")
+            doc_upload_size = await admin_service.get_system_flag(f"document_upload_size_mb_{plan}", "10")
             
             # Feature limits
             chat_limit = await admin_service.get_system_flag(f"chat_daily_limit_{plan}", "20")
@@ -1097,6 +1119,7 @@ async def get_rate_limits(
             all_limits[plan] = {
                 "document_retention_days": int(retention) if retention.isdigit() else 14,
                 "document_uploads_daily": int(doc_uploads) if doc_uploads.isdigit() else 5,
+                "document_upload_size_mb": int(doc_upload_size) if doc_upload_size.isdigit() else 10,
                 "chat_daily_limit": int(chat_limit) if chat_limit.isdigit() else 20,
                 "mcq_daily_limit": int(mcq_limit) if mcq_limit.isdigit() else 10,
                 "flashcard_daily_limit": int(flashcard_limit) if flashcard_limit.isdigit() else 10,
@@ -1135,6 +1158,16 @@ async def update_rate_limits(
                 admin["id"],
                 f"document_uploads_daily_{plan}",
                 str(limits["document_uploads_daily"])
+            )
+        
+        # Update document upload size
+        if "document_upload_size_mb" in limits:
+            # Validate size is between 1 and 50 MB
+            size_mb = max(1, min(50, limits["document_upload_size_mb"]))
+            await admin_service.set_system_flag(
+                admin["id"],
+                f"document_upload_size_mb_{plan}",
+                str(size_mb)
             )
         
         # Update feature limits

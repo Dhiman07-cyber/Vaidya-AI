@@ -289,17 +289,6 @@ class HuggingFaceProvider:
                 "embedding": None
             }
         
-        # Initialize InferenceClient with the provided key
-        try:
-            from huggingface_hub import InferenceClient
-            inference_client = InferenceClient(token=api_key)
-        except ImportError:
-            return {
-                "success": False,
-                "error": "huggingface_hub not installed. Install with: pip install huggingface_hub",
-                "embedding": None
-            }
-        
         model = self.MEDICAL_MODELS["embedding"]
         
         try:
@@ -314,26 +303,57 @@ class HuggingFaceProvider:
             
             logger.info(f"Generating embedding with model: {model}")
             
-            try:
-                # Try Router API first
-                embedding = inference_client.feature_extraction(
-                    text=text_to_embed,
-                    model=model
-                )
-            except Exception as router_error:
-                # If Router API fails (402 payment required), use free Inference API
-                if "402" in str(router_error) or "Payment Required" in str(router_error):
-                    logger.warning("Router API credits depleted for embeddings, using free model")
-                    # Use a free embedding model
-                    free_embedding_model = "sentence-transformers/all-MiniLM-L6-v2"
-                    logger.info(f"Using free embedding model: {free_embedding_model}")
-                    embedding = inference_client.feature_extraction(
-                        text=text_to_embed,
-                        model=free_embedding_model
-                    )
-                    model = free_embedding_model
+            # Use Router API endpoint (required - old inference API is deprecated)
+            # This requires credits or PRO subscription
+            import httpx
+            
+            url = f"{self.router_url}/embeddings"
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": model,
+                "input": text_to_embed
+            }
+            
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.post(url, headers=headers, json=payload)
+                
+                if response.status_code == 402:
+                    logger.error("HuggingFace Router API credits depleted")
+                    return {
+                        "success": False,
+                        "error": "HuggingFace API credits depleted. Free tier exhausted. Add credits at https://huggingface.co/settings/billing or wait until Apr 1 for reset.",
+                        "embedding": None,
+                        "model": model
+                    }
+                
+                if response.status_code == 503:
+                    logger.warning("Model is loading, this may take a moment")
+                    return {
+                        "success": False,
+                        "error": "Model is loading. Please try again in a moment.",
+                        "embedding": None,
+                        "model": model
+                    }
+                
+                if response.status_code != 200:
+                    error_msg = f"API error: {response.status_code} - {response.text[:200]}"
+                    logger.error(error_msg)
+                    return {
+                        "success": False,
+                        "error": error_msg,
+                        "embedding": None,
+                        "model": model
+                    }
+                
+                result = response.json()
+                # Router API returns embeddings in OpenAI format
+                if "data" in result and len(result["data"]) > 0:
+                    embedding = result["data"][0]["embedding"]
                 else:
-                    raise router_error
+                    embedding = result
             
             # Convert to list if it's a numpy array or tensor
             if hasattr(embedding, 'tolist'):
@@ -343,11 +363,20 @@ class HuggingFaceProvider:
             while isinstance(embedding, list) and len(embedding) > 0 and isinstance(embedding[0], list):
                 embedding = embedding[0]
             
-            # Ensure it's a flat list of numbers
-            if not isinstance(embedding, list) or not all(isinstance(x, (int, float)) for x in embedding):
-                raise ValueError(f"Invalid embedding format: {type(embedding)}")
+            # Validate it's a proper list
+            if not isinstance(embedding, list):
+                raise ValueError(f"Invalid embedding format: expected list, got {type(embedding)}")
             
-            logger.info(f"Embedding generated successfully, dimension: {len(embedding) if embedding else 0}")
+            # Validate all elements are numbers
+            if len(embedding) == 0:
+                raise ValueError("Embedding is empty")
+            
+            # Check first few elements to ensure they're numbers (avoid checking all 4096)
+            sample_size = min(10, len(embedding))
+            if not all(isinstance(embedding[i], (int, float)) for i in range(sample_size)):
+                raise ValueError(f"Invalid embedding values: expected numbers")
+            
+            logger.info(f"Embedding generated successfully, dimension: {len(embedding)}")
             
             return {
                 "success": True,

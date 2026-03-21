@@ -20,6 +20,7 @@ export default function Chat() {
   const [sessionsLoading, setSessionsLoading] = useState(false)
   const [sessionsError, setSessionsError] = useState<string | null>(null)
   const [activeDocument, setActiveDocument] = useState<any>(null)
+  const [abortController, setAbortController] = useState<AbortController | null>(null)
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -303,6 +304,10 @@ export default function Chat() {
   }
 
   const handleSendMessage = async (content: string) => {
+    // Create abort controller for this request
+    const controller = new AbortController()
+    setAbortController(controller)
+    
     try {
       setSendingMessage(true)
       setError(null)
@@ -467,8 +472,12 @@ export default function Chat() {
             message: messageContent,
             role: 'user',
             generate_response: true
-          })
+          }),
+          signal: controller.signal
         }).catch(err => {
+          if (err.name === 'AbortError') {
+            throw new Error('Generation stopped by user')
+          }
           throw new Error('Connection failed. Backend server might be offline.')
         })
 
@@ -490,10 +499,21 @@ export default function Chat() {
 
     } catch (err) {
       console.error('Failed to send message:', err)
-      setError(err instanceof Error ? err.message : 'Failed to send message')
+      if (err instanceof Error && err.message !== 'Generation stopped by user') {
+        setError(err.message)
+      }
       setMessages(prev => prev.filter(msg => !msg.id.startsWith('temp-')))
     } finally {
       setSendingMessage(false)
+      setAbortController(null)
+    }
+  }
+
+  const handleStopGeneration = () => {
+    if (abortController) {
+      abortController.abort()
+      setSendingMessage(false)
+      setAbortController(null)
     }
   }
 
@@ -590,6 +610,44 @@ export default function Chat() {
               zIndex: 10
             }}>
               <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+                {sendingMessage ? (
+                  <button
+                    onClick={handleStopGeneration}
+                    style={{
+                      width: '100%',
+                      backgroundColor: '#EF4444',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '16px',
+                      padding: '14px 24px',
+                      fontSize: '15px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
+                      transition: 'all 0.2s',
+                      marginBottom: '12px'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#DC2626'
+                      e.currentTarget.style.transform = 'translateY(-1px)'
+                      e.currentTarget.style.boxShadow = '0 6px 16px rgba(239, 68, 68, 0.4)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#EF4444'
+                      e.currentTarget.style.transform = 'translateY(0)'
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.3)'
+                    }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <rect x="6" y="6" width="12" height="12" rx="2" />
+                    </svg>
+                    Stop Generating
+                  </button>
+                ) : null}
                 <ChatInput
                   onSendMessage={handleSendMessage}
                   disabled={sendingMessage}

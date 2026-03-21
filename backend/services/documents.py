@@ -32,7 +32,7 @@ class DocumentService:
         try:
             from services.providers.huggingface import get_huggingface_provider
             self.hf_provider = get_huggingface_provider()
-            if self.hf_provider and self.hf_provider.inference_client:
+            if self.hf_provider:
                 logger.info("HuggingFace provider initialized for embeddings")
                 # Detect embedding dimension on first use
                 self._detect_embedding_dimension()
@@ -89,10 +89,27 @@ class DocumentService:
                     {"content-type": file_type}
                 )
             except Exception as storage_error:
-                logger.error(f"Storage upload failed: {str(storage_error)}")
-                # If bucket doesn't exist, create it
+                error_str = str(storage_error)
+                logger.error(f"Storage upload failed: {error_str}")
+                
+                # Check if it's a size limit error
+                if "Payload too large" in error_str or "exceeded the maximum allowed size" in error_str:
+                    # Supabase storage has its own limits (usually 50MB max)
+                    file_size_mb = file_size / (1024 * 1024)
+                    raise Exception(
+                        f"File size ({file_size_mb:.1f}MB) exceeds Supabase storage limit. "
+                        f"Supabase storage maximum is 50MB. Please use a smaller file or contact support."
+                    )
+                
+                # If bucket doesn't exist, create it with 50MB limit
                 try:
-                    self.supabase.storage.create_bucket(self.storage_bucket, {"public": False})
+                    self.supabase.storage.create_bucket(
+                        self.storage_bucket, 
+                        {
+                            "public": False,
+                            "file_size_limit": 52428800  # 50MB in bytes
+                        }
+                    )
                     self.supabase.storage.from_(self.storage_bucket).upload(
                         storage_filename,
                         file_content,
@@ -137,13 +154,19 @@ class DocumentService:
     async def _get_retention_days_for_user(self, user_id: str) -> int:
         """Get document retention days based on user's plan"""
         try:
-            # Get user's plan
-            user_result = self.supabase.table("users").select("plan").eq("id", user_id).execute()
+            # Get user's plan and role
+            user_result = self.supabase.table("users").select("plan, role").eq("id", user_id).execute()
             
             if not user_result.data:
                 return 14  # Default
             
-            plan = user_result.data[0].get("plan", "free")
+            user_data = user_result.data[0]
+            plan = user_data.get("plan", "free")
+            role = user_data.get("role")
+            
+            # Admin users have unlimited retention (365 days effectively unlimited)
+            if role in ["super_admin", "admin", "ops"]:
+                return 365
             
             # Get retention days for this plan
             flag_name = f"document_retention_{plan}"
@@ -440,8 +463,16 @@ class DocumentService:
                 embedding = None
                 if self.hf_provider:
                     try:
+                        # Get API key from environment (same as test script)
+                        import os
+                        api_key = os.getenv("HUGGINGFACE_API_KEY")
+                        
                         # Don't prepend instruction for documents/passages
-                        result = await self.hf_provider.generate_embedding(chunk, prepend_instruction=False)
+                        result = await self.hf_provider.generate_embedding(
+                            chunk, 
+                            api_key=api_key,
+                            prepend_instruction=False
+                        )
                         if result["success"]:
                             embedding = result["embedding"]
                             embeddings_generated += 1
@@ -469,12 +500,22 @@ class DocumentService:
                 embedding_part3_str = None
                 
                 if embedding:
-                    # Convert list to PostgreSQL vector format: [1,2,3]
-                    embedding_str = '[' + ','.join(str(x) for x in embedding) + ']'
+                    # Validate embedding dimension
+                    expected_dim = 4096
+                    actual_dim = len(embedding)
                     
-                    # Split into three parts for indexing (pgvector limit is 2000 dims)
-                    # Part 1: 1-1365, Part 2: 1366-2730, Part 3: 2731-4096
-                    if len(embedding) == 4096:
+                    if actual_dim != expected_dim:
+                        logger.error(f"Embedding dimension mismatch: expected {expected_dim}, got {actual_dim}")
+                        logger.error("This usually means the embedding model changed or API credits are depleted")
+                        # Don't store incompatible embeddings
+                        embedding = None
+                        embedding_str = None
+                    else:
+                        # Convert list to PostgreSQL vector format: [1,2,3]
+                        embedding_str = '[' + ','.join(str(x) for x in embedding) + ']'
+                        
+                        # Split into three parts for indexing (pgvector limit is 2000 dims)
+                        # Part 1: 1-1365, Part 2: 1366-2730, Part 3: 2731-4096
                         part1 = embedding[:1365]
                         part2 = embedding[1365:2730]
                         part3 = embedding[2730:]
@@ -652,8 +693,16 @@ class DocumentService:
             # Try vector similarity search if embeddings are available
             if self.hf_provider:
                 try:
+                    # Get API key from environment
+                    import os
+                    api_key = os.getenv("HUGGINGFACE_API_KEY")
+                    
                     # Generate query embedding with instruction for better retrieval
-                    result = await self.hf_provider.generate_embedding(query, prepend_instruction=True)
+                    result = await self.hf_provider.generate_embedding(
+                        query, 
+                        api_key=api_key,
+                        prepend_instruction=True
+                    )
                     
                     if result["success"] and result["embedding"]:
                         query_embedding = result["embedding"]
