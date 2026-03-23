@@ -34,22 +34,11 @@ class DocumentService:
             self.hf_provider = get_huggingface_provider()
             if self.hf_provider:
                 logger.info("HuggingFace provider initialized for embeddings")
-                # Detect embedding dimension on first use
-                self._detect_embedding_dimension()
             else:
                 logger.warning("HuggingFace provider not available - embeddings will not be generated")
         except Exception as e:
             logger.error(f"Failed to initialize HuggingFace provider: {str(e)}")
             self.hf_provider = None
-    
-    def _detect_embedding_dimension(self):
-        """Detect the embedding dimension from the model"""
-        try:
-            # This will be set when we generate the first embedding
-            # For now, we'll detect it dynamically during embedding generation
-            pass
-        except Exception as e:
-            logger.warning(f"Could not detect embedding dimension: {str(e)}")
         
     async def upload_document(
         self,
@@ -463,7 +452,7 @@ class DocumentService:
                 embedding = None
                 if self.hf_provider:
                     try:
-                        # Get API key from environment (same as test script)
+                        # Get API key from environment
                         import os
                         api_key = os.getenv("HUGGINGFACE_API_KEY")
                         
@@ -473,6 +462,7 @@ class DocumentService:
                             api_key=api_key,
                             prepend_instruction=False
                         )
+                        
                         if result["success"]:
                             embedding = result["embedding"]
                             embeddings_generated += 1
@@ -482,7 +472,7 @@ class DocumentService:
                                 self.embedding_dimension = len(embedding)
                                 logger.info(f"Detected embedding dimension: {self.embedding_dimension}")
                             
-                            if i == 0:  # Log first embedding details
+                            if i == 0:
                                 logger.info(f"Generated embedding for chunk {i}, dimension: {len(embedding) if embedding else 0}")
                         else:
                             embeddings_failed += 1
