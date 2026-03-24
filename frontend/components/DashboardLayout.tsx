@@ -36,6 +36,23 @@ const getPageTitle = (pathname: string): string => {
 let globalSidebarCollapsed = false
 let sessionPlanCache: string | null = null
 
+// Mobile Menu Items
+const mobileMenuItems = [
+  { name: 'Dashboard', path: '/dashboard', icon: '🏠' },
+  { name: 'Chat', path: '/chat', icon: '💬' },
+  { name: 'Flashcards', path: '/flashcards', icon: '🎴' },
+  { name: 'MCQs', path: '/mcqs', icon: '✓' },
+  { name: 'High Yield', path: '/highyield', icon: '⭐' },
+  { name: 'Explain', path: '/explain', icon: '📚' },
+  { name: 'Concept Map', path: '/conceptmap', icon: '🗺️' },
+  { name: 'Clinical Cases', path: '/clinical-cases', icon: '🏥' },
+  { name: 'OSCE Simulator', path: '/osce', icon: '👨‍⚕️' },
+  { name: 'Image Analysis', path: '/image-analysis', icon: '🔬' },
+  { name: 'Study Planner', path: '/study-planner', icon: '📅' },
+  { name: 'Documents', path: '/documents', icon: '📄' },
+  { name: 'Profile', path: '/profile', icon: '👤' },
+]
+
 export default function DashboardLayout({ user, children }: DashboardLayoutProps) {
   const router = useRouter()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(globalSidebarCollapsed)
@@ -125,23 +142,6 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
     }
   }, [isDropdownOpen, isNotificationsOpen])
 
-  // Mobile Menu Items
-  const mobileMenuItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: '🏠' },
-    { name: 'Chat', path: '/chat', icon: '💬' },
-    { name: 'Flashcards', path: '/flashcards', icon: '🎴' },
-    { name: 'MCQs', path: '/mcqs', icon: '✓' },
-    { name: 'High Yield', path: '/highyield', icon: '⭐' },
-    { name: 'Explain', path: '/explain', icon: '📚' },
-    { name: 'Concept Map', path: '/conceptmap', icon: '🗺️' },
-    { name: 'Clinical Cases', path: '/clinical-cases', icon: '🏥' },
-    { name: 'OSCE Simulator', path: '/osce', icon: '👨‍⚕️' },
-    { name: 'Image Analysis', path: '/image-analysis', icon: '🔬' },
-    { name: 'Study Planner', path: '/study-planner', icon: '📅' },
-    { name: 'Documents', path: '/documents', icon: '📄' },
-    { name: 'Profile', path: '/profile', icon: '👤' },
-  ]
-
   const sidebarWidth = isMobile ? '0px' : (sidebarCollapsed ? '70px' : '240px')
 
   return (
@@ -195,18 +195,6 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
                   <ChevronRight size={16} className="link-arrow" />
                 </Link>
               ))}
-
-              <Link
-                href="/clinical-reasoning"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="drawer-link-item"
-              >
-                <div className="link-content">
-                  <span className="link-icon">🧠</span>
-                  <span className="link-text">Clinical Reasoning</span>
-                </div>
-                <ChevronRight size={16} className="link-arrow" />
-              </Link>
             </div>
 
             {/* Drawer Footer Actions */}

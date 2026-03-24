@@ -26,6 +26,22 @@ const getPlanLabel = (plan: string = 'free') => {
   return plans[plan.toLowerCase()] || 'Standard Plan'
 }
 
+const menuItems = [
+  { name: 'Dashboard', path: '/dashboard', icon: '🏠' },
+  { name: 'Chat', path: '/chat', icon: '💬' },
+  { name: 'Flashcards', path: '/flashcards', icon: '🎴' },
+  { name: 'MCQs', path: '/mcqs', icon: '✓' },
+  { name: 'High Yield', path: '/highyield', icon: '⭐' },
+  { name: 'Explain', path: '/explain', icon: '📚' },
+  { name: 'Concept Map', path: '/conceptmap', icon: '🗺️' },
+  { name: 'Clinical Cases', path: '/clinical-cases', icon: '🏥' },
+  { name: 'OSCE Simulator', path: '/osce', icon: '👨‍⚕️' },
+  { name: 'Image Analysis', path: '/image-analysis', icon: '🔬' },
+  { name: 'Study Planner', path: '/study-planner', icon: '📅' },
+  { name: 'Documents', path: '/documents', icon: '📄' },
+  { name: 'Profile', path: '/profile', icon: '👤' },
+]
+
 export default function Sidebar({ user, currentPath, collapsed: controlledCollapsed, onToggle, plan }: SidebarProps) {
   const router = useRouter()
   const [isCollapsed, setIsCollapsed] = useState(globalCollapsed)
@@ -43,22 +59,6 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
     globalCollapsed = newState
     onToggle?.(newState)
   }
-
-  const menuItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: '🏠' },
-    { name: 'Chat', path: '/chat', icon: '💬' },
-    { name: 'Flashcards', path: '/flashcards', icon: '🎴' },
-    { name: 'MCQs', path: '/mcqs', icon: '✓' },
-    { name: 'High Yield', path: '/highyield', icon: '⭐' },
-    { name: 'Explain', path: '/explain', icon: '📚' },
-    { name: 'Concept Map', path: '/conceptmap', icon: '🗺️' },
-    { name: 'Clinical Cases', path: '/clinical-cases', icon: '🏥' },
-    { name: 'OSCE Simulator', path: '/osce', icon: '👨‍⚕️' },
-    { name: 'Image Analysis', path: '/image-analysis', icon: '🔬' },
-    { name: 'Study Planner', path: '/study-planner', icon: '📅' },
-    { name: 'Documents', path: '/documents', icon: '📄' },
-    { name: 'Profile', path: '/profile', icon: '👤' },
-  ]
 
   const isActive = (path: string) => currentPath === path
   const sidebarWidth = isCollapsed ? '70px' : '240px'
@@ -153,16 +153,17 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
         .sidebar-container {
           width: ${sidebarWidth};
           height: 100vh;
-          background-color: #2C3238;
-          border-right: 1px solid rgba(255, 255, 255, 0.08);
+          background-color: #fdfbf7;
+          border-right: 1px solid rgba(0, 0, 0, 0.06);
           display: flex;
           flex-direction: column;
           position: fixed;
           left: 0;
           top: 0;
-          transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
           z-index: 100;
-          color: #E9ECEF;
+          color: #1e293b;
+          box-shadow: 4px 0 24px rgba(0,0,0,0.02);
         }
 
         .sidebar-header {
@@ -171,6 +172,7 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
           align-items: center;
           justify-content: ${isCollapsed ? 'center' : 'space-between'};
           min-height: 70px;
+          border-bottom: 1px solid rgba(0,0,0,0.04);
         }
 
         .logo-link {
@@ -201,13 +203,13 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
         .logo-text {
           font-size: 18px;
           font-weight: 800;
-          color: white;
+          color: #1e293b;
           letter-spacing: -0.03em;
         }
 
         .toggle-btn {
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: white;
+          border: 1px solid rgba(0, 0, 0, 0.1);
           border-radius: 8px;
           width: 24px;
           height: 24px;
@@ -215,29 +217,39 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          color: #ADB5BD;
+          color: #64748b;
           transition: all 0.2s;
         }
 
         .toggle-btn:hover {
-          background-color: rgba(255, 255, 255, 0.1);
-          color: white;
+          background-color: #f8fafc;
+          color: #1e293b;
         }
 
         .toggle-btn-collapsed {
           margin: 10px auto;
-          background: transparent;
-          border: none;
-          color: #ADB5BD;
+          background: white;
+          border: 1px solid rgba(0, 0, 0, 0.1);
+          border-radius: 8px;
+          color: #64748b;
           cursor: pointer;
           padding: 8px;
+          transition: all 0.2s;
+        }
+
+        .toggle-btn-collapsed:hover {
+          background-color: #f8fafc;
+          color: #1e293b;
         }
 
         .sidebar-nav {
           flex: 1;
-          padding: 8px 12px;
+          padding: 16px 12px;
           overflow-y: auto;
           scrollbar-width: none;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
         }
 
         .sidebar-nav::-webkit-scrollbar {
@@ -249,7 +261,6 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
           text-decoration: none;
           display: block;
           width: 100%;
-          margin-bottom: 2px;
         }
 
         .nav-item {
@@ -257,29 +268,34 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
           flex-direction: row !important;
           align-items: center !important; 
           gap: 12px;
-          padding: ${isCollapsed ? '10px 0' : '10px 12px'};
+          padding: ${isCollapsed ? '12px 0' : '12px 14px'};
           justify-content: ${isCollapsed ? 'center' : 'flex-start'};
-          color: #ADB5BD;
-          border-radius: 10px;
-          transition: background-color 0.2s, color 0.2s;
-          font-weight: 600;
-          font-size: 13px;
+          background: white;
+          color: #1e293b;
+          border-radius: 12px;
+          border: 1px solid rgba(0,0,0,0.04);
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          font-weight: 700;
+          font-size: 14px;
           width: 100%;
           white-space: nowrap;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
 
         .nav-item:hover {
-          background-color: rgba(255, 255, 255, 0.08);
-          color: white;
+          transform: scale(0.98);
+          background-color: #f8fafc;
         }
 
         .nav-item.active {
-          background-color: rgba(255, 255, 255, 0.15);
-          color: white;
+          background-color: #f8fafc;
+          border-color: rgba(99, 102, 241, 0.3);
+          color: #6366F1;
+          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
         }
 
         .nav-icon {
-          font-size: 16px;
+          font-size: 18px;
           width: 20px;
           height: 20px;
           display: flex;
@@ -294,59 +310,62 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
 
         .sidebar-footer {
           padding: 16px;
-          border-top: 1px solid rgba(255, 255, 255, 0.08);
+          border-top: 1px solid rgba(0, 0, 0, 0.06);
+          background: white;
         }
 
         .user-avatar-small {
           width: 32px;
           height: 32px;
-          border-radius: 50%;
-          background-color: #334155;
+          border-radius: 10px;
+          background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
           color: white;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-weight: bold;
+          font-weight: 800;
           margin: 0 auto;
+          box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
         }
 
         .user-full-card {
            display: flex;
            flex-direction: column;
-           gap: 10px;
+           gap: 12px;
         }
 
         .user-info-row {
           display: flex !important;
           flex-direction: row !important;
           align-items: center !important;
-          gap: 10px;
+          gap: 12px;
         }
 
         .user-avatar {
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #E9ECEF 0%, #ADB5BD 100%);
-          color: #212529;
+          width: 40px;
+          height: 40px;
+          border-radius: 12px;
+          background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+          color: white;
           display: flex;
           align-items: center;
           justify-content: center;
           font-weight: 800;
           flex-shrink: 0;
-          font-size: 12px;
+          font-size: 14px;
+          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
 
         .user-text {
           display: flex;
           flex-direction: column;
-          min-width: 0; /* Important for text truncation in flex items */
+          min-width: 0;
         }
 
         .user-name {
-          font-size: 13px;
-          font-weight: 700;
-          color: white;
+          font-size: 14px;
+          font-weight: 800;
+          color: #1e293b;
           margin: 0;
           line-height: 1.2;
           white-space: nowrap;
@@ -355,32 +374,32 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
         }
 
         .user-subtext {
-          font-size: 10px;
-          color: #ADB5BD;
-          margin: 0;
+          font-size: 11px;
+          color: #64748b;
+          margin: 4px 0 0 0;
           font-weight: 600;
         }
 
-
-
-/* Token Styles Removed */
-
         .upgrade-button {
           width: 100%;
-          padding: 8px;
-          background: linear-gradient(to right, #6366f1, #8b5cf6);
+          padding: 12px;
+          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
           color: white;
           border: none;
-          border-radius: 8px;
-          font-size: 11px;
+          border-radius: 12px;
+          font-size: 13px;
           font-weight: 700;
           cursor: pointer;
           transition: all 0.2s;
           box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+          display: flex;
+          justify-content: center;
+          align-items: center;
         }
 
         .upgrade-button:hover {
           filter: brightness(1.1);
+          transform: translateY(-1px);
           box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
         }
       `}</style>
