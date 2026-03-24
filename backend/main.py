@@ -38,6 +38,7 @@ app = FastAPI(title="Medical AI Platform API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://localhost:3001"],  # Frontend URLs
+    allow_origin_regex=r"https://.*\.devtunnels\.ms",  # Allow VS Code port forwarding
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -205,10 +206,7 @@ class StudyToolRequest(BaseModel):
     topic: str
     session_id: Optional[str] = None
     document_context: Optional[str] = None
-    format: Optional[str] = None
-    count: Optional[int] = None
-    count: Optional[int] = 5  # Number of MCQs to generate
-    count: Optional[int] = 5  # Number of items to generate per batch
+    count: Optional[int] = 5  # Number of items to generate
     format: Optional[str] = "interactive"  # interactive or static
 
 

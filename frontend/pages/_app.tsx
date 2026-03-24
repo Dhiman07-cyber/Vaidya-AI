@@ -4,6 +4,18 @@ import { useRouter } from 'next/router'
 import Lenis from 'lenis'
 import '@/styles/globals.css'
 
+if (typeof window !== 'undefined') {
+  const originalFetch = window.fetch;
+  window.fetch = async (...args) => {
+    let [resource, config] = args;
+    // Map absolute API calls to relative paths so our robust custom local proxy catches them!
+    if (typeof resource === 'string' && resource.includes('localhost:8000')) {
+        resource = resource.replace('http://localhost:8000', '');
+    }
+    return originalFetch(resource, config);
+  };
+}
+
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter()
   
