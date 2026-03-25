@@ -74,7 +74,7 @@ CONNECTION: Diabetes Mellitus Type 2 -> Diabetic Nephropathy`
             style={{
               padding: '1rem 2rem',
               fontSize: '1rem',
-              background: activeTest === 'flashcards' ? '#667eea' : '#f8f9fa',
+              background: activeTest === 'flashcards' ? '#667eea' : 'var(--bg-main)',
               color: activeTest === 'flashcards' ? 'white' : '#333',
               border: '2px solid #667eea',
               borderRadius: '8px',
@@ -89,7 +89,7 @@ CONNECTION: Diabetes Mellitus Type 2 -> Diabetic Nephropathy`
             style={{
               padding: '1rem 2rem',
               fontSize: '1rem',
-              background: activeTest === 'map' ? '#667eea' : '#f8f9fa',
+              background: activeTest === 'map' ? '#667eea' : 'var(--bg-main)',
               color: activeTest === 'map' ? 'white' : '#333',
               border: '2px solid #667eea',
               borderRadius: '8px',
@@ -104,7 +104,7 @@ CONNECTION: Diabetes Mellitus Type 2 -> Diabetic Nephropathy`
             style={{
               padding: '1rem 2rem',
               fontSize: '1rem',
-              background: '#f8f9fa',
+              background: 'var(--bg-main)',
               color: '#333',
               border: '2px solid #e2e8f0',
               borderRadius: '8px',
@@ -140,7 +140,7 @@ CONNECTION: Diabetes Mellitus Type 2 -> Diabetic Nephropathy`
           <div style={{
             textAlign: 'center',
             padding: '4rem 2rem',
-            background: '#f8f9fa',
+            background: 'var(--bg-main)',
             borderRadius: '12px'
           }}>
             <h2 style={{ color: '#667eea', marginBottom: '1rem' }}>

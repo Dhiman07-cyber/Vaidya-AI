@@ -91,7 +91,7 @@ export default function AuditLogTable({ logs, loading }: AuditLogTableProps) {
         }}>
           <thead>
             <tr style={{
-              backgroundColor: '#f8f9fa',
+              backgroundColor: 'var(--bg-main)',
               borderBottom: '2px solid #dee2e6'
             }}>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', width: '50px' }}></th>
@@ -113,7 +113,7 @@ export default function AuditLogTable({ logs, loading }: AuditLogTableProps) {
                   }}
                   onClick={() => toggleExpand(log.id)}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#f8f9fa'
+                    e.currentTarget.style.backgroundColor = 'var(--bg-main)'
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = 'white'
@@ -160,7 +160,7 @@ export default function AuditLogTable({ logs, loading }: AuditLogTableProps) {
                 
                 {/* Expanded Details Row */}
                 {expandedLogId === log.id && (
-                  <tr style={{ backgroundColor: '#f8f9fa' }}>
+                  <tr style={{ backgroundColor: 'var(--bg-main)' }}>
                     <td colSpan={6} style={{ padding: '20px' }}>
                       <div style={{
                         backgroundColor: 'white',
@@ -194,7 +194,7 @@ export default function AuditLogTable({ logs, loading }: AuditLogTableProps) {
                           <div>
                             <h5 style={{ marginTop: '15px', marginBottom: '10px' }}>Additional Details:</h5>
                             <pre style={{
-                              backgroundColor: '#f8f9fa',
+                              backgroundColor: 'var(--bg-main)',
                               padding: '10px',
                               borderRadius: '4px',
                               fontSize: '13px',
@@ -218,7 +218,7 @@ export default function AuditLogTable({ logs, loading }: AuditLogTableProps) {
       {/* Summary */}
       <div style={{
         padding: '15px',
-        backgroundColor: '#f8f9fa',
+        backgroundColor: 'var(--bg-main)',
         borderTop: '1px solid #dee2e6',
         textAlign: 'center',
         color: '#6c757d',

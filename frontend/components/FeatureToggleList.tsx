@@ -157,7 +157,7 @@ export default function FeatureToggleList({ features, loading, onToggle }: Featu
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    backgroundColor: isToggling ? '#f8f9fa' : 'white'
+                    backgroundColor: isToggling ? 'var(--bg-main)' : 'white'
                   }}
                 >
                   <div style={{ flex: 1 }}>

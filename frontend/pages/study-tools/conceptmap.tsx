@@ -308,7 +308,7 @@ export default function ConceptMapPage() {
                       onClick={() => setCurrentMaterial(material)}
                       style={{
                         padding: '0.5rem 1rem',
-                        background: currentMaterial.id === material.id ? '#667eea' : '#f8f9fa',
+                        background: currentMaterial.id === material.id ? '#667eea' : 'var(--bg-main)',
                         color: currentMaterial.id === material.id ? 'white' : '#333',
                         border: '2px solid',
                         borderColor: currentMaterial.id === material.id ? '#667eea' : '#e2e8f0',

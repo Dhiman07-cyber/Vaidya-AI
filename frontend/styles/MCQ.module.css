@@ -5,9 +5,9 @@
 /* Page Layout */
 .pageLayout {
     display: flex;
-    min-height: calc(100vh - 64px);
+    min-height: calc(100dvh - 64px);
     position: relative;
-    background: #fdfbf7;
+    background: var(--bg-main);
     /* Main Creamy background */
 }
 
@@ -32,7 +32,7 @@
     right: 0;
     bottom: 0;
     z-index: 10;
-    background-color: #F7F7F6;
+    background-color: var(--bg-sidebar);
 }
 
 /* Main Container */

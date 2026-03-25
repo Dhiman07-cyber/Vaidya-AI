@@ -805,14 +805,14 @@ export default function ClinicalCases() {
             width: 100%;
             margin: 0 auto;
             padding: 0;
-            background: #fdfbf7;
-            min-height: calc(100vh - 64px);
+            background: var(--bg-main);
+            min-height: calc(100dvh - 64px);
             display: flex;
             flex-direction: column;
           }
 
           .clinical-container[data-station-active="true"] {
-            height: calc(100vh - 64px);
+            height: calc(100dvh - 64px);
             overflow: hidden;
           }
 
@@ -868,7 +868,7 @@ export default function ClinicalCases() {
           }
 
           .specialty-card {
-            background: #F7F7F6;
+            background: var(--bg-sidebar);
             border: 1px solid rgba(0, 0, 0, 0.08);
             border-radius: 16px;
             padding: 12px;
@@ -968,7 +968,7 @@ export default function ClinicalCases() {
 
           /* Difficulty Track */
           .difficulty-track {
-            background: #F7F7F6;
+            background: var(--bg-sidebar);
             border: 1px solid rgba(0, 0, 0, 0.08);
             border-radius: 18px;
             padding: 32px 12px;

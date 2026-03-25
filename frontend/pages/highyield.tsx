@@ -22,7 +22,7 @@ const SUGGESTIONS = [
 // Premium styles (strictly like Flashcards)
 const stylesMap = {
   container: "max-w-[1200px] mx-auto",
-  mainArea: "flex-1 flex flex-col overflow-y-auto p-4 pt-12 sm:p-8 custom-scrollbar bg-[#fdfbf7]",
+  mainArea: "flex-1 flex flex-col overflow-y-auto p-4 pt-12 sm:p-8 custom-scrollbar bg-[var(--bg-main)]",
   searchOnlyState: "bg-white rounded-[24px] sm:rounded-[32px] p-6 sm:p-10 text-center border border-[#E2E8F0] mt-4 sm:mt-0 w-full max-w-[750px] mx-auto",
   sparkleIcon: "w-10 h-10 sm:w-14 sm:h-14 bg-[#EDE9FE] rounded-xl sm:rounded-2xl mx-auto mb-3 sm:mb-4 flex items-center justify-center",
   h1: "text-2xl sm:text-2xl font-[800] mb-1 sm:mb-2 text-[#0F172A]",
@@ -286,7 +286,7 @@ export default function HighYield() {
 
   if (loading || !user) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#fdfbf7' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100dvh', background: 'var(--bg-main)' }}>
         <div className={styles.loadingSpinner} style={{ borderTopColor: '#8B5CF6' }}></div>
       </div>
     )
@@ -299,9 +299,9 @@ export default function HighYield() {
       </Head>
       <DashboardLayout user={user}>
         <div style={{
-          height: 'calc(100vh - 64px)',
+          height: 'calc(100dvh - 64px)',
           display: 'flex',
-          backgroundColor: '#fdfbf7',
+          backgroundColor: 'var(--bg-main)',
           position: 'relative'
         }}>
           <div style={{
@@ -449,7 +449,7 @@ export default function HighYield() {
                           <p style={{ fontWeight: 600, color: '#475569' }}>Synthesizing high-yield content...</p>
                         </div>
                       ) : (
-                        <div className={styles.scrollArea} style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 400px)' }}>
+                        <div className={styles.scrollArea} style={{ overflowY: 'auto', maxHeight: 'calc(100dvh - 400px)' }}>
                           <div className={styles.noteContent}>
                             <div dangerouslySetInnerHTML={{ __html: parseMarkdown(result?.content || '') }} />
                           </div>

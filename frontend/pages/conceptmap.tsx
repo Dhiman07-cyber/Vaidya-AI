@@ -9,10 +9,10 @@ import SessionSidebar, { ChatSession } from '@/components/SessionSidebar'
 
 // Tailwind class mappings
 const styles = {
-  container: "w-full min-h-[500px] h-[calc(100vh-150px)] flex flex-col overflow-hidden max-[1024px]:h-auto max-[1024px]:overflow-visible relative",
-  mainLayout: "flex gap-4 flex-1 min-h-0 max-[1024px]:flex-col max-[1024px]:overflow-visible overflow-hidden",
+  container: "w-full min-h-[500px] h-[calc(100dvh-150px)] flex flex-col overflow-hidden relative",
+  mainLayout: "flex gap-4 flex-1 min-h-0 max-[1024px]:flex-col overflow-hidden",
 
-  mainContent: "bg-[#F7F7F6] rounded-xl p-4 shadow-sm border border-slate-200 flex flex-col min-h-0 overflow-hidden flex-1 max-[1024px]:order-1 max-[1024px]:min-h-[500px]",
+  mainContent: "bg-[var(--bg-sidebar)] rounded-xl p-4 shadow-sm border border-slate-200 flex flex-col min-h-0 overflow-hidden flex-1 max-[1024px]:order-1",
   inputSection: "flex gap-3 mb-4 flex-shrink-0 max-[640px]:flex-col items-center",
   searchBox: "flex-1 flex items-center bg-white/50 border border-slate-200 rounded-xl px-4 transition-all focus-within:border-medical-indigo focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(102,126,234,0.1)] h-12",
   searchIcon: "text-slate-400",
@@ -23,9 +23,9 @@ const styles = {
   placeholder: "flex-1 flex flex-col items-center justify-center text-slate-500 bg-slate-50/50 rounded-xl border-2 border-dashed border-slate-200 p-8", // Reverted transparency
   placeholderIcon: "w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-[2.5rem] mb-4 border border-slate-100 flex-shrink-0 animate-pulse",
 
-  rightSidebar: "bg-[#F7F7F6] rounded-xl shadow-sm border border-slate-200 flex flex-col h-full overflow-hidden flex-shrink-0 max-[1024px]:order-3 max-[1024px]:!w-full max-[1024px]:h-auto max-[1024px]:overflow-visible",
+  rightSidebar: "bg-[var(--bg-sidebar)] rounded-xl shadow-sm border border-slate-200 flex flex-col h-full overflow-hidden flex-shrink-0 max-[1024px]:order-3 max-[1024px]:!w-full",
   rightSidebarHeader: "p-3.5 flex items-center gap-2 flex-shrink-0",
-  rightSidebarContent: "flex-1 overflow-y-auto p-3 custom-scrollbar h-full scrollbar-none max-[1024px]:h-auto max-[1024px]:overflow-visible",
+  rightSidebarContent: "flex-1 overflow-y-auto p-3 custom-scrollbar h-full scrollbar-none",
   summaryCard: "flex flex-col gap-3",
   topicIcon: "flex justify-center mb-1",
   iconCircle: "w-12 h-12 bg-gradient-to-br from-medical-indigo/10 to-medical-indigo/5 rounded-2xl flex items-center justify-center text-[1.2rem] shadow-sm border border-medical-indigo/10",
@@ -281,7 +281,7 @@ export default function ConceptMap() {
 
   if (loading || !user) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100dvh' }}>
         <p>Loading...</p>
       </div>
     )

@@ -7,7 +7,7 @@
     --hy-primary: #8B5CF6;
     --hy-primary-soft: #EDE9FE;
     --hy-accent: #F59E0B;
-    --hy-bg: #fdfbf7;
+    --hy-bg: var(--bg-main);
     --hy-card: #ffffff;
     --hy-border: rgba(0, 0, 0, 0.08);
     --hy-text: #1E293B;

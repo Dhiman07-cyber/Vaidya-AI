@@ -9,7 +9,7 @@
     --osce-primary-soft: #EEF2FF;
     --osce-accent: #14B8A6;
     --osce-accent-soft: #CCFBF1;
-    --osce-bg: #fdfbf7;
+    --osce-bg: var(--bg-main);
     --osce-bg-warm: #f7f3ed;
     --osce-card: rgba(255, 255, 255, 0.85);
     --osce-glass: rgba(255, 255, 255, 0.7);
@@ -23,7 +23,7 @@
     --osce-danger: #EF4444;
     --osce-radius: 20px;
     --osce-radius-sm: 12px;
-    --osce-card-bg: #F7F7F6;
+    --osce-card-bg: var(--bg-sidebar);
     /* Creamy Silver Whitish used for cards */
 }
 
@@ -1490,7 +1490,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: calc(100vh - 100px);
+    min-height: calc(100dvh - 100px);
     padding: 40px 24px;
 }
 
@@ -1807,7 +1807,7 @@
     .osceWrapper {
         overflow-y: auto !important;
         height: auto;
-        min-height: 100vh;
+        min-height: 100dvh;
     }
 
     .mainContent {

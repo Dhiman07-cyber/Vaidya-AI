@@ -75,7 +75,7 @@ export default function UserList({
         }}>
           <thead>
             <tr style={{
-              backgroundColor: '#f8f9fa',
+              backgroundColor: 'var(--bg-main)',
               borderBottom: '2px solid #dee2e6'
             }}>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold' }}>Name</th>
@@ -95,7 +95,7 @@ export default function UserList({
                   cursor: 'pointer'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f8f9fa'
+                  e.currentTarget.style.backgroundColor = 'var(--bg-main)'
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'white'

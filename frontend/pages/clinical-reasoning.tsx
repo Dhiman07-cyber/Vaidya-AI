@@ -112,7 +112,7 @@ export default function ClinicalReasoning() {
 
   if (loading || !user) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100dvh' }}>
         <p>Loading...</p>
       </div>
     )

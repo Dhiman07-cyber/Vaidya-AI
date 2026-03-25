@@ -12,7 +12,7 @@ import SessionSidebar, { ChatSession } from '@/components/SessionSidebar'
 // Premium styles (for consistency)
 const styles = {
   container: "max-w-[1200px] mx-auto",
-  mainArea: "flex-1 flex flex-col overflow-y-auto p-4 pt-20 sm:p-10 custom-scrollbar bg-[#fdfbf7]", // Matches chat theme color
+  mainArea: "flex-1 flex flex-col overflow-y-auto p-4 pt-20 sm:p-10 custom-scrollbar bg-[var(--bg-main)]", // Matches chat theme color
   searchOnlyState: "bg-white rounded-[24px] sm:rounded-[32px] p-6 sm:p-10 text-center border border-[#E2E8F0] mt-4 sm:mt-0 w-full max-w-[750px] mx-auto",
   sparkleIcon: "w-10 h-10 sm:w-14 sm:h-14 bg-[#F0FDF4] rounded-xl sm:rounded-2xl mx-auto mb-3 sm:mb-4 flex items-center justify-center",
   h1: "text-2xl sm:text-2xl font-[800] mb-1 sm:mb-2 text-[#064E3B]",
@@ -268,7 +268,7 @@ export default function Explain() {
 
   if (loading || !user) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100dvh' }}>
         <p>Loading...</p>
       </div>
     )
@@ -466,9 +466,9 @@ export default function Explain() {
         <style jsx>{`
           .page-layout {
             display: flex;
-            min-height: calc(100vh - 64px);
+            min-height: calc(100dvh - 64px);
             position: relative;
-            background-color: #fdfbf7; /* Matches chat theme color */
+            background-color: var(--bg-main); /* Matches chat theme color */
           }
 
           .content-area {
@@ -484,7 +484,7 @@ export default function Explain() {
             right: 0;
             bottom: 0;
             z-index: 10;
-            background-color: #F7F7F6;
+            background-color: var(--bg-sidebar);
           }
 
           @media (max-width: 1024px) {

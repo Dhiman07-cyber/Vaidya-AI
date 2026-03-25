@@ -70,7 +70,7 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100dvh' }}>
         <p>Loading...</p>
       </div>
     )
@@ -99,7 +99,7 @@ export default function AdminDashboard() {
             {/* Dashboard Cards */}
             <div style={{
               padding: '20px',
-              backgroundColor: '#f8f9fa',
+              backgroundColor: 'var(--bg-main)',
               borderRadius: '8px',
               border: '1px solid #dee2e6'
             }}>
@@ -123,7 +123,7 @@ export default function AdminDashboard() {
 
             <div style={{
               padding: '20px',
-              backgroundColor: '#f8f9fa',
+              backgroundColor: 'var(--bg-main)',
               borderRadius: '8px',
               border: '1px solid #dee2e6'
             }}>
@@ -147,7 +147,7 @@ export default function AdminDashboard() {
 
             <div style={{
               padding: '20px',
-              backgroundColor: '#f8f9fa',
+              backgroundColor: 'var(--bg-main)',
               borderRadius: '8px',
               border: '1px solid #dee2e6'
             }}>
@@ -171,7 +171,7 @@ export default function AdminDashboard() {
 
             <div style={{
               padding: '20px',
-              backgroundColor: '#f8f9fa',
+              backgroundColor: 'var(--bg-main)',
               borderRadius: '8px',
               border: '1px solid #dee2e6'
             }}>
@@ -196,7 +196,7 @@ export default function AdminDashboard() {
 
             <div style={{
               padding: '20px',
-              backgroundColor: '#f8f9fa',
+              backgroundColor: 'var(--bg-main)',
               borderRadius: '8px',
               border: '1px solid #dee2e6'
             }}>

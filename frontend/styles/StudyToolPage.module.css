@@ -65,7 +65,7 @@
 .sessionItem {
   padding: 1rem;
   margin-bottom: 0.5rem;
-  background: #f8f9fa;
+  background: var(--bg-main);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
@@ -268,7 +268,7 @@
 }
 
 .backBtn {
-  background: #f8f9fa;
+  background: var(--bg-main);
   border: 2px solid #e2e8f0;
   padding: 0.75rem 1.5rem;
   border-radius: 8px;

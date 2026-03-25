@@ -135,7 +135,7 @@ export default function UserDetails({
               <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>
                 Name:
               </label>
-              <p style={{ margin: 0, padding: '8px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+              <p style={{ margin: 0, padding: '8px', backgroundColor: 'var(--bg-main)', borderRadius: '4px' }}>
                 {user.name}
               </p>
             </div>
@@ -144,7 +144,7 @@ export default function UserDetails({
               <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>
                 Email:
               </label>
-              <p style={{ margin: 0, padding: '8px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+              <p style={{ margin: 0, padding: '8px', backgroundColor: 'var(--bg-main)', borderRadius: '4px' }}>
                 {user.email}
               </p>
             </div>
@@ -156,7 +156,7 @@ export default function UserDetails({
               <p style={{
                 margin: 0,
                 padding: '8px',
-                backgroundColor: '#f8f9fa',
+                backgroundColor: 'var(--bg-main)',
                 borderRadius: '4px',
                 fontSize: '12px',
                 fontFamily: 'monospace'
@@ -169,7 +169,7 @@ export default function UserDetails({
               <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>
                 Created:
               </label>
-              <p style={{ margin: 0, padding: '8px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+              <p style={{ margin: 0, padding: '8px', backgroundColor: 'var(--bg-main)', borderRadius: '4px' }}>
                 {new Date(user.created_at).toLocaleString()}
               </p>
             </div>
@@ -195,7 +195,7 @@ export default function UserDetails({
           <div style={{
             marginBottom: '30px',
             padding: '20px',
-            backgroundColor: '#f8f9fa',
+            backgroundColor: 'var(--bg-main)',
             borderRadius: '8px'
           }}>
             <h3 style={{ marginTop: 0, marginBottom: '15px' }}>Change Plan</h3>

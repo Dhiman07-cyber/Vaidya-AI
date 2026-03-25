@@ -237,7 +237,7 @@
   padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   height: fit-content;
-  max-height: calc(100vh - 200px);
+  max-height: calc(100dvh - 200px);
   overflow-y: auto;
 }
 
@@ -256,7 +256,7 @@
 
 .sessionItem {
   padding: 1rem;
-  background: #f8f9fa;
+  background: var(--bg-main);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
@@ -328,7 +328,7 @@
 }
 
 .materialCard {
-  background: #f8f9fa;
+  background: var(--bg-main);
   border-radius: 8px;
   padding: 1.5rem;
   border-left: 4px solid #667eea;
@@ -385,7 +385,7 @@
 }
 
 .backBtn {
-  background: #f8f9fa;
+  background: var(--bg-main);
   border: 2px solid #e2e8f0;
   padding: 0.75rem 1.5rem;
   border-radius: 8px;

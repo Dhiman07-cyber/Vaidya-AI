@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { AuthUser, supabase } from '@/lib/supabase'
 import Sidebar from './Sidebar'
+import ThemeToggle from './ThemeToggle'
 import { Menu, X, LogOut, ChevronRight, Crown } from 'lucide-react'
 
 interface DashboardLayoutProps {
@@ -163,8 +164,11 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
             {/* Drawer Header */}
             <div className="drawer-header">
               <div className="drawer-user-info">
-                <div className="avatar-large">
-                  {user ? user.email?.[0].toUpperCase() : '?'}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                  <div className="avatar-large">
+                    {user ? user.email?.[0].toUpperCase() : '?'}
+                  </div>
+                  <ThemeToggle />
                 </div>
                 <div className="drawer-user-meta">
                   <h3 className="drawer-username">{user ? (user.user_metadata?.name || user.email?.split('@')[0]) : 'Loading...'}</h3>
@@ -243,6 +247,7 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
           </div>
 
           <div className="actions-section">
+            {!isMobile && <ThemeToggle />}
             {/* Desktop Profile Menu */}
             {!isMobile && (
               <>
@@ -375,8 +380,8 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
         }
         .layout-root {
           display: flex;
-          min-height: 100vh;
-          background-color: var(--cream-bg);
+          min-height: 100dvh;
+          background-color: var(--bg-main);
           font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
@@ -390,13 +395,11 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
 
         .top-bar {
           height: 64px;
-          background: linear-gradient(180deg, rgba(255, 255, 255, 0.7) 0%, rgba(253, 253, 255, 0.6) 100%);
+          background: var(--bg-card);
           backdrop-filter: blur(12px) saturate(180%);
           -webkit-backdrop-filter: blur(12px) saturate(180%);
-          border-bottom: none;
-          box-shadow: 
-            0 10px 40px -10px rgba(0, 0, 0, 0.05),
-            inset 0 -1px 0 0 rgba(255, 255, 255, 0.5);
+          border-bottom: 1px solid var(--border-subtle);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.02);
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -424,8 +427,8 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
         }
 
         .icon-action-btn {
-          background: white;
-          border: 1px solid rgba(0, 0, 0, 0.1);
+          background: var(--bg-card);
+          border: 1px solid var(--border-strong);
           width: 44px;
           height: 44px;
           border-radius: 14px;
@@ -439,9 +442,9 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
         }
 
         .icon-action-btn:hover, .icon-action-btn.active {
-          background-color: white;
-          color: var(--cream-text-main);
-          border-color: var(--cream-accent);
+          background-color: var(--accent-hover);
+          color: var(--text-main);
+          border-color: var(--border-subtle);
           transform: translateY(-1px);
           box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
         }
@@ -451,8 +454,8 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
           align-items: center;
           gap: 12px;
           padding: 6px 14px 6px 6px;
-          background: white;
-          border: 1px solid rgba(0, 0, 0, 0.1);
+          background: var(--bg-card);
+          border: 1px solid var(--border-strong);
           border-radius: 16px;
           cursor: pointer;
           transition: all 0.2s;
@@ -460,8 +463,8 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
         }
 
         .profile-trigger:hover, .profile-trigger.active {
-          border-color: var(--cream-accent);
-          background-color: white;
+          border-color: var(--medical-blue-soft);
+          background-color: var(--accent-hover);
           transform: translateY(-1px);
         }
 
@@ -534,10 +537,10 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
           top: calc(100% + 12px);
           right: 0;
           width: 280px;
-          background-color: white;
+          background-color: var(--bg-card);
           border-radius: 24px;
           box-shadow: 0 20px 40px -8px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04);
-          border: 1px solid rgba(0, 0, 0, 0.08);
+          border: 1px solid var(--border-subtle);
           overflow: hidden;
           animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -552,13 +555,13 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
           top: calc(100% + 12px);
           right: 0;
           width: 340px;
-          background-color: white;
+          background-color: var(--bg-card);
           border-radius: 24px;
           box-shadow: 
             0 20px 40px -8px rgba(0,0,0,0.12), 
             0 0 0 1px rgba(0,0,0,0.04),
             0 10px 20px -5px rgba(0, 0, 0, 0.05);
-          border: 1px solid rgba(0, 0, 0, 0.08);
+          border: 1px solid var(--border-subtle);
           overflow: hidden;
           animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
           z-index: 100;
@@ -750,7 +753,7 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
         }
 
         .modal-content {
-          background: #FFFFFF;
+          background: var(--bg-card);
           width: 100%;
           max-width: 420px;
           border-radius: 32px;
@@ -844,6 +847,10 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
           .top-bar {
             padding: 0 20px;
           }
+          .main-scroll-area {
+            padding: 16px;
+            overflow-x: hidden;
+          }
           /* Adjusted to show title on mobile as requested */
           .mobile-title {
             display: block;
@@ -877,7 +884,7 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
         .mobile-drawer {
           width: 100%;
           max-width: 320px;
-          background: #fdfbf7;
+          background: var(--bg-sidebar);
           height: 100%;
           display: flex;
           flex-direction: column;
@@ -944,8 +951,8 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
         }
         
         .drawer-close-btn {
-          background: white;
-          border: 1px solid rgba(0,0,0,0.1);
+          background: var(--bg-card);
+          border: 1px solid var(--border-strong);
           border-radius: 12px;
           width: 40px;
           height: 40px;
@@ -969,18 +976,18 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
           align-items: center;
           justify-content: space-between;
           padding: 16px;
-          background: white;
+          background: var(--bg-card);
           border-radius: 16px;
           text-decoration: none;
-          color: #1e293b;
-          border: 1px solid rgba(0,0,0,0.04);
+          color: var(--text-main);
+          border: 1px solid var(--border-subtle);
           transition: all 0.2s;
           box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
         
         .drawer-link-item:active {
           transform: scale(0.98);
-          background-color: #f8fafc;
+          background-color: var(--accent-hover);
         }
         
         .link-content {
@@ -1004,11 +1011,11 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
         
         .drawer-footer {
           padding: 24px;
-          border-top: 1px solid rgba(0,0,0,0.06);
+          border-top: 1px solid var(--border-subtle);
           display: flex;
           flex-direction: column;
           gap: 12px;
-          background: white;
+          background: var(--bg-sidebar);
         }
         
         .drawer-upgrade-btn {

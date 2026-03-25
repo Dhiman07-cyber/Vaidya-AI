@@ -9,7 +9,7 @@ interface StudyToolsLayoutProps {
 export default function StudyToolsLayout({ children }: StudyToolsLayoutProps) {
   return (
     <Layout>
-      <div className="flex min-h-[calc(100vh-70px)] bg-[#f8f9fa] max-[968px]:flex-col">
+      <div className="flex min-h-[calc(100dvh-70px)] bg-[var(--bg-main)] max-[968px]:flex-col">
         <StudyToolsSidebar />
         <main className="flex-1 overflow-y-auto">
           {children}

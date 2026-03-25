@@ -2,6 +2,7 @@ import type { AppProps } from 'next/app'
 import { useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Lenis from 'lenis'
+import { ThemeProvider } from '@/components/ThemeProvider'
 import '@/styles/globals.css'
 
 if (typeof window !== 'undefined') {
@@ -21,7 +22,7 @@ export default function App({ Component, pageProps }: AppProps) {
   
   useEffect(() => {
     // Disable Lenis on pages with custom scrolling
-    const disableLenisPages = ['/highyield', '/image-analysis', '/osce']
+    const disableLenisPages = ['/highyield', '/image-analysis', '/osce', '/conceptmap']
     const shouldDisableLenis = disableLenisPages.includes(router.pathname)
     
     if (shouldDisableLenis) {
@@ -50,5 +51,9 @@ export default function App({ Component, pageProps }: AppProps) {
     }
   }, [router.pathname])
 
-  return <Component {...pageProps} />
+  return (
+    <ThemeProvider>
+      <Component {...pageProps} />
+    </ThemeProvider>
+  )
 }

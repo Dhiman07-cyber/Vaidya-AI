@@ -3,14 +3,49 @@
 @import "tailwindcss";
 
 :root {
-  --cream-bg: #fdfbf7;
-  --cream-card: #FFFFFF;
+  /* Light Mode (Deep Creamy Medical) */
+  --bg-main: #F5F2E9; /* Deeper cream background */
+  --bg-card: #FFFFFF;
+  --bg-sidebar: #FCFAF6;
+  --cream-bg: var(--bg-main); /* Legacy compat */
+  --cream-card: var(--bg-card); /* Legacy compat */
   --cream-accent: #E2E2DF;
   --cream-accent-soft: #F2F2F0;
   --cream-text-main: #1F2937;
   --cream-text-muted: #6B7280;
+  
+  --text-main: #1F2937;
+  --text-muted: #6B7280;
+  --border-subtle: rgba(0,0,0,0.06);
+  --border-strong: rgba(0,0,0,0.1);
+  --accent-soft: #F2F2F0;
+  --accent-hover: #f8fafc;
+
   --medical-blue: #5C67F2;
   --medical-blue-soft: #EDEEFF;
+}
+
+.dark {
+  /* Dark Mode (Medical Dark Slate) */
+  --bg-main: #0B1120;
+  --bg-card: #1E293B;
+  --bg-sidebar: #0F172A;
+  --cream-bg: var(--bg-main); /* Legacy compat */
+  --cream-card: var(--bg-card); /* Legacy compat */
+  --cream-accent: #334155;
+  --cream-accent-soft: #1E293B;
+  --cream-text-main: #F8FAFC;
+  --cream-text-muted: #94A3B8;
+  
+  --text-main: #F8FAFC;
+  --text-muted: #94A3B8;
+  --border-subtle: rgba(255,255,255,0.06);
+  --border-strong: rgba(255,255,255,0.1);
+  --accent-soft: #334155;
+  --accent-hover: #1E293B;
+
+  --medical-blue: #818cf8;
+  --medical-blue-soft: rgba(129, 140, 248, 0.1);
 }
 
 * {
@@ -23,8 +58,9 @@ body {
   margin: 0;
   padding: 0;
   font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: var(--cream-bg);
-  color: var(--cream-text-main);
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 ::selection {

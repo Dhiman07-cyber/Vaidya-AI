@@ -177,7 +177,7 @@ export default function ModelUsagePage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100dvh' }}>
         <p>Loading...</p>
       </div>
     )
@@ -415,7 +415,7 @@ export default function ModelUsagePage() {
                 }}>
                   <thead>
                     <tr style={{
-                      backgroundColor: '#f8f9fa',
+                      backgroundColor: 'var(--bg-main)',
                       borderBottom: '2px solid #dee2e6'
                     }}>
                       <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold' }}>Timestamp</th>
@@ -506,7 +506,7 @@ export default function ModelUsagePage() {
 
             <div style={{
               padding: '15px',
-              backgroundColor: '#f8f9fa',
+              backgroundColor: 'var(--bg-main)',
               borderTop: '1px solid #dee2e6',
               textAlign: 'center',
               color: '#6c757d',

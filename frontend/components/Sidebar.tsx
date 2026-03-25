@@ -152,9 +152,9 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
       <style jsx>{`
         .sidebar-container {
           width: ${sidebarWidth};
-          height: 100vh;
-          background-color: #fdfbf7;
-          border-right: 1px solid rgba(0, 0, 0, 0.06);
+          height: 100dvh;
+          background-color: var(--bg-sidebar);
+          border-right: 1px solid var(--border-subtle);
           display: flex;
           flex-direction: column;
           position: fixed;
@@ -162,7 +162,7 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
           top: 0;
           transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
           z-index: 100;
-          color: #1e293b;
+          color: var(--text-main);
           box-shadow: 4px 0 24px rgba(0,0,0,0.02);
         }
 
@@ -172,7 +172,7 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
           align-items: center;
           justify-content: ${isCollapsed ? 'center' : 'space-between'};
           min-height: 70px;
-          border-bottom: 1px solid rgba(0,0,0,0.04);
+          border-bottom: 1px solid var(--border-subtle);
         }
 
         .logo-link {
@@ -203,13 +203,13 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
         .logo-text {
           font-size: 18px;
           font-weight: 800;
-          color: #1e293b;
+          color: var(--text-main);
           letter-spacing: -0.03em;
         }
 
         .toggle-btn {
-          background: white;
-          border: 1px solid rgba(0, 0, 0, 0.1);
+          background: var(--bg-card);
+          border: 1px solid var(--border-strong);
           border-radius: 8px;
           width: 24px;
           height: 24px;
@@ -217,29 +217,29 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          color: #64748b;
+          color: var(--text-muted);
           transition: all 0.2s;
         }
 
         .toggle-btn:hover {
-          background-color: #f8fafc;
-          color: #1e293b;
+          background-color: var(--accent-hover);
+          color: var(--text-main);
         }
 
         .toggle-btn-collapsed {
           margin: 10px auto;
-          background: white;
-          border: 1px solid rgba(0, 0, 0, 0.1);
+          background: var(--bg-card);
+          border: 1px solid var(--border-strong);
           border-radius: 8px;
-          color: #64748b;
+          color: var(--text-muted);
           cursor: pointer;
           padding: 8px;
           transition: all 0.2s;
         }
 
         .toggle-btn-collapsed:hover {
-          background-color: #f8fafc;
-          color: #1e293b;
+          background-color: var(--accent-hover);
+          color: var(--text-main);
         }
 
         .sidebar-nav {
@@ -270,10 +270,10 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
           gap: 12px;
           padding: ${isCollapsed ? '12px 0' : '12px 14px'};
           justify-content: ${isCollapsed ? 'center' : 'flex-start'};
-          background: white;
-          color: #1e293b;
+          background: var(--bg-card);
+          color: var(--text-main);
           border-radius: 12px;
-          border: 1px solid rgba(0,0,0,0.04);
+          border: 1px solid var(--border-subtle);
           transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
           font-weight: 700;
           font-size: 14px;
@@ -284,14 +284,14 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
 
         .nav-item:hover {
           transform: scale(0.98);
-          background-color: #f8fafc;
+          background-color: var(--accent-hover);
         }
 
         .nav-item.active {
-          background-color: #f8fafc;
-          border-color: rgba(99, 102, 241, 0.3);
-          color: #6366F1;
-          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+          background-color: var(--accent-hover);
+          border-color: var(--medical-blue-soft);
+          color: var(--medical-blue);
+          box-shadow: 0 4px 12px var(--medical-blue-soft);
         }
 
         .nav-icon {
@@ -310,8 +310,8 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
 
         .sidebar-footer {
           padding: 16px;
-          border-top: 1px solid rgba(0, 0, 0, 0.06);
-          background: white;
+          border-top: 1px solid var(--border-subtle);
+          background: var(--bg-sidebar);
         }
 
         .user-avatar-small {
@@ -365,7 +365,7 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
         .user-name {
           font-size: 14px;
           font-weight: 800;
-          color: #1e293b;
+          color: var(--text-main);
           margin: 0;
           line-height: 1.2;
           white-space: nowrap;
@@ -375,7 +375,7 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
 
         .user-subtext {
           font-size: 11px;
-          color: #64748b;
+          color: var(--text-muted);
           margin: 4px 0 0 0;
           font-weight: 600;
         }

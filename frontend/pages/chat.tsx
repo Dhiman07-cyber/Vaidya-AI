@@ -519,7 +519,7 @@ export default function Chat() {
 
   if (loading || !user) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100dvh' }}>
         <p>Loading...</p>
       </div>
     )
@@ -533,9 +533,9 @@ export default function Chat() {
       <DashboardLayout user={user}>
         {/* Full Page Chat Container */}
         <div style={{
-          height: 'calc(100vh - 64px)', // Exact height minus top bar (64px)
+          height: 'calc(100dvh - 64px)', // Exact height minus top bar (64px)
           display: 'flex',
-          backgroundColor: '#fdfbf7',
+          backgroundColor: 'var(--bg-main)',
           overflow: 'hidden', // Contain scrolling within this app-like view
           position: 'relative' // Create stacking context
         }}>
@@ -606,7 +606,7 @@ export default function Chat() {
               flexShrink: 0, // Prevent shrinking
               padding: '24px',
               paddingTop: '0', // Let ChatWindow bottom padding handle spacing
-              background: 'linear-gradient(to bottom, rgba(253, 251, 247, 0) 0%, #fdfbf7 20%)',
+              background: 'linear-gradient(to bottom, rgba(253, 251, 247, 0) 0%, var(--bg-main) 20%)',
               zIndex: 10
             }}>
               <div style={{ maxWidth: '800px', margin: '0 auto' }}>

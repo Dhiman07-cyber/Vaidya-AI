@@ -108,7 +108,7 @@ export default function RateLimits() {
 
   if (loading || !user || !limits) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh' }}>
         <p>Loading...</p>
       </div>
     )
@@ -230,7 +230,7 @@ export default function RateLimits() {
                 <div style={{
                   marginBottom: '25px',
                   padding: '20px',
-                  backgroundColor: '#f8f9fa',
+                  backgroundColor: 'var(--bg-main)',
                   borderRadius: '8px',
                   border: '1px solid #dee2e6'
                 }}>
@@ -329,7 +329,7 @@ export default function RateLimits() {
                 {/* Feature Limits */}
                 <div style={{
                   padding: '20px',
-                  backgroundColor: '#f8f9fa',
+                  backgroundColor: 'var(--bg-main)',
                   borderRadius: '8px',
                   border: '1px solid #dee2e6'
                 }}>

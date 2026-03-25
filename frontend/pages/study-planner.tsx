@@ -807,7 +807,7 @@ export default function StudyPlanner() {
                 <div className="spinner"></div>
                 <p>Loading your study planner...</p>
                 <style jsx>{`
-                    .loading-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; background: var(--cream-bg); gap: 16px; }
+                    .loading-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100dvh; background: var(--cream-bg); gap: 16px; }
                     .spinner { width: 32px; height: 32px; border: 3px solid var(--cream-accent-soft); border-top-color: var(--cream-text-main); border-radius: 50%; animation: spin 1s linear infinite; }
                     @keyframes spin { to { transform: rotate(360deg); } }
                     p { font-size: 14px; font-weight: 600; color: var(--cream-text-muted); }

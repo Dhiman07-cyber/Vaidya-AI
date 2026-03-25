@@ -132,7 +132,7 @@ export default function ApiKeyList({
       }}>
         <thead>
           <tr style={{
-            backgroundColor: '#f8f9fa',
+            backgroundColor: 'var(--bg-main)',
             borderBottom: '2px solid #dee2e6'
           }}>
             <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold' }}>Provider</th>

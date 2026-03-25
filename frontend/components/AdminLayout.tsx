@@ -25,7 +25,7 @@ export default function AdminLayout({ user, children }: AdminLayoutProps) {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <header style={{
         padding: '15px 20px',
@@ -90,7 +90,7 @@ export default function AdminLayout({ user, children }: AdminLayoutProps) {
         <main style={{
           flex: 1,
           overflow: 'auto',
-          backgroundColor: '#f8f9fa'
+          backgroundColor: 'var(--bg-main)'
         }}>
           {children}
         </main>

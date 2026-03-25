@@ -339,7 +339,7 @@ export default function ImageAnalysis() {
         <title>Medical Image Analysis - Vaidya AI</title>
       </Head>
       <DashboardLayout user={user}>
-        <div className="flex flex-col md:flex-row h-[calc(100vh-64px)] gap-0 bg-[var(--cream-bg)] relative">
+        <div className="flex flex-col md:flex-row h-[calc(100dvh-64px)] gap-0 bg-[var(--cream-bg)] relative">
           {/* Main Main Content */}
           <div className="flex-1 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
             <motion.div
