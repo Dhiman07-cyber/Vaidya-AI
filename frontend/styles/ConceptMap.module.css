@@ -15,11 +15,11 @@
 
 /* Left Sidebar - History */
 .sidebar {
-  background: white;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-strong);
   overflow-y: auto;
   height: fit-content;
   max-height: 100%;
@@ -51,7 +51,7 @@
 
 .sessionItem:hover {
   background: #f1f5f9;
-  border-color: #e2e8f0;
+  border-color: var(--border-strong);
 }
 
 .sessionItem.active {
@@ -112,11 +112,11 @@
 
 /* Main Content */
 .mainContent {
-  background: white;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-strong);
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -135,7 +135,7 @@
   display: flex;
   align-items: center;
   background: #f8fafc;
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--border-strong);
   border-radius: 10px;
   padding: 0 1rem;
   transition: all 0.15s ease;
@@ -143,7 +143,7 @@
 
 .searchBox:focus-within {
   border-color: #667eea;
-  background: white;
+  background: var(--bg-card);
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
@@ -242,11 +242,11 @@
 
 /* Right Sidebar - Card Summary */
 .rightSidebar {
-  background: white;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-strong);
   overflow-y: auto;
   height: fit-content;
   max-height: 100%;

@@ -36,8 +36,8 @@
 }
 
 .toolBtn {
-  background: white;
-  border: 2px solid #e2e8f0;
+  background: var(--bg-card);
+  border: 2px solid var(--border-strong);
   border-radius: 12px;
   padding: 1.5rem 1rem;
   cursor: pointer;
@@ -83,7 +83,7 @@
 .topicInput {
   flex: 1;
   padding: 1rem 1.5rem;
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--border-strong);
   border-radius: 12px;
   font-size: 1rem;
   transition: border-color 0.2s;
@@ -126,10 +126,10 @@
 }
 
 .resultCard {
-  background: white;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-card);
 }
 
 .resultHeader {
@@ -148,7 +148,7 @@
 
 .clearBtn {
   background: #f7fafc;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-strong);
   padding: 0.5rem 1rem;
   border-radius: 8px;
   cursor: pointer;
@@ -232,10 +232,10 @@
 }
 
 .sidebar {
-  background: white;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-card);
   height: fit-content;
   max-height: calc(100dvh - 200px);
   overflow-y: auto;
@@ -314,10 +314,10 @@
 }
 
 .mainContent {
-  background: white;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-card);
 }
 
 .materialsContainer {
@@ -386,7 +386,7 @@
 
 .backBtn {
   background: var(--bg-main);
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--border-strong);
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   font-size: 0.95rem;

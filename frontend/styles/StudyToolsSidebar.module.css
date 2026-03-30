@@ -1,6 +1,6 @@
 .sidebar {
   width: 280px;
-  background: white;
+  background: var(--bg-card);
   border-right: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
@@ -86,7 +86,7 @@
   width: 100%;
   padding: 0.75rem 1rem;
   background: #f7fafc;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-strong);
   border-radius: 8px;
   font-size: 0.95rem;
   font-weight: 600;
@@ -122,7 +122,7 @@
     padding: 1rem;
     border-left: none;
     border-radius: 8px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-strong);
   }
 
   .toolItem.active {

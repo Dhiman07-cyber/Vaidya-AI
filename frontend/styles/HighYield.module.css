@@ -94,7 +94,7 @@
     max-width: 800px;
     display: flex;
     gap: 12px;
-    background: white;
+    background: var(--bg-card);
     padding: 10px;
     border-radius: var(--hy-radius);
     border: 1px solid var(--hy-border);

@@ -48,11 +48,11 @@
 }
 
 .formCard {
-  background: white;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-card);
 }
 
 .formCard h3 {
@@ -75,7 +75,7 @@
 .formGroup textarea {
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--border-strong);
   border-radius: 8px;
   font-size: 1rem;
   transition: border-color 0.2s;
@@ -133,10 +133,10 @@
 }
 
 .sessionCard {
-  background: white;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-card);
   transition: all 0.2s;
 }
 
@@ -221,7 +221,7 @@
 .deleteBtn {
   background: #f7fafc;
   color: #e53e3e;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-strong);
   padding: 0.75rem 1rem;
   border-radius: 8px;
   font-weight: 500;

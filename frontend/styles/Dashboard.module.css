@@ -29,11 +29,11 @@
 }
 
 .usageCard {
-  background: white;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-card);
 }
 
 .usageCard h3 {
@@ -73,12 +73,12 @@
 }
 
 .featureCard {
-  background: white;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 2rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-card);
 }
 
 .featureCard:hover {
@@ -108,7 +108,7 @@
   color: white;
   border-radius: 12px;
   padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-card);
 }
 
 .quickTips h3 {

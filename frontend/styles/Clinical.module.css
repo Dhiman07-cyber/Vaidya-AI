@@ -36,8 +36,8 @@
 }
 
 .modeBtn {
-  background: white;
-  border: 2px solid #e2e8f0;
+  background: var(--bg-card);
+  border: 2px solid var(--border-strong);
   border-radius: 12px;
   padding: 2rem;
   cursor: pointer;
@@ -104,10 +104,10 @@
 }
 
 .infoCard {
-  background: white;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-card);
 }
 
 .infoCard h3 {
@@ -143,9 +143,9 @@
 }
 
 .sessionContainer {
-  background: white;
+  background: var(--bg-card);
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
 }
 
@@ -203,7 +203,7 @@
   align-self: flex-start;
   background: #f7fafc;
   color: #2d3748;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-strong);
 }
 
 .messageContent {
@@ -220,7 +220,7 @@
 .messageInput {
   flex: 1;
   padding: 1rem 1.5rem;
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--border-strong);
   border-radius: 12px;
   font-size: 1rem;
   transition: border-color 0.2s;

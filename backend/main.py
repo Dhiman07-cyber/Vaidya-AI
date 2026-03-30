@@ -37,7 +37,7 @@ app = FastAPI(title="Medical AI Platform API", version="1.0.0")
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"],  # Frontend URLs
+    allow_origins=["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000"],  # Frontend URLs
     allow_origin_regex=r"https://.*\.devtunnels\.ms",  # Allow VS Code port forwarding
     allow_credentials=True,
     allow_methods=["*"],

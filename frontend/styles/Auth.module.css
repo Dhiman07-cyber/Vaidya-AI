@@ -14,7 +14,7 @@
 }
 
 .card {
-    background: #ffffff;
+    background: var(--bg-card);
     width: 100%;
     max-width: 420px;
     padding: 48px 40px;
@@ -94,7 +94,7 @@
 
 .input:focus {
     border-color: #94a3b8;
-    background-color: #ffffff;
+    background-color: var(--bg-card);
     box-shadow: 0 0 0 4px rgba(148, 163, 184, 0.1);
 }
 

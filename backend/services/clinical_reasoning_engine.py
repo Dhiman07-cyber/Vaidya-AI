@@ -1318,6 +1318,9 @@ Example: If student says "Hello I am Dr Smith", respond with:
     
     async def get_performance_summary(self, user_id: str) -> Dict[str, Any]:
         """Get user's clinical performance summary"""
+        # Ensure record exists
+        await self._ensure_performance_record(user_id)
+        
         # Get performance record
         perf_response = self.supabase.table("clinical_performance")\
             .select("*")\

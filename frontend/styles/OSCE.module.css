@@ -101,7 +101,7 @@
 .commandBar {
     max-width: 1400px;
     margin: 10px auto 10px auto;
-    background: white;
+    background: var(--bg-card);
     border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 20px;
     padding: 10px 20px;
@@ -301,7 +301,7 @@
 }
 
 .timerCard {
-    background: white;
+    background: var(--bg-card);
     border-radius: var(--osce-radius-sm);
     padding: 6px 12px;
     border: 1px solid rgba(0, 0, 0, 0.1);
@@ -313,14 +313,14 @@
 }
 
 .patientCard {
-    background: white;
+    background: var(--bg-card);
     border-radius: var(--osce-radius-sm);
     padding: 8px;
     border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .progressChecklist {
-    background: white;
+    background: var(--bg-card);
     border-radius: var(--osce-radius-sm);
     padding: 12px;
     border: 1px solid rgba(0, 0, 0, 0.1);
@@ -805,7 +805,7 @@
     font-size: 0.9rem;
     font-family: inherit;
     resize: none;
-    background: white;
+    background: var(--bg-card);
     transition: all 0.2s ease;
     min-height: 48px;
     max-height: 100px;
@@ -891,7 +891,7 @@
 
 .suggestionChip {
     padding: 8px 14px;
-    background: white;
+    background: var(--bg-card);
     border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: 20px;
     font-size: 0.8rem;

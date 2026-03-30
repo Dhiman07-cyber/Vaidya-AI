@@ -69,7 +69,7 @@
   padding: 40px;
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  background: white;
+  background: var(--bg-card);
 }
 
 .cardFront {
@@ -120,7 +120,7 @@
   padding: 12px 24px;
   font-size: 15px;
   font-weight: 600;
-  background: white;
+  background: var(--bg-card);
   color: #667eea;
   border: 2px solid #667eea;
   border-radius: 8px;
