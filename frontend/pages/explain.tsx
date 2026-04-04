@@ -280,7 +280,7 @@ export default function Explain() {
         <title>Explain - Vaidya AI</title>
       </Head>
       <DashboardLayout user={user}>
-        <div className="page-layout" style={{ position: 'relative' }}>
+        <div className="flex min-h-[calc(100dvh-64px)] relative bg-[var(--bg-main)]">
           {/* Floating Document Badge */}
           {activeDocument && (
             <div
@@ -341,7 +341,10 @@ export default function Explain() {
           )}
 
           {/* Main Content Area */}
-          <div className="content-area">
+          <div 
+            className="flex-1 p-[20px] lg:p-[40px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] max-lg:!mr-0 max-lg:!p-[20px]"
+            style={{ marginRight: isSidebarCollapsed ? '80px' : '320px' }}
+          >
             {!result && !generating ? (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -444,7 +447,7 @@ export default function Explain() {
             )}
           </div>
 
-          <div className="fixed-sidebar-wrap">
+          <div className="static lg:fixed lg:top-[64px] lg:right-0 lg:bottom-0 z-10 bg-[var(--bg-sidebar)]">
             <SessionSidebar
               sessions={sessions}
               currentSessionId={currentSessionId}
@@ -459,44 +462,10 @@ export default function Explain() {
               untitledLabel="Untitled Explanation"
               isCollapsed={isSidebarCollapsed}
               onToggleCollapsed={setIsSidebarCollapsed}
+              disableMobileHamburger
             />
           </div>
         </div>
-
-        <style jsx>{`
-          .page-layout {
-            display: flex;
-            min-height: calc(100dvh - 64px);
-            position: relative;
-            background-color: var(--bg-main); /* Matches chat theme color */
-          }
-
-          .content-area {
-            flex: 1;
-            padding: 40px;
-            margin-right: ${isSidebarCollapsed ? '80px' : '320px'};
-            transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          }
-
-          .fixed-sidebar-wrap {
-            position: fixed;
-            top: 64px;
-            right: 0;
-            bottom: 0;
-            z-index: 10;
-            background-color: var(--bg-sidebar);
-          }
-
-          @media (max-width: 1024px) {
-            .content-area {
-              margin-right: 0;
-              padding: 20px;
-            }
-            .fixed-sidebar-wrap {
-              position: static;
-            }
-          }
-        `}</style>
 
         <style jsx global>{`
           .custom-scrollbar::-webkit-scrollbar { width: 4px; }

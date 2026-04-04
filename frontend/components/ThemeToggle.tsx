@@ -13,30 +13,10 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={cycleTheme}
-      className="theme-toggle-btn"
+      className="flex items-center justify-center w-9 h-9 rounded-[10px] bg-transparent border border-[var(--border-strong)] text-[var(--text-muted)] cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-[var(--accent-hover)] hover:text-[var(--text-main)] hover:scale-95"
       title={`Current theme: ${theme}`}
     >
       {theme === 'system' ? <Monitor size={18} /> : theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
-      <style jsx>{`
-        .theme-toggle-btn {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 36px;
-          height: 36px;
-          border-radius: 10px;
-          background: transparent;
-          border: 1px solid var(--border-strong);
-          color: var(--text-muted);
-          cursor: pointer;
-          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .theme-toggle-btn:hover {
-          background: var(--accent-hover);
-          color: var(--text-main);
-          transform: scale(0.95);
-        }
-      `}</style>
     </button>
   )
 }

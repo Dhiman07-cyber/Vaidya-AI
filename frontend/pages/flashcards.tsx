@@ -341,7 +341,7 @@ export default function Flashcards() {
         <title>Flashcards - Vaidya AI</title>
       </Head>
       <DashboardLayout user={user}>
-        <div className="page-layout" style={{ position: 'relative' }}>
+        <div className="flex min-h-[calc(100dvh-64px)] relative bg-[var(--bg-main)]">
           {/* Floating Document Badge */}
           {activeDocument && (
             <div
@@ -403,7 +403,10 @@ export default function Flashcards() {
 
           {/* Main Content */}
           {/* Main Content Area */}
-          <div className="content-area">
+          <div 
+            className="flex-1 p-[20px] lg:p-[40px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] max-lg:!mr-0 max-lg:!p-5"
+            style={{ marginRight: isSidebarCollapsed ? '80px' : '320px' }}
+          >
             {!result && !generating ? (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -453,7 +456,7 @@ export default function Flashcards() {
                           if (count > 100) setCount(100)
                         }}
                         placeholder="Max 100"
-                        className="px-4 py-2 border-2 border-gray-200 rounded-lg font-medium text-gray-700 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition-all w-[100px]"
+                        className="px-4 py-2 border-2 border-gray-200 rounded-lg font-medium text-gray-700 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition-all w-[100px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-inner-spin-button]:m-0"
                       />
                       <button
                         onClick={() => {
@@ -558,7 +561,7 @@ export default function Flashcards() {
             )}
           </div>
 
-          <div className="fixed-sidebar-wrap">
+          <div className="static lg:fixed lg:top-[64px] lg:right-0 lg:bottom-0 z-10 bg-[var(--bg-sidebar)]">
             <SessionSidebar
               sessions={sessions}
               currentSessionId={currentSessionId}
@@ -573,62 +576,10 @@ export default function Flashcards() {
               untitledLabel="Untitled Deck"
               isCollapsed={isSidebarCollapsed}
               onToggleCollapsed={setIsSidebarCollapsed}
+              disableMobileHamburger
             />
           </div>
         </div>
-
-        <style jsx>{`
-          .page-layout {
-            display: flex;
-            min-height: calc(100dvh - 64px);
-            position: relative;
-            background-color: var(--bg-main); /* Consistent with main app theme */
-          }
-
-          .content-area {
-            flex: 1;
-            padding: 40px;
-            margin-right: ${isSidebarCollapsed ? '80px' : '320px'};
-            transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          }
-
-          .fixed-sidebar-wrap {
-            position: fixed;
-            top: 64px;
-            right: 0;
-            bottom: 0;
-            z-index: 10;
-            background-color: var(--bg-sidebar);
-          }
-
-          @media (max-width: 1024px) {
-            .content-area {
-              margin-right: 0;
-              padding: 20px;
-            }
-            .fixed-sidebar-wrap {
-              position: static;
-            }
-          }
-        `}</style>
-
-        <style jsx global>{`
-          .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-          .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-          .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
-          .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2); }
-          @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-          
-          /* Hide number input arrows */
-          input::-webkit-outer-spin-button,
-          input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-          }
-          input[type=number] {
-            -moz-appearance: textfield;
-          }
-        `}</style>
       </DashboardLayout>
     </>
   )

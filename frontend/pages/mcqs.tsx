@@ -1143,6 +1143,7 @@ export default function MCQs() {
               untitledLabel="Untitled Quiz"
               isCollapsed={isSidebarCollapsed}
               onToggleCollapsed={setIsSidebarCollapsed}
+              disableMobileHamburger
             />
           </div>
         </div>

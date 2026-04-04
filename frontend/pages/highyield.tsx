@@ -487,6 +487,7 @@ export default function HighYield() {
             position="right"
             newSessionLabel="New Topic"
             untitledLabel="Untitled Topic"
+            disableMobileHamburger
           />
         </div>
       </DashboardLayout>

@@ -2,7 +2,15 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { AuthUser } from '@/lib/supabase'
-import { ChevronLeft, Menu, Shield } from 'lucide-react'
+import {
+  ChevronLeft, Menu, ChevronDown,
+  LayoutDashboard, BookOpen, Stethoscope,
+  Library, MessageSquare, Layers,
+  ClipboardCheck, Star, Microscope,
+  Map, Activity, FileText,
+  PenTool, Image as ImageIcon, CalendarDays,
+  User
+} from 'lucide-react'
 
 interface SidebarProps {
   user: AuthUser | null
@@ -26,25 +34,56 @@ const getPlanLabel = (plan: string = 'free') => {
   return plans[plan.toLowerCase()] || 'Standard Plan'
 }
 
-const menuItems = [
-  { name: 'Dashboard', path: '/dashboard', icon: '🏠' },
-  { name: 'Chat', path: '/chat', icon: '💬' },
-  { name: 'Flashcards', path: '/flashcards', icon: '🎴' },
-  { name: 'MCQs', path: '/mcqs', icon: '✓' },
-  { name: 'High Yield', path: '/highyield', icon: '⭐' },
-  { name: 'Explain', path: '/explain', icon: '📚' },
-  { name: 'Concept Map', path: '/conceptmap', icon: '🗺️' },
-  { name: 'Clinical Cases', path: '/clinical-cases', icon: '🏥' },
-  { name: 'OSCE Simulator', path: '/osce', icon: '👨‍⚕️' },
-  { name: 'Image Analysis', path: '/image-analysis', icon: '🔬' },
-  { name: 'Study Planner', path: '/study-planner', icon: '📅' },
-  { name: 'Documents', path: '/documents', icon: '📄' },
-  { name: 'Profile', path: '/profile', icon: '👤' },
+// Hub-based navigation structure
+const navHubs = [
+  {
+    id: 'dashboard',
+    name: 'Dashboard',
+    icon: LayoutDashboard,
+    path: '/dashboard',
+    children: null, // Direct link, no children
+  },
+  {
+    id: 'study',
+    name: 'Study Hub',
+    icon: BookOpen,
+    path: null, // Parent group
+    children: [
+      { name: 'AI Chat', path: '/chat', icon: MessageSquare },
+      { name: 'Flashcards', path: '/flashcards', icon: Layers },
+      { name: 'MCQs', path: '/mcqs', icon: ClipboardCheck },
+      { name: 'High Yield', path: '/highyield', icon: Star },
+      { name: 'Explain', path: '/explain', icon: PenTool },
+      { name: 'Image Analysis', path: '/image-analysis', icon: ImageIcon },
+    ],
+  },
+  {
+    id: 'clinical',
+    name: 'Clinical',
+    icon: Stethoscope,
+    path: null,
+    children: [
+      { name: 'Clinical Cases', path: '/clinical-cases', icon: Activity },
+      { name: 'OSCE Simulator', path: '/osce', icon: ClipboardCheck },
+      { name: 'Concept Map', path: '/conceptmap', icon: Map },
+    ],
+  },
+  {
+    id: 'knowledge',
+    name: 'Knowledge',
+    icon: Library,
+    path: null,
+    children: [
+      { name: 'Documents', path: '/documents', icon: FileText },
+      { name: 'Study Planner', path: '/study-planner', icon: CalendarDays },
+    ],
+  },
 ]
 
 export default function Sidebar({ user, currentPath, collapsed: controlledCollapsed, onToggle, plan }: SidebarProps) {
   const router = useRouter()
   const [isCollapsed, setIsCollapsed] = useState(globalCollapsed)
+  const [expandedHubs, setExpandedHubs] = useState<Record<string, boolean>>({})
 
   // Sync with controlled prop if provided
   useEffect(() => {
@@ -53,6 +92,18 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
     }
   }, [controlledCollapsed])
 
+  // Auto-expand the hub that contains the current path
+  useEffect(() => {
+    navHubs.forEach(hub => {
+      if (hub.children) {
+        const isActive = hub.children.some(child => currentPath === child.path)
+        if (isActive) {
+          setExpandedHubs(prev => ({ ...prev, [hub.id]: true }))
+        }
+      }
+    })
+  }, [currentPath])
+
   const handleToggle = () => {
     const newState = !isCollapsed
     setIsCollapsed(newState)
@@ -60,349 +111,222 @@ export default function Sidebar({ user, currentPath, collapsed: controlledCollap
     onToggle?.(newState)
   }
 
-  const isActive = (path: string) => currentPath === path
-  const sidebarWidth = isCollapsed ? '70px' : '240px'
-  const nameMaxWidth = '160px'
+  const toggleHub = (hubId: string) => {
+    if (isCollapsed) return // Don't toggle in collapsed mode
+    setExpandedHubs(prev => ({ ...prev, [hubId]: !prev[hubId] }))
+  }
 
+  const isActive = (path: string) => currentPath === path
+  const isHubActive = (hub: typeof navHubs[0]) => {
+    if (hub.path) return currentPath === hub.path
+    return hub.children?.some(child => currentPath === child.path) || false
+  }
+
+  const sidebarWidth = isCollapsed ? '70px' : '260px'
   const userInitial = user ? (user.user_metadata?.name || user.email)?.[0].toUpperCase() : 'U'
 
   return (
-    <div className="sidebar-container" data-lenis-prevent>
+    <div
+      className="fixed left-0 top-0 h-dvh flex flex-col z-[100] border-r transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
+      style={{
+        width: sidebarWidth,
+        backgroundColor: 'var(--bg-sidebar)',
+        borderColor: 'var(--border-subtle)',
+        color: 'var(--text-main)',
+        boxShadow: '4px 0 24px rgba(0,0,0,0.02)',
+      }}
+      data-lenis-prevent
+    >
       {/* Logo & Toggle */}
-      <div className="sidebar-header">
-        <Link href="/dashboard" className="logo-link">
-          <div className="logo-section">
-            <div className="logo-icon">
+      <div
+        className={`flex items-center min-h-[70px] border-b ${isCollapsed ? 'justify-center py-5' : 'justify-between px-5 py-4'}`}
+        style={{ borderColor: 'var(--border-subtle)' }}
+      >
+        <Link href="/dashboard" className="no-underline block cursor-pointer">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 text-white flex items-center justify-center flex-shrink-0 shadow-[0_4px_12px_rgba(99,102,241,0.3)]">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
               </svg>
             </div>
-            {!isCollapsed && <span className="logo-text">Vaidya AI</span>}
+            {!isCollapsed && <span className="text-lg font-extrabold tracking-tight" style={{ color: 'var(--text-main)' }}>Vaidya AI</span>}
           </div>
         </Link>
 
         {!isCollapsed && (
-          <button onClick={handleToggle} className="toggle-btn" title="Collapse sidebar">
+          <button
+            onClick={handleToggle}
+            className="w-6 h-6 rounded-lg flex items-center justify-center cursor-pointer border transition-all hover:scale-105"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              borderColor: 'var(--border-strong)',
+              color: 'var(--text-muted)',
+            }}
+            title="Collapse sidebar"
+          >
             <ChevronLeft size={18} />
           </button>
         )}
       </div>
 
       {isCollapsed && (
-        <button onClick={handleToggle} className="toggle-btn-collapsed" title="Expand sidebar">
+        <button
+          onClick={handleToggle}
+          className="mx-auto my-2.5 p-2 rounded-lg cursor-pointer border transition-all hover:scale-105"
+          style={{
+            backgroundColor: 'var(--bg-card)',
+            borderColor: 'var(--border-strong)',
+            color: 'var(--text-muted)',
+          }}
+          title="Expand sidebar"
+        >
           <Menu size={18} />
         </button>
       )}
 
-      {/* Menu Items */}
-      <nav className="sidebar-nav">
-        {menuItems.map((item) => (
-          <Link
-            key={item.path}
-            href={item.path}
-            passHref
-            className="link-wrapper"
-          >
-            <div className={`nav-item ${isActive(item.path) ? 'active' : ''}`} title={isCollapsed ? item.name : undefined}>
-              <span className="nav-icon">{item.icon}</span>
-              {!isCollapsed && <span className="nav-label">{item.name}</span>}
+      {/* Navigation Hubs */}
+      <nav className="flex-1 py-4 px-3 overflow-y-auto flex flex-col gap-1" style={{ scrollbarWidth: 'none' }}>
+        {navHubs.map(hub => {
+          const HubIcon = hub.icon
+          const hubIsActive = isHubActive(hub)
+          const isExpanded = expandedHubs[hub.id] || false
+
+          // Direct link (Dashboard)
+          if (hub.path) {
+            return (
+              <Link key={hub.id} href={hub.path} className="no-underline block w-full">
+                <div
+                  className={`flex items-center gap-3 rounded-xl border transition-all duration-200 cursor-pointer font-bold text-sm w-full ${
+                    isCollapsed ? 'justify-center py-3' : 'px-3.5 py-2.5'
+                  } ${hubIsActive
+                    ? 'shadow-[0_4px_12px_var(--medical-blue-soft)]'
+                    : 'shadow-[0_2px_4px_rgba(0,0,0,0.02)] hover:scale-[0.98]'
+                  }`}
+                  style={{
+                    backgroundColor: hubIsActive ? 'var(--accent-hover)' : 'var(--bg-card)',
+                    borderColor: hubIsActive ? 'var(--medical-blue-soft)' : 'var(--border-subtle)',
+                    color: hubIsActive ? 'var(--medical-blue)' : 'var(--text-main)',
+                  }}
+                  title={isCollapsed ? hub.name : undefined}
+                >
+                  <HubIcon size={18} className="flex-shrink-0" />
+                  {!isCollapsed && <span className="whitespace-nowrap">{hub.name}</span>}
+                </div>
+              </Link>
+            )
+          }
+
+          // Hub with children (expandable group)
+          return (
+            <div key={hub.id} className="w-full">
+              <button
+                onClick={() => {
+                  if (isCollapsed) {
+                    // In collapsed mode, navigate to the first child
+                    if (hub.children?.[0]) {
+                      router.push(hub.children[0].path)
+                    }
+                  } else {
+                    toggleHub(hub.id)
+                  }
+                }}
+                className={`flex items-center gap-3 w-full rounded-xl border transition-all duration-200 cursor-pointer font-bold text-sm ${
+                  isCollapsed ? 'justify-center py-3' : 'px-3.5 py-2.5'
+                } ${hubIsActive && !isExpanded
+                  ? 'shadow-[0_4px_12px_var(--medical-blue-soft)]'
+                  : 'shadow-[0_2px_4px_rgba(0,0,0,0.02)] hover:scale-[0.98]'
+                }`}
+                style={{
+                  backgroundColor: hubIsActive ? 'var(--accent-hover)' : 'var(--bg-card)',
+                  borderColor: hubIsActive ? 'var(--medical-blue-soft)' : 'var(--border-subtle)',
+                  color: hubIsActive ? 'var(--medical-blue)' : 'var(--text-main)',
+                }}
+                title={isCollapsed ? hub.name : undefined}
+              >
+                <HubIcon size={18} className="flex-shrink-0" />
+                {!isCollapsed && (
+                  <>
+                    <span className="whitespace-nowrap flex-1 text-left">{hub.name}</span>
+                    <ChevronDown
+                      size={14}
+                      className={`transition-transform duration-200 flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`}
+                      style={{ color: 'var(--text-muted)' }}
+                    />
+                  </>
+                )}
+              </button>
+
+              {/* Children (sub-nav items) */}
+              {!isCollapsed && isExpanded && hub.children && (
+                <div className="ml-3 mt-1 pl-3 flex flex-col gap-0.5 border-l-2" style={{ borderColor: 'var(--border-subtle)' }}>
+                  {hub.children.map(child => {
+                    const ChildIcon = child.icon
+                    const childActive = isActive(child.path)
+                    return (
+                      <Link key={child.path} href={child.path} className="no-underline block w-full">
+                        <div
+                          className={`flex items-center gap-2.5 py-2 px-3 rounded-lg transition-all duration-200 cursor-pointer text-[13px] font-semibold ${
+                            childActive ? '' : 'hover:translate-x-0.5'
+                          }`}
+                          style={{
+                            backgroundColor: childActive ? 'var(--medical-blue-soft)' : 'transparent',
+                            color: childActive ? 'var(--medical-blue)' : 'var(--text-muted)',
+                          }}
+                        >
+                          <ChildIcon size={15} className="flex-shrink-0" />
+                          <span className="whitespace-nowrap">{child.name}</span>
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
             </div>
-          </Link>
-        ))}
+          )
+        })}
       </nav>
 
       {/* User Area */}
-      <div className="sidebar-footer">
+      <div className="p-4 border-t" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--bg-sidebar)' }}>
         {isCollapsed ? (
-          <div className="user-avatar-small">
+          <div
+            className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-indigo-500 to-violet-500 text-white flex items-center justify-center font-extrabold mx-auto shadow-[0_4px_10px_rgba(99,102,241,0.3)]"
+          >
             {userInitial}
           </div>
         ) : (
-          <div className="user-full-card">
-            <div className="user-info-row">
-              <div className="user-avatar">
-                {userInitial}
+          <div className="flex flex-col gap-3">
+            <Link href="/profile" className="no-underline block">
+              <div className="flex items-center gap-3 group cursor-pointer">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white flex items-center justify-center font-extrabold flex-shrink-0 text-sm shadow-[0_4px_12px_rgba(99,102,241,0.3)]">
+                  {userInitial}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <p
+                    className="text-sm font-extrabold m-0 leading-tight whitespace-nowrap overflow-hidden text-ellipsis max-w-[160px] group-hover:underline"
+                    style={{ color: 'var(--text-main)' }}
+                    title={user ? (user.user_metadata?.name || user.email) : ''}
+                  >
+                    {user ? (user.user_metadata?.name || user.email?.split('@')[0]) : 'Loading...'}
+                  </p>
+                  <p className="text-[11px] font-semibold mt-1 m-0" style={{ color: 'var(--text-muted)' }}>
+                    {getPlanLabel(plan || 'free')}
+                  </p>
+                </div>
               </div>
-              <div className="user-text">
-                <p
-                  className="user-name"
-                  style={{ maxWidth: nameMaxWidth }}
-                  title={user ? (user.user_metadata?.name || user.email) : ''}
-                >
-                  {user ? (user.user_metadata?.name || user.email?.split('@')[0]) : 'Loading...'}
-                </p>
-                <p className="user-subtext">{getPlanLabel(plan || 'free')}</p>
-              </div>
+            </Link>
 
-
-            </div>
-
-            {/* Token Meter Removed */}
-
-            {/* Only show upgrade button for free users, and only when plan is confirmed */}
             {plan?.toLowerCase() === 'free' && (
-              <button onClick={() => router.push('/upgrade')} className="upgrade-button">
+              <button
+                onClick={() => router.push('/upgrade')}
+                className="w-full py-3 bg-gradient-to-r from-indigo-500 to-violet-500 text-white border-none rounded-xl text-[13px] font-bold cursor-pointer transition-all hover:brightness-110 hover:-translate-y-0.5 shadow-[0_4px_12px_rgba(99,102,241,0.3)] hover:shadow-[0_6px_16px_rgba(99,102,241,0.4)] flex justify-center items-center"
+              >
                 Upgrade Plan
               </button>
             )}
           </div>
         )}
       </div>
-
-      <style jsx>{`
-        .sidebar-container {
-          width: ${sidebarWidth};
-          height: 100dvh;
-          background-color: var(--bg-sidebar);
-          border-right: 1px solid var(--border-subtle);
-          display: flex;
-          flex-direction: column;
-          position: fixed;
-          left: 0;
-          top: 0;
-          transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-          z-index: 100;
-          color: var(--text-main);
-          box-shadow: 4px 0 24px rgba(0,0,0,0.02);
-        }
-
-        .sidebar-header {
-          padding: ${isCollapsed ? '20px 0' : '16px 20px'};
-          display: flex;
-          align-items: center;
-          justify-content: ${isCollapsed ? 'center' : 'space-between'};
-          min-height: 70px;
-          border-bottom: 1px solid var(--border-subtle);
-        }
-
-        .logo-link {
-          text-decoration: none;
-          display: block;
-          cursor: pointer;
-        }
-
-        .logo-section {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .logo-icon {
-          width: 32px;
-          height: 32px;
-          border-radius: 8px;
-          background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-        }
-
-        .logo-text {
-          font-size: 18px;
-          font-weight: 800;
-          color: var(--text-main);
-          letter-spacing: -0.03em;
-        }
-
-        .toggle-btn {
-          background: var(--bg-card);
-          border: 1px solid var(--border-strong);
-          border-radius: 8px;
-          width: 24px;
-          height: 24px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          color: var(--text-muted);
-          transition: all 0.2s;
-        }
-
-        .toggle-btn:hover {
-          background-color: var(--accent-hover);
-          color: var(--text-main);
-        }
-
-        .toggle-btn-collapsed {
-          margin: 10px auto;
-          background: var(--bg-card);
-          border: 1px solid var(--border-strong);
-          border-radius: 8px;
-          color: var(--text-muted);
-          cursor: pointer;
-          padding: 8px;
-          transition: all 0.2s;
-        }
-
-        .toggle-btn-collapsed:hover {
-          background-color: var(--accent-hover);
-          color: var(--text-main);
-        }
-
-        .sidebar-nav {
-          flex: 1;
-          padding: 16px 12px;
-          overflow-y: auto;
-          scrollbar-width: none;
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-        }
-
-        .sidebar-nav::-webkit-scrollbar {
-          display: none;
-        }
-
-        /* Ensure link wrapper doesn't break flex layout */
-        :global(.link-wrapper) {
-          text-decoration: none;
-          display: block;
-          width: 100%;
-        }
-
-        .nav-item {
-          display: flex !important;
-          flex-direction: row !important;
-          align-items: center !important; 
-          gap: 12px;
-          padding: ${isCollapsed ? '12px 0' : '12px 14px'};
-          justify-content: ${isCollapsed ? 'center' : 'flex-start'};
-          background: var(--bg-card);
-          color: var(--text-main);
-          border-radius: 12px;
-          border: 1px solid var(--border-subtle);
-          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-          font-weight: 700;
-          font-size: 14px;
-          width: 100%;
-          white-space: nowrap;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        }
-
-        .nav-item:hover {
-          transform: scale(0.98);
-          background-color: var(--accent-hover);
-        }
-
-        .nav-item.active {
-          background-color: var(--accent-hover);
-          border-color: var(--medical-blue-soft);
-          color: var(--medical-blue);
-          box-shadow: 0 4px 12px var(--medical-blue-soft);
-        }
-
-        .nav-icon {
-          font-size: 18px;
-          width: 20px;
-          height: 20px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-
-        .nav-label {
-           white-space: nowrap;
-        }
-
-        .sidebar-footer {
-          padding: 16px;
-          border-top: 1px solid var(--border-subtle);
-          background: var(--bg-sidebar);
-        }
-
-        .user-avatar-small {
-          width: 32px;
-          height: 32px;
-          border-radius: 10px;
-          background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 800;
-          margin: 0 auto;
-          box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
-        }
-
-        .user-full-card {
-           display: flex;
-           flex-direction: column;
-           gap: 12px;
-        }
-
-        .user-info-row {
-          display: flex !important;
-          flex-direction: row !important;
-          align-items: center !important;
-          gap: 12px;
-        }
-
-        .user-avatar {
-          width: 40px;
-          height: 40px;
-          border-radius: 12px;
-          background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 800;
-          flex-shrink: 0;
-          font-size: 14px;
-          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-        }
-
-        .user-text {
-          display: flex;
-          flex-direction: column;
-          min-width: 0;
-        }
-
-        .user-name {
-          font-size: 14px;
-          font-weight: 800;
-          color: var(--text-main);
-          margin: 0;
-          line-height: 1.2;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .user-subtext {
-          font-size: 11px;
-          color: var(--text-muted);
-          margin: 4px 0 0 0;
-          font-weight: 600;
-        }
-
-        .upgrade-button {
-          width: 100%;
-          padding: 12px;
-          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-          color: white;
-          border: none;
-          border-radius: 12px;
-          font-size: 13px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.2s;
-          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-
-        .upgrade-button:hover {
-          filter: brightness(1.1);
-          transform: translateY(-1px);
-          box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
-        }
-      `}</style>
     </div>
   )
 }

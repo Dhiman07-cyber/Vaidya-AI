@@ -636,6 +636,7 @@ export default function ImageAnalysis() {
             loading={sessionsLoading}
             position="right"
             newSessionLabel="New Analysis"
+            disableMobileHamburger
           />
         </div>
       </DashboardLayout>

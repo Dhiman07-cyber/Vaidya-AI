@@ -25,7 +25,7 @@ const styles = {
 
   rightSidebar: "bg-[var(--bg-sidebar)] rounded-xl shadow-sm border border-slate-200 flex flex-col h-full overflow-hidden flex-shrink-0 max-[1024px]:order-3 max-[1024px]:!w-full",
   rightSidebarHeader: "p-3.5 flex items-center gap-2 flex-shrink-0",
-  rightSidebarContent: "flex-1 overflow-y-auto p-3 custom-scrollbar h-full scrollbar-none",
+  rightSidebarContent: "flex-1 overflow-y-auto p-3 custom-scrollbar h-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]",
   summaryCard: "flex flex-col gap-3",
   topicIcon: "flex justify-center mb-1",
   iconCircle: "w-12 h-12 bg-gradient-to-br from-medical-indigo/10 to-medical-indigo/5 rounded-2xl flex items-center justify-center text-[1.2rem] shadow-sm border border-medical-indigo/10",
@@ -330,6 +330,7 @@ export default function ConceptMap() {
               untitledLabel="Untitled Map"
               isCollapsed={sidebarCollapsed}
               onToggleCollapsed={setSidebarCollapsed}
+              disableMobileHamburger
             />
 
             {/* Main Content */}
@@ -531,10 +532,6 @@ export default function ConceptMap() {
           </div>
         </div>
       </DashboardLayout>
-      <style jsx>{`
-        .scrollbar-none::-webkit-scrollbar { display: none; }
-        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
     </>
   )
 }

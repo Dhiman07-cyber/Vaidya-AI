@@ -175,17 +175,7 @@ export default function ProfilePage() {
             minHeight: '60vh',
             gap: '20px'
           }}>
-            <div className="loader" style={{
-              width: '40px',
-              height: '40px',
-              border: '3px solid #e2e8f0',
-              borderTopColor: '#6366f1',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite'
-            }} />
-            <style jsx>{`
-              @keyframes spin { to { transform: rotate(360deg); } }
-            `}</style>
+            <div className="w-10 h-10 border-4 border-slate-200 border-t-indigo-500 rounded-full animate-spin" />
             <span style={{ color: '#64748b', fontWeight: '500' }}>Loading profile settings...</span>
           </div>
         ) : !user ? null : (

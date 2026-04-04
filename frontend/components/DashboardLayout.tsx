@@ -4,7 +4,13 @@ import Link from 'next/link'
 import { AuthUser, supabase } from '@/lib/supabase'
 import Sidebar from './Sidebar'
 import ThemeToggle from './ThemeToggle'
-import { Menu, X, LogOut, ChevronRight, Crown } from 'lucide-react'
+import {
+  Menu, X, LogOut, ChevronRight, Crown,
+  LayoutDashboard, BookOpen, Stethoscope, Library,
+  MessageSquare, Layers, ClipboardCheck, Star,
+  PenTool, Image as ImageIcon, Activity, Map,
+  FileText, CalendarDays, Microscope, ChevronDown
+} from 'lucide-react'
 
 interface DashboardLayoutProps {
   user: AuthUser | null
@@ -37,21 +43,50 @@ const getPageTitle = (pathname: string): string => {
 let globalSidebarCollapsed = false
 let sessionPlanCache: string | null = null
 
-// Mobile Menu Items
-const mobileMenuItems = [
-  { name: 'Dashboard', path: '/dashboard', icon: '🏠' },
-  { name: 'Chat', path: '/chat', icon: '💬' },
-  { name: 'Flashcards', path: '/flashcards', icon: '🎴' },
-  { name: 'MCQs', path: '/mcqs', icon: '✓' },
-  { name: 'High Yield', path: '/highyield', icon: '⭐' },
-  { name: 'Explain', path: '/explain', icon: '📚' },
-  { name: 'Concept Map', path: '/conceptmap', icon: '🗺️' },
-  { name: 'Clinical Cases', path: '/clinical-cases', icon: '🏥' },
-  { name: 'OSCE Simulator', path: '/osce', icon: '👨‍⚕️' },
-  { name: 'Image Analysis', path: '/image-analysis', icon: '🔬' },
-  { name: 'Study Planner', path: '/study-planner', icon: '📅' },
-  { name: 'Documents', path: '/documents', icon: '📄' },
-  { name: 'Profile', path: '/profile', icon: '👤' },
+// Mobile Menu Hub Structure (matching Sidebar)
+const mobileHubs = [
+  {
+    id: 'dashboard',
+    name: 'Dashboard',
+    icon: LayoutDashboard,
+    path: '/dashboard',
+    children: null,
+  },
+  {
+    id: 'study',
+    name: 'Study Hub',
+    icon: BookOpen,
+    path: null,
+    children: [
+      { name: 'AI Chat', path: '/chat', icon: MessageSquare },
+      { name: 'Flashcards', path: '/flashcards', icon: Layers },
+      { name: 'MCQs', path: '/mcqs', icon: ClipboardCheck },
+      { name: 'High Yield', path: '/highyield', icon: Star },
+      { name: 'Explain', path: '/explain', icon: PenTool },
+      { name: 'Image Analysis', path: '/image-analysis', icon: ImageIcon },
+    ],
+  },
+  {
+    id: 'clinical',
+    name: 'Clinical',
+    icon: Stethoscope,
+    path: null,
+    children: [
+      { name: 'Clinical Cases', path: '/clinical-cases', icon: Activity },
+      { name: 'OSCE Simulator', path: '/osce', icon: ClipboardCheck },
+      { name: 'Concept Map', path: '/conceptmap', icon: Map },
+    ],
+  },
+  {
+    id: 'knowledge',
+    name: 'Knowledge',
+    icon: Library,
+    path: null,
+    children: [
+      { name: 'Documents', path: '/documents', icon: FileText },
+      { name: 'Study Planner', path: '/study-planner', icon: CalendarDays },
+    ],
+  },
 ]
 
 export default function DashboardLayout({ user, children }: DashboardLayoutProps) {
@@ -63,6 +98,7 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
+  const [expandedMobileHubs, setExpandedMobileHubs] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
@@ -143,10 +179,14 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
     }
   }, [isDropdownOpen, isNotificationsOpen])
 
-  const sidebarWidth = isMobile ? '0px' : (sidebarCollapsed ? '70px' : '240px')
+  const sidebarWidth = isMobile ? '0px' : (sidebarCollapsed ? '70px' : '260px')
+
+  const toggleMobileHub = (hubId: string) => {
+    setExpandedMobileHubs(prev => ({ ...prev, [hubId]: !prev[hubId] }))
+  }
 
   return (
-    <div className="layout-root">
+    <div className="flex min-h-dvh" style={{ backgroundColor: 'var(--bg-main)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       {!isMobile && (
         <Sidebar
           user={user}
@@ -159,72 +199,142 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
 
       {/* Mobile Navigation Drawer */}
       {isMobile && isMobileMenuOpen && (
-        <div className="mobile-drawer-overlay">
-          <div className="mobile-drawer" data-lenis-prevent>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000] flex justify-end animate-[fadeIn_0.3s_ease]">
+          <div
+            className="w-full max-w-[320px] h-full flex flex-col animate-[slideLeft_0.3s_cubic-bezier(0.16,1,0.3,1)] shadow-[-10px_0_30px_rgba(0,0,0,0.1)] overflow-y-auto overscroll-contain"
+            style={{ backgroundColor: 'var(--bg-sidebar)' }}
+            data-lenis-prevent
+          >
             {/* Drawer Header */}
-            <div className="drawer-header">
-              <div className="drawer-user-info">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                  <div className="avatar-large">
+            <div className="p-6 flex justify-between items-start border-b" style={{ borderColor: 'rgba(0,0,0,0.06)' }}>
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-center w-full">
+                  <div className="w-[60px] h-[60px] bg-gradient-to-br from-indigo-500 to-violet-500 rounded-[20px] flex items-center justify-center text-2xl text-white font-extrabold shadow-[0_10px_20px_-5px_rgba(99,102,241,0.4)]">
                     {user ? user.email?.[0].toUpperCase() : '?'}
                   </div>
                   <ThemeToggle />
                 </div>
-                <div className="drawer-user-meta">
-                  <h3 className="drawer-username">{user ? (user.user_metadata?.name || user.email?.split('@')[0]) : 'Loading...'}</h3>
-                  <div className="drawer-email">{user?.email || '...'}</div>
-                  <div className="drawer-badge">
+                <div>
+                  <h3 className="m-0 text-lg font-extrabold tracking-tight" style={{ color: '#1e293b' }}>
+                    {user ? (user.user_metadata?.name || user.email?.split('@')[0]) : 'Loading...'}
+                  </h3>
+                  <div className="text-[13px] font-medium mt-0.5" style={{ color: '#64748b' }}>{user?.email || '...'}</div>
+                  <div className="inline-block mt-2 px-2.5 py-1 bg-purple-50 text-purple-700 rounded-md text-[11px] font-extrabold uppercase tracking-wide">
                     {(plan || 'free') === 'free' ? 'User' : 'Premium'}
                   </div>
                 </div>
               </div>
-              <button onClick={() => setIsMobileMenuOpen(false)} className="drawer-close-btn">
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer border"
+                style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-strong)', color: '#64748b' }}
+              >
                 <X size={24} />
               </button>
             </div>
 
-            {/* Navigation Links */}
-            <div className="drawer-links">
-              {mobileMenuItems.map((item) => (
-                <Link
-                  key={item.path}
-                  href={item.path}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="drawer-link-item"
-                >
-                  <div className="link-content">
-                    <span className="link-icon">{item.icon}</span>
-                    <span className="link-text">{item.name}</span>
+            {/* Navigation Links - Hub Structure */}
+            <div className="flex-1 p-6 flex flex-col gap-2">
+              {mobileHubs.map(hub => {
+                const HubIcon = hub.icon
+                const isExpanded = expandedMobileHubs[hub.id] || false
+                const hubActive = hub.path ? router.pathname === hub.path : hub.children?.some(c => router.pathname === c.path)
+
+                if (hub.path) {
+                  return (
+                    <Link
+                      key={hub.id}
+                      href={hub.path}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center justify-between p-4 rounded-2xl no-underline border transition-all shadow-[0_2px_4px_rgba(0,0,0,0.02)] active:scale-[0.98]"
+                      style={{
+                        backgroundColor: hubActive ? 'var(--accent-hover)' : 'var(--bg-card)',
+                        borderColor: hubActive ? 'var(--medical-blue-soft)' : 'var(--border-subtle)',
+                        color: hubActive ? 'var(--medical-blue)' : 'var(--text-main)',
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <HubIcon size={18} />
+                        <span className="font-bold text-[15px]">{hub.name}</span>
+                      </div>
+                      <ChevronRight size={16} style={{ color: '#cbd5e1' }} />
+                    </Link>
+                  )
+                }
+
+                return (
+                  <div key={hub.id}>
+                    <button
+                      onClick={() => toggleMobileHub(hub.id)}
+                      className="flex items-center justify-between p-4 rounded-2xl w-full border transition-all shadow-[0_2px_4px_rgba(0,0,0,0.02)]"
+                      style={{
+                        backgroundColor: hubActive ? 'var(--accent-hover)' : 'var(--bg-card)',
+                        borderColor: hubActive ? 'var(--medical-blue-soft)' : 'var(--border-subtle)',
+                        color: hubActive ? 'var(--medical-blue)' : 'var(--text-main)',
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <HubIcon size={18} />
+                        <span className="font-bold text-[15px]">{hub.name}</span>
+                      </div>
+                      <ChevronDown size={16} className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} style={{ color: '#cbd5e1' }} />
+                    </button>
+
+                    {isExpanded && hub.children && (
+                      <div className="ml-4 mt-1 pl-3 flex flex-col gap-1 border-l-2" style={{ borderColor: 'var(--border-subtle)' }}>
+                        {hub.children.map(child => {
+                          const ChildIcon = child.icon
+                          const childActive = router.pathname === child.path
+                          return (
+                            <Link
+                              key={child.path}
+                              href={child.path}
+                              onClick={() => setIsMobileMenuOpen(false)}
+                              className="flex items-center gap-2.5 py-2.5 px-3 rounded-lg no-underline transition-all"
+                              style={{
+                                backgroundColor: childActive ? 'var(--medical-blue-soft)' : 'transparent',
+                                color: childActive ? 'var(--medical-blue)' : 'var(--text-muted)',
+                              }}
+                            >
+                              <ChildIcon size={16} />
+                              <span className="font-semibold text-[14px]">{child.name}</span>
+                            </Link>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
-                  <ChevronRight size={16} className="link-arrow" />
-                </Link>
-              ))}
+                )
+              })}
             </div>
 
             {/* Drawer Footer Actions */}
-            <div className="drawer-footer">
-              <button className="drawer-upgrade-btn" onClick={() => router.push('/upgrade')}>
+            <div className="p-6 border-t flex flex-col gap-3" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--bg-sidebar)' }}>
+              <button
+                className="w-full p-4 bg-gradient-to-r from-indigo-500 to-violet-500 text-white border-none rounded-2xl font-bold text-[15px] flex items-center justify-center gap-2 shadow-[0_8px_16px_-4px_rgba(99,102,241,0.4)] cursor-pointer"
+                onClick={() => router.push('/upgrade')}
+              >
                 <Crown size={18} />
                 Upgrade to Pro
               </button>
 
               <button
-                className="drawer-logout-btn"
+                className="w-full p-4 bg-rose-50 text-rose-600 border-none rounded-2xl font-bold text-[15px] flex items-center justify-center gap-2 cursor-pointer"
                 onClick={() => { setIsMobileMenuOpen(false); setIsLogoutModalOpen(true); }}
               >
                 <LogOut size={18} />
                 Sign Out
               </button>
 
-              <div className="drawer-version">
-                <div className="logo-circle">
+              <div className="mt-3 flex items-center gap-3 pt-3">
+                <div className="w-8 h-8 bg-slate-800 rounded-full text-white flex items-center justify-center font-extrabold text-sm">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <div className="version-info">
+                <div className="flex flex-col text-[10px] leading-tight" style={{ color: '#94a3b8' }}>
                   <strong>VAIDYA AI SERVICES</strong>
                   <span>VERSION 1.0.0 • PRE-ALFA</span>
                 </div>
@@ -234,19 +344,29 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
         </div>
       )}
 
-      <div className="main-content-wrapper" style={{ marginLeft: sidebarWidth }}>
+      <div
+        className="flex-1 min-w-0 flex flex-col transition-[margin-left] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+        style={{ marginLeft: sidebarWidth }}
+      >
         {/* Top Bar */}
-        <div className="top-bar">
-          <div className="breadcrumb-section">
-            <h1 className="page-title desktop-title">
-              {getPageTitle(router.pathname)}
-            </h1>
-            <h1 className="page-title mobile-title">
+        <div
+          className="h-16 flex items-center justify-between px-8 max-md:px-5 sticky top-0 z-50 border-b backdrop-blur-xl"
+          style={{
+            backgroundColor: 'var(--bg-card)',
+            borderColor: 'var(--border-subtle)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+          }}
+        >
+          <div>
+            <h1
+              className="text-lg font-extrabold tracking-tight m-0 bg-gradient-to-br from-gray-800 to-gray-500 bg-clip-text"
+              style={{ WebkitTextFillColor: 'transparent', color: 'var(--cream-text-main)' }}
+            >
               {getPageTitle(router.pathname)}
             </h1>
           </div>
 
-          <div className="actions-section">
+          <div className="flex items-center gap-4">
             {!isMobile && <ThemeToggle />}
             {/* Desktop Profile Menu */}
             {!isMobile && (
@@ -254,7 +374,12 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
                 <div id="notifications-menu" className="relative">
                   <button
                     onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                    className={`icon-action-btn ${isNotificationsOpen ? 'active' : ''}`}
+                    className={`w-11 h-11 rounded-[14px] flex items-center justify-center cursor-pointer border transition-all shadow-[0_4px_12px_rgba(0,0,0,0.04)] ${isNotificationsOpen ? 'translate-y-[-1px] shadow-[0_6px_16px_rgba(0,0,0,0.06)]' : 'hover:translate-y-[-1px] hover:shadow-[0_6px_16px_rgba(0,0,0,0.06)]'}`}
+                    style={{
+                      backgroundColor: isNotificationsOpen ? 'var(--accent-hover)' : 'var(--bg-card)',
+                      borderColor: isNotificationsOpen ? 'var(--border-subtle)' : 'var(--border-strong)',
+                      color: isNotificationsOpen ? 'var(--text-main)' : 'var(--cream-text-muted)',
+                    }}
                   >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -263,23 +388,26 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
                   </button>
 
                   {isNotificationsOpen && (
-                    <div className="notification-dropdown">
-                      <div className="notification-header">
-                        <h3 className="notification-title">Notifications</h3>
-                        <button className="mark-read-btn">Clear all</button>
+                    <div
+                      className="absolute top-[calc(100%+12px)] right-0 w-[340px] rounded-3xl shadow-[0_20px_40px_-8px_rgba(0,0,0,0.12),0_0_0_1px_rgba(0,0,0,0.04),0_10px_20px_-5px_rgba(0,0,0,0.05)] border overflow-hidden animate-[slideDown_0.3s_cubic-bezier(0.16,1,0.3,1)] z-[100]"
+                      style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+                    >
+                      <div className="px-6 py-[18px] flex items-center justify-between border-b" style={{ backgroundColor: 'var(--cream-bg)', borderColor: 'rgba(0,0,0,0.06)' }}>
+                        <h3 className="text-[15px] font-extrabold m-0 tracking-tight" style={{ color: 'var(--cream-text-main)' }}>Notifications</h3>
+                        <button className="text-[11px] font-extrabold text-indigo-500 bg-indigo-500/[0.08] border-none cursor-pointer px-3 py-1.5 rounded-[10px] transition-all uppercase tracking-wide hover:bg-indigo-500 hover:text-white hover:-translate-y-px">
+                          Clear all
+                        </button>
                       </div>
-                      <div className="notification-content">
-                        <div className="empty-notification">
-                          <div className="empty-icon-container">
+                      <div className="max-h-[420px] overflow-y-auto">
+                        <div className="py-14 px-8 flex flex-col items-center text-center gap-4" style={{ background: 'linear-gradient(180deg, white 0%, var(--cream-bg) 100%)' }}>
+                          <div className="w-[72px] h-[72px] bg-white rounded-[22px] flex items-center justify-center shadow-[0_10px_25px_-5px_rgba(0,0,0,0.05),inset_0_0_0_1px_rgba(0,0,0,0.02)] mb-1" style={{ color: '#94A3B8' }}>
                             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                               <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                              <path d="m13.5 8.5-4 4" />
-                              <path d="m9.5 8.5 4 4" />
                             </svg>
                           </div>
-                          <p className="empty-text">Your medical feed is pristine.</p>
-                          <span className="empty-subtext">No new alerts. Your dashboard is in peak health.</span>
+                          <p className="text-base font-extrabold m-0 tracking-tight" style={{ color: 'var(--cream-text-main)' }}>Your medical feed is pristine.</p>
+                          <span className="text-[13.5px] font-medium leading-relaxed max-w-[220px]" style={{ color: 'var(--cream-text-muted)' }}>No new alerts. Your dashboard is in peak health.</span>
                         </div>
                       </div>
                     </div>
@@ -289,38 +417,61 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
                 <div id="user-profile-menu" className="relative">
                   <div
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className={`profile-trigger ${isDropdownOpen ? 'active' : ''}`}
+                    className={`flex items-center gap-3 py-1.5 pl-1.5 pr-3.5 rounded-2xl cursor-pointer border transition-all shadow-[0_4px_12px_rgba(0,0,0,0.04)] ${isDropdownOpen ? '-translate-y-px' : 'hover:-translate-y-px'}`}
+                    style={{
+                      backgroundColor: isDropdownOpen ? 'var(--accent-hover)' : 'var(--bg-card)',
+                      borderColor: isDropdownOpen ? 'var(--medical-blue-soft)' : 'var(--border-strong)',
+                    }}
                   >
-                    <div className="avatar-mini">
+                    <div className="w-9 h-9 bg-gradient-to-br from-amber-200 to-amber-300 rounded-xl flex items-center justify-center font-extrabold text-sm shadow-[0_2px_8px_rgba(232,217,192,0.4)]" style={{ color: 'var(--cream-text-main)' }}>
                       {user ? user.email?.[0].toUpperCase() : '?'}
                     </div>
-                    <div className="user-meta hidden sm:block">
-                      <p className="user-full-name">{user ? (user.user_metadata?.name || user.email?.split('@')[0]) : 'Loading...'}</p>
-                      <p className="user-plan-badge">
+                    <div className="hidden sm:flex flex-col items-center gap-0.5">
+                      <p className="text-[13px] font-bold m-0 max-w-[130px] whitespace-nowrap overflow-hidden text-ellipsis leading-tight" style={{ color: 'var(--cream-text-main)' }}>
+                        {user ? (user.user_metadata?.name || user.email?.split('@')[0]) : 'Loading...'}
+                      </p>
+                      <p className="text-[10px] font-extrabold text-violet-500 uppercase tracking-wide m-0 bg-violet-500/10 px-2 py-0.5 rounded-md leading-none inline-flex items-center justify-center">
                         {(plan || user?.user_metadata?.plan || 'free') === 'free' ? 'Standard' : (plan || user?.user_metadata?.plan || 'pro') === 'pro' ? 'Premium' : (plan || 'free').charAt(0).toUpperCase() + (plan || 'free').slice(1)}
                       </p>
                     </div>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={`arrow-icon ${isDropdownOpen ? 'rotate-180' : ''}`}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} style={{ color: 'var(--cream-text-muted)' }}>
                       <path d="m6 9 6 6 6-6" />
                     </svg>
                   </div>
 
                   {isDropdownOpen && (
-                    <div className="dropdown-menu">
-                      <div className="dropdown-header">
-                        <div className="avatar-medium">{user ? user.email?.[0].toUpperCase() : '?'}</div>
-                        <div className="header-meta">
-                          <p className="header-name">{user ? (user.user_metadata?.name || user.email?.split('@')[0]) : 'Loading...'}</p>
-                          <p className="header-email">{user?.email || '...'}</p>
+                    <div
+                      className="absolute top-[calc(100%+12px)] right-0 w-[280px] rounded-3xl shadow-[0_20px_40px_-8px_rgba(0,0,0,0.12),0_0_0_1px_rgba(0,0,0,0.04)] border overflow-hidden animate-[slideDown_0.3s_cubic-bezier(0.4,0,0.2,1)]"
+                      style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+                    >
+                      <div className="p-6 flex items-center gap-3 border-b" style={{ backgroundColor: 'var(--cream-bg)', borderColor: 'rgba(0,0,0,0.06)' }}>
+                        <div className="w-12 h-12 min-w-[48px] flex-shrink-0 bg-gradient-to-br from-amber-200 to-amber-300 rounded-[14px] flex items-center justify-center font-extrabold text-lg">
+                          {user ? user.email?.[0].toUpperCase() : '?'}
+                        </div>
+                        <div>
+                          <p className="text-[15px] font-extrabold m-0 max-w-[160px] whitespace-nowrap overflow-hidden text-ellipsis" style={{ color: 'var(--cream-text-main)' }}>
+                            {user ? (user.user_metadata?.name || user.email?.split('@')[0]) : 'Loading...'}
+                          </p>
+                          <p className="text-xs font-semibold mt-0.5 m-0 max-w-[160px] whitespace-nowrap overflow-hidden text-ellipsis" style={{ color: 'var(--cream-text-muted)' }}>
+                            {user?.email || '...'}
+                          </p>
                         </div>
                       </div>
 
-                      <div className="dropdown-links">
-                        <button onClick={() => { setIsDropdownOpen(false); router.push('/profile'); }}>
+                      <div className="p-3">
+                        <button
+                          onClick={() => { setIsDropdownOpen(false); router.push('/profile'); }}
+                          className="w-full flex items-center gap-3 py-3 px-4 border-none bg-transparent rounded-[14px] cursor-pointer transition-all text-sm font-bold hover:bg-[var(--cream-bg)]"
+                          style={{ color: 'var(--cream-text-muted)' }}
+                        >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                           Profile Settings
                         </button>
-                        <button onClick={() => { setIsDropdownOpen(false); setIsLogoutModalOpen(true); }} className="logout-btn">
+                        <button
+                          onClick={() => { setIsDropdownOpen(false); setIsLogoutModalOpen(true); }}
+                          className="w-full flex items-center gap-3 py-3 px-4 border-none bg-transparent rounded-[14px] cursor-pointer transition-all text-sm font-bold hover:bg-rose-50 hover:text-rose-600"
+                          style={{ color: 'var(--cream-text-muted)' }}
+                        >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
                           Log out
                         </button>
@@ -334,7 +485,8 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
             {/* Mobile Menu Trigger */}
             {isMobile && (
               <button
-                className="mobile-menu-trigger"
+                className="w-11 h-11 flex items-center justify-center bg-white border rounded-xl cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
+                style={{ borderColor: 'rgba(0,0,0,0.1)' }}
                 onClick={() => setIsMobileMenuOpen(true)}
               >
                 <Menu size={24} color="#1e293b" />
@@ -344,7 +496,7 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
         </div>
 
         {/* Main Content Area */}
-        <main className={`main-scroll-area ${['/chat', '/mcqs', '/flashcards', '/explain', '/osce', '/clinical-cases', '/highyield', '/image-analysis'].includes(router.pathname) ? 'no-padding' : ''}`}>
+        <main className={`flex-1 overflow-y-auto ${['/chat', '/mcqs', '/flashcards', '/explain', '/osce', '/clinical-cases', '/highyield', '/image-analysis'].includes(router.pathname) ? 'p-0' : 'p-10 max-md:p-4'}`}>
           {children}
         </main>
       </div>
@@ -353,733 +505,43 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
 
       {/* Logout Modal */}
       {isLogoutModalOpen && (
-        <div className="modal-backdrop">
-          <div className="modal-content">
-            <div className="modal-icon">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xl flex items-center justify-center z-[5000] p-5 transition-all duration-400">
+          <div
+            className="w-full max-w-[420px] rounded-[32px] p-12 text-center border shadow-[0_48px_96px_-24px_rgba(0,0,0,0.25)]"
+            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'rgba(0,0,0,0.05)' }}
+          >
+            <div className="w-[72px] h-[72px] bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center mx-auto mb-7">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
               </svg>
             </div>
-            <h2>Sign out?</h2>
-            <p>Ready to wrap up your clinical session? We'll save your progress.</p>
-            <div className="modal-actions">
-              <button onClick={handleSignOut} className="confirm-btn">Log out</button>
-              <button onClick={() => setIsLogoutModalOpen(false)} className="cancel-btn">Stay Logged In</button>
+            <h2 className="text-[26px] font-extrabold mb-3.5 tracking-tight" style={{ color: 'var(--cream-text-main)' }}>Sign out?</h2>
+            <p className="text-base leading-relaxed mb-9 font-medium" style={{ color: 'var(--cream-text-muted)' }}>
+              Ready to wrap up your clinical session? We&apos;ll save your progress.
+            </p>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={handleSignOut}
+                className="bg-gray-800 text-white border-none p-4 rounded-[18px] font-extrabold cursor-pointer transition-all hover:bg-gray-900 hover:-translate-y-px"
+              >
+                Log out
+              </button>
+              <button
+                onClick={() => setIsLogoutModalOpen(false)}
+                className="p-3.5 rounded-[18px] font-bold cursor-pointer transition-all border hover:bg-white"
+                style={{ backgroundColor: 'var(--cream-bg)', borderColor: 'rgba(0,0,0,0.05)', color: 'var(--cream-text-main)' }}
+              >
+                Stay Logged In
+              </button>
             </div>
           </div>
         </div>
       )}
 
       <style jsx global>{`
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        .layout-root {
-          display: flex;
-          min-height: 100dvh;
-          background-color: var(--bg-main);
-          font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-
-        .main-content-wrapper {
-          flex: 1;
-          transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          min-width: 0;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .top-bar {
-          height: 64px;
-          background: var(--bg-card);
-          backdrop-filter: blur(12px) saturate(180%);
-          -webkit-backdrop-filter: blur(12px) saturate(180%);
-          border-bottom: 1px solid var(--border-subtle);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 0 32px;
-          position: sticky;
-          top: 0;
-          z-index: 50;
-        }
-
-        .page-title {
-          font-size: 18px;
-          font-weight: 800;
-          color: var(--cream-text-main);
-          letter-spacing: -0.02em;
-          margin: 0;
-          background: linear-gradient(135deg, #1F2937 0%, #4B5563 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-
-        .actions-section {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-        }
-
-        .icon-action-btn {
-          background: var(--bg-card);
-          border: 1px solid var(--border-strong);
-          width: 44px;
-          height: 44px;
-          border-radius: 14px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: var(--cream-text-muted);
-          cursor: pointer;
-          transition: all 0.2s;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-        }
-
-        .icon-action-btn:hover, .icon-action-btn.active {
-          background-color: var(--accent-hover);
-          color: var(--text-main);
-          border-color: var(--border-subtle);
-          transform: translateY(-1px);
-          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
-        }
-
-        .profile-trigger {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 6px 14px 6px 6px;
-          background: var(--bg-card);
-          border: 1px solid var(--border-strong);
-          border-radius: 16px;
-          cursor: pointer;
-          transition: all 0.2s;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-        }
-
-        .profile-trigger:hover, .profile-trigger.active {
-          border-color: var(--medical-blue-soft);
-          background-color: var(--accent-hover);
-          transform: translateY(-1px);
-        }
-
-        .user-meta {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 2px;
-        }
-
-        .avatar-mini {
-          width: 36px;
-          height: 36px;
-          background: linear-gradient(135deg, #E8D9C0 0%, #D4C3A9 100%);
-          color: var(--cream-text-main);
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 800;
-          font-size: 14px;
-          box-shadow: 0 2px 8px rgba(232, 217, 192, 0.4);
-        }
-
-        .user-full-name {
-          font-size: 13px;
-          font-weight: 700;
-          color: var(--cream-text-main);
-          margin: 0;
-          max-width: 130px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          line-height: 1.2;
-        }
-
-        .user-badge-row {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-
-        .user-plan-badge {
-          font-size: 10px;
-          font-weight: 800;
-          color: #8B5CF6;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          margin: 0;
-          background: rgba(139, 92, 246, 0.1);
-          padding: 3px 8px;
-          border-radius: 6px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          line-height: 1;
-        }
-
-        .arrow-icon {
-          color: var(--cream-text-muted);
-          transition: transform 0.2s;
-        }
-
-        .arrow-icon.rotate-180 {
-          transform: rotate(180deg);
-        }
-
-        .dropdown-menu {
-          position: absolute;
-          top: calc(100% + 12px);
-          right: 0;
-          width: 280px;
-          background-color: var(--bg-card);
-          border-radius: 24px;
-          box-shadow: 0 20px 40px -8px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04);
-          border: 1px solid var(--border-subtle);
-          overflow: hidden;
-          animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        @keyframes slideDown {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        .notification-dropdown {
-          position: absolute;
-          top: calc(100% + 12px);
-          right: 0;
-          width: 340px;
-          background-color: var(--bg-card);
-          border-radius: 24px;
-          box-shadow: 
-            0 20px 40px -8px rgba(0,0,0,0.12), 
-            0 0 0 1px rgba(0,0,0,0.04),
-            0 10px 20px -5px rgba(0, 0, 0, 0.05);
-          border: 1px solid var(--border-subtle);
-          overflow: hidden;
-          animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-          z-index: 100;
-        }
-
-        .notification-header {
-          padding: 18px 24px;
-          background-color: var(--cream-bg);
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-        }
-
-        .notification-title {
-          font-size: 15px;
-          font-weight: 800;
-          margin: 0;
-          color: var(--cream-text-main);
-          letter-spacing: -0.01em;
-        }
-
-        .mark-read-btn {
-          font-size: 11px;
-          font-weight: 800;
-          color: #6366F1;
-          background: rgba(99, 102, 241, 0.08);
-          border: none;
-          cursor: pointer;
-          padding: 6px 12px;
-          border-radius: 10px;
-          transition: all 0.2s;
-          text-transform: uppercase;
-          letter-spacing: 0.02em;
-        }
-
-        .mark-read-btn:hover {
-          background-color: #6366F1;
-          color: white;
-          transform: translateY(-1px);
-        }
-
-        .notification-content {
-          padding: 0;
-          max-height: 420px;
-          overflow-y: auto;
-        }
-
-        .empty-notification {
-          padding: 56px 32px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          gap: 16px;
-          background: linear-gradient(180deg, white 0%, var(--cream-bg) 100%);
-        }
-
-        .empty-icon-container {
-          width: 72px;
-          height: 72px;
-          background-color: white;
-          color: #94A3B8;
-          border-radius: 22px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), inset 0 0 0 1px rgba(0,0,0,0.02);
-          margin-bottom: 4px;
-        }
-
-        .empty-text {
-          font-size: 16px;
-          font-weight: 800;
-          color: var(--cream-text-main);
-          margin: 0;
-          letter-spacing: -0.02em;
-        }
-
-        .empty-subtext {
-          font-size: 13.5px;
-          color: var(--cream-text-muted);
-          font-weight: 500;
-          line-height: 1.6;
-          max-width: 220px;
-        }
-
-        .dropdown-header {
-          padding: 24px 20px;
-          background-color: var(--cream-bg);
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-        }
-
-        .avatar-medium {
-          width: 48px;
-          height: 48px;
-          min-width: 48px;
-          flex-shrink: 0;
-          background: linear-gradient(135deg, #E8D9C0 0%, #D4C3A9 100%);
-          border-radius: 14px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 800;
-          font-size: 18px;
-        }
-
-        .header-name {
-          font-size: 15px;
-          font-weight: 800;
-          margin: 0;
-          color: var(--cream-text-main);
-          max-width: 160px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .header-email {
-          font-size: 12px;
-          color: var(--cream-text-muted);
-          margin: 2px 0 0 0;
-          font-weight: 600;
-          max-width: 160px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .dropdown-links {
-          padding: 12px;
-        }
-
-        .dropdown-links button {
-          width: 100%;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 12px 16px;
-          border: none;
-          background: transparent;
-          color: var(--cream-text-muted);
-          font-size: 14px;
-          font-weight: 700;
-          border-radius: 14px;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .dropdown-links button:hover {
-          background-color: var(--cream-bg);
-          color: var(--cream-text-main);
-        }
-
-        .dropdown-links button.logout-btn:hover {
-          background-color: #FFF5F5;
-          color: #EA4335;
-        }
-
-        .main-scroll-area {
-          flex: 1;
-          padding: 40px;
-          overflow-y: auto;
-        }
-
-        .main-scroll-area.no-padding {
-          padding: 0;
-        }
-
-        .main-scroll-area.overflow-hidden {
-          overflow: hidden !important;
-        }
-
-        .modal-backdrop {
-          position: fixed;
-          inset: 0;
-          background-color: rgba(15, 23, 42, 0.4);
-          backdrop-filter: blur(12px) saturate(160%);
-          -webkit-backdrop-filter: blur(12px) saturate(160%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 5000;
-          padding: 20px;
-          transition: all 0.4s ease;
-        }
-
-        .modal-content {
-          background: var(--bg-card);
-          width: 100%;
-          max-width: 420px;
-          border-radius: 32px;
-          padding: 48px;
-          text-align: center;
-          box-shadow: 0 48px 96px -24px rgba(0,0,0,0.25);
-          border: 1px solid rgba(0, 0, 0, 0.05);
-        }
-
-        .modal-icon {
-          width: 72px;
-          height: 72px;
-          background-color: #FFF5F5;
-          color: #EA4335;
-          border-radius: 24px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 0 auto 28px;
-        }
-
-        .modal-content h2 {
-          font-size: 26px;
-          font-weight: 800;
-          margin-bottom: 14px;
-          letter-spacing: -0.03em;
-          color: var(--cream-text-main);
-        }
-
-        .modal-content p {
-          color: var(--cream-text-muted);
-          font-size: 16px;
-          line-height: 1.6;
-          margin-bottom: 36px;
-          font-weight: 500;
-        }
-
-        .modal-actions {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .confirm-btn {
-          background-color: #333333;
-          color: white;
-          border: none;
-          padding: 16px;
-          border-radius: 18px;
-          font-weight: 800;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .confirm-btn:hover {
-          background-color: #1A1A1A;
-          transform: translateY(-1px);
-        }
-
-        .cancel-btn {
-          background-color: var(--cream-bg);
-          border: 1px solid rgba(0, 0, 0, 0.05);
-          padding: 14px;
-          border-radius: 18px;
-          font-weight: 700;
-          color: var(--cream-text-main);
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .cancel-btn:hover {
-          background-color: white;
-          border-color: var(--cream-accent);
-        }
-
-        /* Mobile Menu Trigger Style */
-        .mobile-menu-trigger {
-          width: 44px;
-          height: 44px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: white;
-          border: 1px solid rgba(0,0,0,0.1);
-          border-radius: 12px;
-          cursor: pointer;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-
-        @media (max-width: 768px) {
-          .top-bar {
-            padding: 0 20px;
-          }
-          .main-scroll-area {
-            padding: 16px;
-            overflow-x: hidden;
-          }
-          /* Adjusted to show title on mobile as requested */
-          .mobile-title {
-            display: block;
-          }
-          .desktop-title {
-            display: none;
-          }
-        }
-        
-        @media (min-width: 769px) {
-          .mobile-title {
-            display: none;
-          }
-          .desktop-title {
-            display: block;
-          }
-        }
-        
-        /* Mobile Drawer Styles */
-        .mobile-drawer-overlay {
-          position: fixed;
-          inset: 0;
-          background-color: rgba(0,0,0,0.5);
-          backdrop-filter: blur(4px);
-          z-index: 1000;
-          display: flex;
-          justify-content: flex-end;
-          animation: fadeIn 0.3s ease;
-        }
-        
-        .mobile-drawer {
-          width: 100%;
-          max-width: 320px;
-          background: var(--bg-sidebar);
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-          animation: slideLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-          box-shadow: -10px 0 30px rgba(0,0,0,0.1);
-          overflow-y: auto;
-          overscroll-behavior: contain; /* Prevent scroll chaining */
-        }
-        
-        .drawer-header {
-          padding: 24px;
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          border-bottom: 1px solid rgba(0,0,0,0.06);
-        }
-        
-        .drawer-user-info {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-        
-        .avatar-large {
-          width: 60px;
-          height: 60px;
-          background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
-          border-radius: 20px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 24px;
-          color: white;
-          font-weight: 800;
-          box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
-        }
-        
-        .drawer-user-meta h3 {
-          margin: 0;
-          font-size: 18px;
-          color: #1e293b;
-          font-weight: 800;
-          letter-spacing: -0.02em;
-        }
-        
-        .drawer-email {
-          font-size: 13px;
-          color: #64748b;
-          font-weight: 500;
-          margin-top: 2px;
-        }
-        
-        .drawer-badge {
-          display: inline-block;
-          margin-top: 8px;
-          padding: 4px 10px;
-          background-color: #f3e8ff;
-          color: #7e22ce;
-          border-radius: 6px;
-          font-size: 11px;
-          font-weight: 800;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-        }
-        
-        .drawer-close-btn {
-          background: var(--bg-card);
-          border: 1px solid var(--border-strong);
-          border-radius: 12px;
-          width: 40px;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #64748b;
-          cursor: pointer;
-        }
-        
-        .drawer-links {
-          flex: 1;
-          padding: 24px;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-        
-        .drawer-link-item {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 16px;
-          background: var(--bg-card);
-          border-radius: 16px;
-          text-decoration: none;
-          color: var(--text-main);
-          border: 1px solid var(--border-subtle);
-          transition: all 0.2s;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        }
-        
-        .drawer-link-item:active {
-          transform: scale(0.98);
-          background-color: var(--accent-hover);
-        }
-        
-        .link-content {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-        
-        .link-icon {
-          font-size: 18px;
-        }
-        
-        .link-text {
-          font-weight: 700;
-          font-size: 15px;
-        }
-        
-        .link-arrow {
-          color: #cbd5e1;
-        }
-        
-        .drawer-footer {
-          padding: 24px;
-          border-top: 1px solid var(--border-subtle);
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-          background: var(--bg-sidebar);
-        }
-        
-        .drawer-upgrade-btn {
-          width: 100%;
-          padding: 16px;
-          background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
-          color: white;
-          border: none;
-          border-radius: 16px;
-          font-weight: 700;
-          font-size: 15px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          box-shadow: 0 8px 16px -4px rgba(99, 102, 241, 0.4);
-          cursor: pointer;
-        }
-        
-        .drawer-logout-btn {
-          width: 100%;
-          padding: 16px;
-          background: #fff1f2;
-          color: #e11d48;
-          border: none;
-          border-radius: 16px;
-          font-weight: 700;
-          font-size: 15px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          cursor: pointer;
-        }
-        
-        .drawer-version {
-          margin-top: 12px;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding-top: 12px;
-        }
-        
-        .logo-circle {
-          width: 32px;
-          height: 32px;
-          background: #1e293b;
-          border-radius: 50%;
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 800;
-          font-size: 14px;
-        }
-        
-        .version-info {
-          display: flex;
-          flex-direction: column;
-          font-size: 10px;
-          color: #94a3b8;
-          line-height: 1.3;
-        }
-        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideLeft { from { transform: translateX(100%); } to { transform: translateX(0); } }
       `}</style>

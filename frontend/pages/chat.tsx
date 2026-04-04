@@ -668,6 +668,7 @@ export default function Chat() {
             loading={sessionsLoading}
             error={sessionsError}
             position="right"
+            disableMobileHamburger
           />
         </div>
       </DashboardLayout>
