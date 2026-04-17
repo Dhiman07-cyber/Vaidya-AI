@@ -7,34 +7,34 @@ import FlashcardViewer from '@/components/FlashcardViewer'
 
 // Tailwind class mappings
 const styles = {
-  loading: "flex justify-center items-center min-h-[60vh] text-xl text-slate-700 font-semibold",
+  loading: "flex justify-center items-center min-h-[60vh] text-xl text-slate-700 dark:text-slate-200 font-semibold",
   container: "h-full flex flex-col",
-  header: "px-10 py-8 pb-6 bg-white border-b border-slate-300",
+  header: "px-10 py-8 pb-6 bg-white dark:bg-slate-800 border-b border-slate-300 dark:border-slate-600",
   content: "flex-1 flex overflow-hidden max-[968px]:flex-col",
-  sessionSidebar: "w-[280px] bg-white border-r border-slate-300 flex flex-col max-[968px]:w-full max-[968px]:max-h-[200px] max-[968px]:border-r-0 max-[968px]:border-b",
-  sidebarHeader: "px-6 py-6 border-b border-slate-300",
+  sessionSidebar: "w-[280px] bg-white dark:bg-slate-800 border-r border-slate-300 dark:border-slate-600 flex flex-col max-[968px]:w-full max-[968px]:max-h-[200px] max-[968px]:border-r-0 max-[968px]:border-b",
+  sidebarHeader: "px-6 py-6 border-b border-slate-300 dark:border-slate-600",
   sessionList: "flex-1 overflow-y-auto p-2",
-  sessionItem: "p-4 mb-2 bg-slate-100 rounded-lg cursor-pointer transition-all relative hover:bg-slate-200 hover:translate-x-1 border border-slate-300",
+  sessionItem: "p-4 mb-2 bg-slate-100 dark:bg-slate-700 rounded-lg cursor-pointer transition-all relative hover:bg-slate-200 dark:hover:bg-slate-600 hover:translate-x-1 border border-slate-300 dark:border-slate-600",
   active: "bg-gradient-to-br from-medical-indigo to-medical-purple text-white border-medical-indigo shadow-md",
   sessionTitle: "font-bold mb-1 text-[0.95rem]",
   sessionDate: "text-sm opacity-90",
-  deleteBtn: "absolute top-2 right-2 bg-white/30 border-0 rounded px-2 py-1 cursor-pointer text-base opacity-0 transition-opacity hover:bg-white/50 font-bold",
-  emptyState: "text-center py-8 px-4 text-slate-600 font-medium",
+  deleteBtn: "absolute top-2 right-2 bg-white/30 dark:bg-slate-600/50 border-0 rounded px-2 py-1 cursor-pointer text-base opacity-0 transition-opacity hover:bg-white/50 dark:hover:bg-slate-600 font-bold",
+  emptyState: "text-center py-8 px-4 text-slate-600 dark:text-slate-300 font-medium",
   mainArea: "flex-1 overflow-y-auto px-10 py-8 max-md:px-6",
   inputSection: "flex gap-4 mb-8 max-md:flex-col",
-  topicInput: "flex-1 px-6 py-4 border-2 border-slate-300 rounded-xl text-base transition-colors focus:outline-none focus:border-medical-indigo text-slate-900 placeholder:text-slate-400",
+  topicInput: "flex-1 px-6 py-4 border-2 border-slate-300 dark:border-slate-600 rounded-xl text-base transition-colors focus:outline-none focus:border-medical-indigo text-slate-900 dark:text-slate-100 dark:bg-slate-800 placeholder:text-slate-400",
   generateBtn: "bg-gradient-to-br from-medical-indigo to-medical-purple text-white border-0 px-10 py-4 rounded-xl text-base font-bold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(102,126,234,0.5)] disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap max-md:w-full shadow-md",
-  error: "bg-red-50 text-red-700 p-4 rounded-lg mb-6 border-l-4 border-red-600 font-medium",
+  error: "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 p-4 rounded-lg mb-6 border-l-4 border-red-600 dark:border-red-500 font-medium",
   materialsGrid: "grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-6 max-md:grid-cols-1",
-  materialCard: "bg-white rounded-xl px-6 py-6 shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl border border-slate-300",
-  cardHeader: "flex justify-between items-start mb-4 pb-4 border-b border-slate-300",
-  cardDate: "text-sm text-slate-600 font-medium",
+  materialCard: "bg-white dark:bg-slate-800 rounded-xl px-6 py-6 shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl border border-slate-300 dark:border-slate-600",
+  cardHeader: "flex justify-between items-start mb-4 pb-4 border-b border-slate-300 dark:border-slate-600",
+  cardDate: "text-sm text-slate-600 dark:text-slate-400 font-medium",
   cardMeta: "text-medical-indigo text-base font-bold mb-4",
   studyBtn: "w-full bg-gradient-to-br from-medical-indigo to-medical-purple text-white border-0 px-6 py-3 rounded-lg text-base font-bold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(102,126,234,0.5)] shadow-md",
-  placeholder: "col-span-full text-center py-16 px-8 text-slate-600",
+  placeholder: "col-span-full text-center py-16 px-8 text-slate-600 dark:text-slate-300",
   placeholderIcon: "text-[5rem] mb-4",
   studyView: "max-w-[900px] mx-auto",
-  backBtn: "bg-slate-100 border-2 border-slate-300 px-6 py-3 rounded-lg text-base font-bold cursor-pointer transition-all mb-8 hover:bg-slate-200 hover:border-slate-400 text-slate-700"
+  backBtn: "bg-slate-100 dark:bg-slate-700 border-2 border-slate-300 dark:border-slate-600 px-6 py-3 rounded-lg text-base font-bold cursor-pointer transition-all mb-8 hover:bg-slate-200 dark:hover:bg-slate-600 hover:border-slate-400 text-slate-700 dark:text-slate-200"
 }
 
 interface Session {

@@ -65,14 +65,14 @@ export default function FlashcardViewer({ flashcards }: FlashcardViewerProps) {
       {/* Progress Bar */}
       <div className="mb-6">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-semibold text-gray-600">
+          <span className="text-sm font-semibold text-gray-600 dark:text-gray-300">
             Card {currentIndex + 1} of {flashcards.length}
           </span>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-gray-500 dark:text-gray-400">
             {Math.round(((currentIndex + 1) / flashcards.length) * 100)}% Complete
           </span>
         </div>
-        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
           <motion.div
             className="h-full bg-gradient-to-r from-teal-500 to-cyan-500"
             initial={{ width: 0 }}
@@ -93,18 +93,18 @@ export default function FlashcardViewer({ flashcards }: FlashcardViewerProps) {
         >
           {/* Front of card */}
           <div
-            className="absolute inset-0 w-full h-full bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 rounded-3xl shadow-2xl border-2 border-teal-200 flex flex-col items-center justify-center p-12"
+            className="absolute inset-0 w-full h-full bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 rounded-3xl shadow-2xl border-2 border-teal-200 dark:border-slate-600 flex flex-col items-center justify-center p-12"
             style={{
               backfaceVisibility: 'hidden',
               WebkitBackfaceVisibility: 'hidden'
             }}
           >
             <div className="flex-1 flex items-center justify-center w-full">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-800 text-center leading-relaxed">
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 text-center leading-relaxed">
                 {currentCard.front}
               </h2>
             </div>
-            <div className="flex items-center gap-2 text-sm text-teal-600 font-medium">
+            <div className="flex items-center gap-2 text-sm text-teal-600 dark:text-teal-400 font-medium">
               <RotateCw size={16} />
               <span>Click to reveal</span>
             </div>
@@ -112,7 +112,7 @@ export default function FlashcardViewer({ flashcards }: FlashcardViewerProps) {
 
           {/* Back of card */}
           <div
-            className="absolute inset-0 w-full h-full bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 rounded-3xl shadow-2xl border-2 border-emerald-200 flex flex-col items-center justify-center p-12 relative overflow-hidden"
+            className="absolute inset-0 w-full h-full bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 rounded-3xl shadow-2xl border-2 border-emerald-200 dark:border-slate-600 flex flex-col items-center justify-center p-12 relative overflow-hidden"
             style={{
               backfaceVisibility: 'hidden',
               WebkitBackfaceVisibility: 'hidden',
@@ -130,11 +130,11 @@ export default function FlashcardViewer({ flashcards }: FlashcardViewerProps) {
             </div>
             
             {/* Decorative corner accent */}
-            <div className="absolute top-4 right-4 w-12 h-12 border-t-2 border-r-2 border-emerald-300 rounded-tr-2xl opacity-30"></div>
-            <div className="absolute bottom-4 left-4 w-12 h-12 border-b-2 border-l-2 border-emerald-300 rounded-bl-2xl opacity-30"></div>
+            <div className="absolute top-4 right-4 w-12 h-12 border-t-2 border-r-2 border-emerald-300 dark:border-slate-500 rounded-tr-2xl opacity-30"></div>
+            <div className="absolute bottom-4 left-4 w-12 h-12 border-b-2 border-l-2 border-emerald-300 dark:border-slate-500 rounded-bl-2xl opacity-30"></div>
             
             {/* Medical icon */}
-            <div className="absolute top-6 left-6 text-emerald-300 opacity-40">
+            <div className="absolute top-6 left-6 text-emerald-300 dark:text-slate-500 opacity-40">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 2v20M2 12h20M8 8l8 8M16 8l-8 8" />
               </svg>
@@ -142,13 +142,13 @@ export default function FlashcardViewer({ flashcards }: FlashcardViewerProps) {
             
             <div className="flex-1 flex items-center justify-center w-full overflow-y-auto relative z-10">
               <div className="max-w-2xl">
-                <p className="text-base md:text-lg text-gray-700 text-center leading-relaxed">
+                <p className="text-base md:text-lg text-gray-700 dark:text-gray-200 text-center leading-relaxed">
                   {currentCard.back}
                 </p>
               </div>
             </div>
             
-            <div className="flex items-center gap-2 text-sm text-emerald-600 font-medium relative z-10">
+            <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400 font-medium relative z-10">
               <RotateCw size={16} />
               <span>Click to flip back</span>
             </div>
@@ -161,7 +161,7 @@ export default function FlashcardViewer({ flashcards }: FlashcardViewerProps) {
         <button
           onClick={handlePrevious}
           disabled={currentIndex === 0}
-          className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-gray-200 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 hover:border-teal-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          className="flex items-center gap-2 px-6 py-3 bg-white dark:bg-slate-800 border-2 border-gray-200 dark:border-slate-600 rounded-xl font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 hover:border-teal-300 dark:hover:border-teal-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
         >
           <ChevronLeft size={20} />
           Previous
@@ -179,8 +179,8 @@ export default function FlashcardViewer({ flashcards }: FlashcardViewerProps) {
                 idx === currentIndex
                   ? 'bg-teal-500 w-8'
                   : idx < currentIndex
-                  ? 'bg-teal-300'
-                  : 'bg-gray-300'
+                  ? 'bg-teal-300 dark:bg-teal-600'
+                  : 'bg-gray-300 dark:bg-gray-600'
               }`}
               aria-label={`Go to card ${idx + 1}`}
             />
@@ -198,7 +198,7 @@ export default function FlashcardViewer({ flashcards }: FlashcardViewerProps) {
       </div>
 
       {/* Keyboard Shortcuts Hint */}
-      <div className="mt-6 text-center text-xs text-gray-400">
+      <div className="mt-6 text-center text-xs text-gray-400 dark:text-gray-500">
         <span className="inline-flex items-center gap-4">
           <span>← Previous</span>
           <span>Space to flip</span>

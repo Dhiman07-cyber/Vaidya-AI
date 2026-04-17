@@ -126,8 +126,8 @@ export default function ClinicalReasoning() {
       <DashboardLayout user={user}>
         <div className="max-w-[1200px] mx-auto p-8">
           <div className="mb-8">
-            <h1 className="text-4xl font-bold text-slate-800 mb-2">🧠 Clinical Reasoning</h1>
-            <p className="text-lg text-slate-700">Practice diagnostic thinking with case scenarios</p>
+            <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-100 mb-2">🧠 Clinical Reasoning</h1>
+            <p className="text-lg text-slate-700 dark:text-slate-300">Practice diagnostic thinking with case scenarios</p>
           </div>
 
           {!sessionActive && (
@@ -136,31 +136,31 @@ export default function ClinicalReasoning() {
                 <button
                   onClick={startSession}
                   disabled={generating}
-                  className="bg-gradient-to-br from-medical-indigo to-medical-purple text-white border-0 px-12 py-5 rounded-xl text-lg font-bold cursor-pointer transition-all shadow-md hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(102,126,234,0.4)] disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white border-0 px-12 py-5 rounded-xl text-lg font-bold cursor-pointer transition-all shadow-md hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(102,126,234,0.4)] disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {generating ? 'Generating Case...' : 'Start Clinical Case'}
                 </button>
               </div>
 
-              <div className="bg-white rounded-xl p-8 shadow-md border border-slate-300">
-                <h3 className="text-slate-800 font-bold mb-4 text-2xl">🧠 Clinical Reasoning Mode</h3>
-                <p className="text-slate-700 leading-relaxed mb-6">
+              <div className="bg-white dark:bg-slate-800 rounded-xl p-8 shadow-md border border-slate-300 dark:border-slate-600">
+                <h3 className="text-slate-800 dark:text-slate-100 font-bold mb-4 text-2xl">🧠 Clinical Reasoning Mode</h3>
+                <p className="text-slate-700 dark:text-slate-300 leading-relaxed mb-6">
                   You will be presented with a patient case. Ask questions, request investigations, and work through your diagnostic reasoning. The case will unfold based on your decisions.
                 </p>
                 <ul className="list-none p-0">
-                  <li className="py-3 pl-8 relative text-slate-700 before:content-['✓'] before:absolute before:left-0 before:text-medical-indigo before:font-bold before:text-lg">Take a focused history</li>
-                  <li className="py-3 pl-8 relative text-slate-700 before:content-['✓'] before:absolute before:left-0 before:text-medical-indigo before:font-bold before:text-lg">Request relevant examinations</li>
-                  <li className="py-3 pl-8 relative text-slate-700 before:content-['✓'] before:absolute before:left-0 before:text-medical-indigo before:font-bold before:text-lg">Order appropriate investigations</li>
-                  <li className="py-3 pl-8 relative text-slate-700 before:content-['✓'] before:absolute before:left-0 before:text-medical-indigo before:font-bold before:text-lg">Formulate differential diagnoses</li>
-                  <li className="py-3 pl-8 relative text-slate-700 before:content-['✓'] before:absolute before:left-0 before:text-medical-indigo before:font-bold before:text-lg">Develop a management plan</li>
+                  <li className="py-3 pl-8 relative text-slate-700 dark:text-slate-300 before:content-['✓'] before:absolute before:left-0 before:text-indigo-600 dark:before:text-indigo-400 before:font-bold before:text-lg">Take a focused history</li>
+                  <li className="py-3 pl-8 relative text-slate-700 dark:text-slate-300 before:content-['✓'] before:absolute before:left-0 before:text-indigo-600 dark:before:text-indigo-400 before:font-bold before:text-lg">Request relevant examinations</li>
+                  <li className="py-3 pl-8 relative text-slate-700 dark:text-slate-300 before:content-['✓'] before:absolute before:left-0 before:text-indigo-600 dark:before:text-indigo-400 before:font-bold before:text-lg">Order appropriate investigations</li>
+                  <li className="py-3 pl-8 relative text-slate-700 dark:text-slate-300 before:content-['✓'] before:absolute before:left-0 before:text-indigo-600 dark:before:text-indigo-400 before:font-bold before:text-lg">Formulate differential diagnoses</li>
+                  <li className="py-3 pl-8 relative text-slate-700 dark:text-slate-300 before:content-['✓'] before:absolute before:left-0 before:text-indigo-600 dark:before:text-indigo-400 before:font-bold before:text-lg">Develop a management plan</li>
                 </ul>
               </div>
             </>
           )}
 
           {sessionActive && (
-            <div className="bg-white rounded-xl shadow-md border border-slate-300 overflow-hidden">
-              <div className="flex justify-between items-center px-8 py-6 bg-gradient-to-br from-medical-indigo to-medical-purple text-white">
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md border border-slate-300 dark:border-slate-600 overflow-hidden">
+              <div className="flex justify-between items-center px-8 py-6 bg-gradient-to-br from-indigo-600 to-purple-600 text-white">
                 <h3 className="text-xl font-bold">📋 Clinical Case</h3>
                 <button onClick={endSession} className="bg-white/20 text-white border-0 px-6 py-2 rounded-lg cursor-pointer font-bold transition-all hover:bg-white/30 shadow-md">
                   End Session
@@ -173,33 +173,33 @@ export default function ClinicalReasoning() {
                     key={idx}
                     className={`max-w-[80%] px-6 py-4 rounded-xl leading-relaxed ${
                       msg.role === 'user'
-                        ? 'self-end bg-gradient-to-br from-medical-indigo to-medical-purple text-white shadow-md'
-                        : 'self-start bg-slate-50 text-slate-800 border-2 border-slate-300'
+                        ? 'self-end bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-md'
+                        : 'self-start bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-2 border-slate-300 dark:border-slate-600'
                     }`}
                   >
                     <div className="whitespace-pre-wrap">{msg.content}</div>
                   </div>
                 ))}
                 {generating && (
-                  <div className="max-w-[80%] px-6 py-4 rounded-xl leading-relaxed self-start bg-slate-50 text-slate-800 border-2 border-slate-300">
+                  <div className="max-w-[80%] px-6 py-4 rounded-xl leading-relaxed self-start bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-2 border-slate-300 dark:border-slate-600">
                     <div className="whitespace-pre-wrap">Thinking...</div>
                   </div>
                 )}
               </div>
 
-              <div className="flex gap-4 px-8 py-6 border-t-2 border-slate-300">
+              <div className="flex gap-4 px-8 py-6 border-t-2 border-slate-300 dark:border-slate-600">
                 <input
                   type="text"
                   placeholder="Ask a question or state your diagnosis..."
                   value={userInput}
                   onChange={(e) => setUserInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                  className="flex-1 px-6 py-4 border-2 border-slate-300 rounded-xl text-base text-slate-800 transition-colors focus:outline-none focus:border-medical-indigo"
+                  className="flex-1 px-6 py-4 border-2 border-slate-300 dark:border-slate-600 rounded-xl text-base text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-700 transition-colors focus:outline-none focus:border-indigo-600 dark:focus:border-indigo-400"
                 />
                 <button
                   onClick={sendMessage}
                   disabled={generating || !userInput.trim()}
-                  className="bg-gradient-to-br from-medical-indigo to-medical-purple text-white border-0 px-8 py-4 rounded-xl font-bold cursor-pointer transition-all shadow-md hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(102,126,234,0.4)] disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white border-0 px-8 py-4 rounded-xl font-bold cursor-pointer transition-all shadow-md hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(102,126,234,0.4)] disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   Send
                 </button>

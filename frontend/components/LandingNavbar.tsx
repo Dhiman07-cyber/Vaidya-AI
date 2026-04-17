@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import ThemeToggle from './ThemeToggle'
 
 export default function LandingNavbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -42,7 +43,7 @@ export default function LandingNavbar() {
                 <motion.div
                     initial={false}
                     animate={{
-                        backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0)',
+                        backgroundColor: isScrolled ? 'rgba(var(--bg-card-rgb, 255, 255, 255), 0.8)' : 'rgba(255, 255, 255, 0)',
                         backdropFilter: isScrolled ? 'blur(20px)' : 'blur(0px)',
                         padding: isScrolled ? '14px 40px' : '16px 0px',
                         borderRadius: isScrolled ? '100px' : '0px',
@@ -54,28 +55,29 @@ export default function LandingNavbar() {
                     className="flex justify-between items-center w-full"
                 >
                     <Link href="/" className="flex items-center gap-3 group shrink-0">
-                        <div className="w-12 h-12 bg-[var(--cream-text-main)] rounded-[16px] flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 shadow-lg shadow-black/10">
+                        <div className="w-12 h-12 bg-slate-900 dark:bg-slate-800 rounded-[16px] flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 shadow-lg shadow-black/10">
                             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
                             </svg>
                         </div>
-                        <span className="text-[28px] font-black tracking-tighter text-[var(--cream-text-main)]">Vaidya <span className="text-indigo-600">AI</span></span>
+                        <span className="text-[28px] font-black tracking-tighter text-slate-900 dark:text-slate-100 lg:text-[var(--cream-text-main)]">Vaidya <span className="text-indigo-600 dark:text-indigo-400">AI</span></span>
                     </Link>
 
                     {/* Desktop Nav */}
                     <div className="hidden md:flex items-center gap-10 lg:gap-12">
-                        <Link href="/#features" className="text-[11px] font-black text-[var(--cream-text-muted)] hover:text-black transition-all uppercase tracking-[0.2em]">Features</Link>
-                        <Link href="/#methodology" className="text-[11px] font-black text-[var(--cream-text-muted)] hover:text-black transition-all uppercase tracking-[0.2em]">Methodology</Link>
-                        <Link href="/#about" className="text-[11px] font-black text-[var(--cream-text-muted)] hover:text-black transition-all uppercase tracking-[0.2em]">About</Link>
+                        <Link href="/#features" className="text-[11px] font-black text-[var(--cream-text-muted)] hover:text-[var(--cream-text-main)] transition-all uppercase tracking-[0.2em]">Features</Link>
+                        <Link href="/#methodology" className="text-[11px] font-black text-[var(--cream-text-muted)] hover:text-[var(--cream-text-main)] transition-all uppercase tracking-[0.2em]">Methodology</Link>
+                        <Link href="/#about" className="text-[11px] font-black text-[var(--cream-text-muted)] hover:text-[var(--cream-text-main)] transition-all uppercase tracking-[0.2em]">About</Link>
                     </div>
 
-                    <div className="hidden md:flex items-center">
+                    <div className="hidden md:flex items-center gap-3">
+                        <ThemeToggle />
                         {isLoggedIn ? (
-                            <Link href="/dashboard" className="bg-[var(--cream-text-main)] text-white px-8 py-3 rounded-full text-[14px] font-extrabold hover:bg-black transition-all shadow-xl hover:-translate-y-0.5 active:translate-y-0">
+                            <Link href="/dashboard" className="bg-[var(--cream-text-main)] text-[var(--cream-bg)] px-8 py-3 rounded-full text-[14px] font-extrabold hover:bg-[var(--text-muted)] transition-all shadow-xl hover:-translate-y-0.5 active:translate-y-0">
                                 Dashboard
                             </Link>
                         ) : (
-                            <Link href="/login" className="bg-[var(--cream-text-main)] text-white px-8 py-3.5 rounded-full text-[14px] font-extrabold hover:bg-black transition-all shadow-2xl hover:-translate-y-0.5 active:translate-y-0 group">
+                            <Link href="/login" className="bg-[var(--cream-text-main)] text-[var(--cream-bg)] px-8 py-3.5 rounded-full text-[14px] font-extrabold hover:bg-[var(--text-muted)] transition-all shadow-2xl hover:-translate-y-0.5 active:translate-y-0 group">
                                 <span className="flex items-center gap-2">
                                     Get Started
                                     <motion.span animate={{ x: [0, 5, 0] }} transition={{ repeat: Infinity, duration: 1.5 }}>
@@ -101,7 +103,7 @@ export default function LandingNavbar() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -20, scale: 0.95 }}
                         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                        className="md:hidden absolute top-24 left-6 right-6 bg-[var(--cream-bg)]/95 backdrop-blur-2xl rounded-[40px] p-10 shadow-2xl border border-[var(--cream-accent-soft)] space-y-8 pointer-events-auto"
+                        className="md:hidden absolute top-24 left-6 right-6 bg-[var(--cream-bg)]/95 dark:bg-[var(--bg-card)]/95 backdrop-blur-2xl rounded-[40px] p-10 shadow-2xl border border-[var(--cream-accent-soft)] dark:border-[var(--border-subtle)] space-y-8 pointer-events-auto"
                     >
                         <div className="flex flex-col gap-6">
                             <Link href="/#features" onClick={() => setIsMenuOpen(false)} className="text-xl font-black text-[var(--cream-text-main)]">Features</Link>
@@ -109,7 +111,7 @@ export default function LandingNavbar() {
                             <Link href="/#about" onClick={() => setIsMenuOpen(false)} className="text-xl font-black text-[var(--cream-text-main)]">About Us</Link>
                         </div>
                         <div className="pt-8 border-t border-[var(--cream-accent-soft)]">
-                            <Link href="/login" onClick={() => setIsMenuOpen(false)} className="block bg-[var(--cream-text-main)] text-white py-5 rounded-full text-[18px] font-black text-center shadow-xl">
+                            <Link href="/login" onClick={() => setIsMenuOpen(false)} className="block bg-[var(--cream-text-main)] text-[var(--cream-bg)] py-5 rounded-full text-[18px] font-black text-center shadow-xl">
                                 Get Started Free
                             </Link>
                         </div>

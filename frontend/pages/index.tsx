@@ -108,7 +108,7 @@ export default function LandingPage() {
                 animate: { opacity: 1, y: 0 }
               }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="inline-flex items-center gap-2 px-3.5 py-1 bg-white/60 backdrop-blur-md rounded-full border border-[var(--cream-accent)] mb-6 shadow-sm hover:shadow-md transition-all cursor-default"
+              className="inline-flex items-center gap-2 px-3.5 py-1 bg-[var(--cream-card)]/60 dark:bg-[var(--cream-card)]/80 backdrop-blur-md rounded-full border border-[var(--cream-accent)] mb-6 shadow-sm hover:shadow-md transition-all cursor-default"
             >
               <span className="relative flex h-1.5 w-1.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
@@ -153,7 +153,7 @@ export default function LandingPage() {
             >
               <Link
                 href="/login"
-                className="w-full sm:w-auto bg-[var(--cream-text-main)] text-white px-9 py-3.5 rounded-2xl text-[15px] font-bold hover:bg-black transition-all shadow-xl hover:-translate-y-1 active:translate-y-0.5 flex items-center justify-center gap-3 group"
+                className="w-full sm:w-auto bg-[var(--cream-text-main)] text-[var(--cream-bg)] px-9 py-3.5 rounded-2xl text-[15px] font-bold hover:bg-[var(--text-muted)] transition-all shadow-xl hover:-translate-y-1 active:translate-y-0.5 flex items-center justify-center gap-3 group"
               >
                 Start Studying Free
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
@@ -161,7 +161,7 @@ export default function LandingPage() {
 
               <Link
                 href="#features"
-                className="w-full sm:w-auto bg-white text-[var(--cream-text-main)] border border-[var(--cream-accent)] px-9 py-3.5 rounded-2xl text-[15px] font-bold hover:bg-[var(--cream-accent-soft)] transition-all flex items-center justify-center gap-2 group"
+                className="w-full sm:w-auto bg-[var(--cream-card)] text-[var(--cream-text-main)] border border-[var(--cream-accent)] px-9 py-3.5 rounded-2xl text-[15px] font-bold hover:bg-[var(--cream-accent-soft)] transition-all flex items-center justify-center gap-2 group"
               >
                 Learn More
                 <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
@@ -176,7 +176,7 @@ export default function LandingPage() {
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.4 }}
             className="hidden lg:block relative"
           >
-            <div className="relative z-10 p-3 bg-white/20 backdrop-blur-3xl rounded-[40px] border border-white/30 shadow-2xl overflow-hidden group max-h-[70vh]">
+            <div className="relative z-10 p-3 bg-[var(--cream-card)]/20 dark:bg-[var(--bg-card)]/40 backdrop-blur-3xl rounded-[40px] border border-[var(--cream-card)]/30 dark:border-[var(--border-subtle)] shadow-2xl overflow-hidden group max-h-[70vh]">
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent pointer-events-none"></div>
               <img
                 src="/hero-asset.png"
@@ -189,12 +189,12 @@ export default function LandingPage() {
             <motion.div
               animate={{ y: [0, -15, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -top-6 -right-6 w-20 h-20 bg-orange-100 rounded-3xl blur-3xl opacity-60"
+              className="absolute -top-6 -right-6 w-20 h-20 bg-orange-100 dark:bg-orange-900/40 rounded-3xl blur-3xl opacity-60"
             ></motion.div>
             <motion.div
               animate={{ y: [0, 15, 0] }}
               transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              className="absolute -bottom-6 -left-6 w-28 h-28 bg-indigo-100 rounded-full blur-3xl opacity-60"
+              className="absolute -bottom-6 -left-6 w-28 h-28 bg-indigo-100 dark:bg-indigo-900/40 rounded-full blur-3xl opacity-60"
             ></motion.div>
           </motion.div>
         </div>
@@ -204,7 +204,7 @@ export default function LandingPage() {
       <section id="features" className="py-32 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-24">
-            <h2 className="text-[13px] font-bold text-indigo-600 uppercase tracking-[0.3em] mb-4">Powerful Features</h2>
+            <h2 className="text-[13px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.3em] mb-4">Powerful Features</h2>
             <h3 className="text-5xl font-extrabold text-[var(--cream-text-main)] tracking-tight">Intelligence built for clinical mastery.</h3>
           </div>
 
@@ -220,35 +220,35 @@ export default function LandingPage() {
                 icon: <Activity size={28} />,
                 title: "Clinical Cases",
                 desc: "Sharpen diagnostic skills with adaptive simulators and step-by-step reasoning guides.",
-                color: "bg-indigo-50 text-indigo-600",
+                color: "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400",
                 href: "/clinical"
               },
               {
                 icon: <Brain size={28} />,
                 title: "Concept Mapping",
                 desc: "Visualize complex medical relationships with AI-generated interactive mind maps.",
-                color: "bg-purple-50 text-purple-600",
+                color: "bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400",
                 href: "/conceptmap"
               },
               {
                 icon: <Zap size={28} />,
                 title: "Question Bank",
                 desc: "Access thousands of high-yield clinical scenarios for comprehensive exam preparation.",
-                color: "bg-orange-50 text-orange-600",
+                color: "bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400",
                 href: "/mcqs"
               },
               {
                 icon: <Shield size={28} />,
                 title: "Flashcards",
                 desc: "Master long-term retention with AI-powered spaced repetition and key concept cards.",
-                color: "bg-green-50 text-green-600",
+                color: "bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400",
                 href: "/flashcards"
               }
             ].map((feature, i) => (
               <motion.div
                 key={i}
                 variants={fadeIn}
-                className="group bg-white p-8 rounded-[40px] border border-[var(--cream-accent-soft)] shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col items-start"
+                className="group bg-[var(--cream-card)] dark:bg-[var(--bg-card)] p-8 rounded-[40px] border border-[var(--cream-accent-soft)] dark:border-[var(--border-subtle)] shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col items-start"
               >
                 <div className={`w-14 h-14 ${feature.color} rounded-2xl flex items-center justify-center mb-8 transition-transform group-hover:scale-110 group-hover:rotate-3`}>
                   {feature.icon}
@@ -257,7 +257,7 @@ export default function LandingPage() {
                 <p className="text-sm text-[var(--cream-text-muted)] font-medium leading-relaxed mb-8 flex-grow">{feature.desc}</p>
                 <Link
                   href={isLoggedIn ? feature.href : "/login"}
-                  className="inline-flex items-center gap-2 font-bold text-[var(--cream-text-main)] group-hover:gap-4 transition-all"
+                  className="inline-flex items-center gap-2 font-bold text-[var(--cream-text-main)] group-hover:gap-4 transition-all group-hover:text-indigo-600 dark:group-hover:text-indigo-400"
                 >
                   Explore Tool <ChevronRight size={18} />
                 </Link>
@@ -268,46 +268,46 @@ export default function LandingPage() {
       </section>
 
       {/* 2. Methodology Section */}
-      <section id="methodology" className="py-20 px-6 relative overflow-hidden bg-white/30">
+      <section id="methodology" className="py-20 px-6 relative overflow-hidden bg-white/30 dark:bg-[var(--bg-card)]/30">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-10">
-            <h2 className="text-[13px] font-bold text-indigo-600 uppercase tracking-[0.3em] mb-4">Precision Engine</h2>
+            <h2 className="text-[13px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.3em] mb-4">Precision Engine</h2>
             <h3 className="text-5xl font-black text-[var(--cream-text-main)] tracking-tight">The Science of Precision.</h3>
             <p className="mt-4 text-lg text-[var(--cream-text-muted)] max-w-2xl mx-auto font-medium leading-relaxed">
               Vaidya AI utilizes a multi-layered clinical reasoning engine designed to mimic professional expertise.
             </p>
           </div>
 
-          <div className="relative p-1 md:p-4 bg-white rounded-[40px] border border-slate-100 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.06)] overflow-hidden">
+          <div className="relative p-1 md:p-4 bg-[var(--cream-card)] dark:bg-[var(--bg-card)] rounded-[40px] border border-[var(--border-subtle)] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.06)] dark:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.3)] overflow-hidden">
             {/* High-Tech Grid Background */}
             <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(#4f46e5 1px, transparent 1px), linear-gradient(90deg, #4f46e5 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
 
-            {/* Neural Scanning Beam */}
+            {/* Neural Scanning Beam - Full Width */}
             <motion.div
-              animate={{ x: ['-20%', '120%'] }}
-              transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-              className="absolute top-0 bottom-0 w-32 bg-gradient-to-r from-transparent via-indigo-50/50 to-transparent skew-x-12 z-0"
+              animate={{ x: ['-100%', '200%'] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              className="absolute top-0 bottom-0 w-full max-w-md bg-gradient-to-r from-transparent via-indigo-400/30 dark:via-indigo-500/20 to-transparent skew-x-12 z-0"
             />
 
-            <div className="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-50 relative z-10">
+            <div className="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[var(--border-subtle)] relative z-10">
               {[
                 {
                   title: "Evidence Ingestion",
                   desc: "We process millions of peer-reviewed articles and clinical guidelines in real-time.",
-                  icon: <Shield className="text-indigo-600" size={28} />,
-                  accent: "bg-indigo-50/50"
+                  icon: <Shield className="text-indigo-600 dark:text-indigo-400" size={28} />,
+                  accent: "bg-indigo-50/50 dark:bg-indigo-900/20"
                 },
                 {
                   title: "Neural Analysis",
                   desc: "Our proprietary LLM architecture identifies complex clinical correlations instantly.",
-                  icon: <Brain className="text-indigo-600" size={28} />,
-                  accent: "bg-indigo-50/50"
+                  icon: <Brain className="text-indigo-600 dark:text-indigo-400" size={28} />,
+                  accent: "bg-indigo-50/50 dark:bg-indigo-900/20"
                 },
                 {
                   title: "Clinical Validation",
                   desc: "Every output is cross-referenced against gold-standard medical benchmarks.",
-                  icon: <CheckCircle2 className="text-indigo-600" size={28} />,
-                  accent: "bg-indigo-50/50"
+                  icon: <CheckCircle2 className="text-indigo-600 dark:text-indigo-400" size={28} />,
+                  accent: "bg-indigo-50/50 dark:bg-indigo-900/20"
                 }
               ].map((item, i) => (
                 <motion.div
@@ -322,15 +322,15 @@ export default function LandingPage() {
                     <motion.div
                       animate={{ opacity: [0.1, 0.2, 0.1] }}
                       transition={{ duration: 3, repeat: Infinity }}
-                      className="absolute -inset-6 bg-indigo-100 rounded-full blur-2xl"
+                      className="absolute -inset-6 bg-indigo-100 dark:bg-indigo-900/30 rounded-full blur-2xl"
                     />
-                    <div className={`w-20 h-20 ${item.accent} rounded-[28px] flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:shadow-[0_15px_30px_-10px_rgba(79,70,229,0.15)] relative z-10 border border-indigo-100/50`}>
-                      <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-40 rounded-[28px] transition-opacity duration-500"></div>
+                    <div className={`w-20 h-20 ${item.accent} dark:bg-indigo-900/20 rounded-[28px] flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:shadow-[0_15px_30px_-10px_rgba(79,70,229,0.15)] relative z-10 border border-indigo-100/50 dark:border-indigo-800/30`}>
+                      <div className="absolute inset-0 bg-white dark:bg-white/10 opacity-0 group-hover:opacity-40 rounded-[28px] transition-opacity duration-500"></div>
                       {item.icon}
                     </div>
                   </div>
 
-                  <h4 className="text-xl font-black text-[var(--cream-text-main)] mb-4 tracking-tight group-hover:text-indigo-600 transition-colors">
+                  <h4 className="text-xl font-black text-[var(--cream-text-main)] mb-4 tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                     {item.title}
                   </h4>
                   <p className="text-sm text-[var(--cream-text-muted)] font-medium leading-relaxed max-w-[240px]">
@@ -347,26 +347,26 @@ export default function LandingPage() {
       <section id="about" className="py-32 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
-            <h2 className="text-[13px] font-bold text-indigo-600 uppercase tracking-[0.3em] mb-4">Platform Stats</h2>
+            <h2 className="text-[13px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.3em] mb-4">Platform Stats</h2>
             <h3 className="text-5xl font-extrabold text-[var(--cream-text-main)] tracking-tight">Precision at the core of learning.</h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
-                icon: <Zap className="text-indigo-600" size={24} />,
+                icon: <Zap className="text-indigo-600 dark:text-indigo-400" size={24} />,
                 value: '99.9%',
                 label: 'Clinical Accuracy',
                 sub: 'AI-driven evidence retrieval'
               },
               {
-                icon: <Activity className="text-indigo-600" size={24} />,
+                icon: <Activity className="text-indigo-600 dark:text-indigo-400" size={24} />,
                 value: '540B+',
                 label: 'Model Parameters',
                 sub: 'Trained on medical gold-standards'
               },
               {
-                icon: <Brain className="text-indigo-600" size={24} />,
+                icon: <Brain className="text-indigo-600 dark:text-indigo-400" size={24} />,
                 value: '24/7',
                 label: 'AI Assistance',
                 sub: 'Instant clinical reasoning'
@@ -378,9 +378,9 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="bg-white p-10 rounded-[40px] border border-[var(--cream-accent-soft)] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group"
+                className="bg-[var(--cream-card)] dark:bg-[var(--bg-card)] p-10 rounded-[40px] border border-[var(--cream-accent-soft)] dark:border-[var(--border-subtle)] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group"
               >
-                <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center mb-8 transition-transform group-hover:scale-110 group-hover:rotate-6">
+                <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center mb-8 transition-transform group-hover:scale-110 group-hover:rotate-6">
                   {stat.icon}
                 </div>
                 <p className="text-5xl font-black text-[var(--cream-text-main)] mb-2 tracking-tighter">{stat.value}</p>
@@ -395,7 +395,7 @@ export default function LandingPage() {
       {/* CTA Section */}
       <section className="py-20 px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="bg-[var(--cream-text-main)] rounded-[60px] p-12 md:p-24 text-center relative overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.4)]">
+          <div className="bg-slate-900 dark:bg-slate-950 rounded-[60px] p-12 md:p-24 text-center relative overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.4)]">
             <div className="absolute top-0 right-0 w-full h-full opacity-10 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
 
             <motion.div
@@ -404,13 +404,13 @@ export default function LandingPage() {
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
             >
-              <h2 className="text-4xl md:text-6xl font-extrabold text-white mb-8 tracking-tighter">
+              <h2 className="text-4xl md:text-6xl font-extrabold text-white dark:text-slate-100 mb-8 tracking-tighter">
                 Ready to transform your <br className="hidden md:block" /> medical education?
               </h2>
-              <p className="text-xl text-gray-400 font-medium mb-12 max-w-2xl mx-auto leading-relaxed">
+              <p className="text-xl text-slate-400 dark:text-slate-500 font-medium mb-12 max-w-2xl mx-auto leading-relaxed">
                 Step into the future of clinical mastery. Vaidya AI is your partner in achieving academic and professional excellence.
               </p>
-              <Link href="/login" className="inline-block bg-white text-[var(--cream-text-main)] px-12 py-5 rounded-[24px] text-xl font-black hover:bg-[var(--cream-accent)] transition-all shadow-2xl hover:-translate-y-1 active:translate-y-0">
+              <Link href="/login" className="inline-block bg-white dark:bg-[var(--bg-card)] text-[var(--cream-text-main)] px-12 py-5 rounded-[24px] text-xl font-black hover:bg-[var(--cream-accent)] dark:hover:bg-[var(--accent-soft)] transition-all shadow-2xl hover:-translate-y-1 active:translate-y-0">
                 Create Free Account
               </Link>
             </motion.div>

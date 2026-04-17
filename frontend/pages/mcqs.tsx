@@ -65,7 +65,7 @@ export default function MCQs() {
   const [questions, setQuestions] = useState<MCQuestion[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
-  const [showResult, setShowResult] = useState(false)
+  const [showResultModal, setShowResultModal] = useState(false)
   const [quizComplete, setQuizComplete] = useState(false)
 
   // UI state
@@ -87,7 +87,7 @@ export default function MCQs() {
     pointsEarned: 0,
     streak: 0
   })
-
+  
   const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetrics | null>(null)
   const [topicHistory, setTopicHistory] = useState<{ topic: string, count: number, color: string }[]>([])
   const [activeDocument, setActiveDocument] = useState<any>(null)
@@ -371,7 +371,7 @@ export default function MCQs() {
   const resetQuizState = () => {
     setCurrentIndex(0)
     setSelectedOption(null)
-    setShowResult(false)
+    setShowResultModal(false)
     setQuizComplete(false)
     setSessionStats({
       correct: 0,
@@ -539,10 +539,10 @@ export default function MCQs() {
 
   // Handle option selection
   const handleOptionSelect = async (optionId: string) => {
-    if (showResult) return
+    if (showResultModal) return
 
     setSelectedOption(optionId)
-    setShowResult(true)
+    setShowResultModal(true)
 
     const currentQuestion = questions[currentIndex]
     const isCorrect = optionId === currentQuestion?.correctId
@@ -562,10 +562,10 @@ export default function MCQs() {
 
   // Next question
   const handleNextQuestion = () => {
+    setShowResultModal(false)
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(prev => prev + 1)
       setSelectedOption(null)
-      setShowResult(false)
     } else {
       setQuizComplete(true)
     }
@@ -717,7 +717,9 @@ export default function MCQs() {
           )}
 
           <div className={`${styles.contentArea} ${isSidebarCollapsed ? styles.contentAreaCollapsed : styles.contentAreaExpanded}`}>
-            <div className={(questions.length > 0 || generating || quizComplete) ? styles.mainContainer : styles.mainContainerFull}>
+            <div className={(questions.length > 0 || generating || quizComplete) 
+              ? isSidebarCollapsed ? `${styles.mainContainer} ${styles.mainContainerCollapsed}` : styles.mainContainerFull
+              : styles.mainContainerFull}>
               {/* Main Content Area */}
               <div className={styles.mainContentArea}>
                 {/* Empty State - No quiz active */}
@@ -860,24 +862,6 @@ export default function MCQs() {
                     animate={{ opacity: 1 }}
                     className={styles.quizContainer}
                   >
-                    {/* Topic Header */}
-                    <div className={styles.topicHeader}>
-                      <div className={styles.topicInfo}>
-                        <span className={styles.topicBadge}>
-                          <BookOpen size={14} style={{ marginRight: 6 }} />
-                          MCQ Quiz
-                        </span>
-                        <span className={styles.topicName}>{topic}</span>
-                      </div>
-                      <button
-                        className={styles.regenerateButton}
-                        onClick={handleGenerate}
-                      >
-                        <RefreshCw size={14} />
-                        Regenerate
-                      </button>
-                    </div>
-
                     {/* Question Card */}
                     <AnimatePresence mode="wait">
                       <motion.div
@@ -896,7 +880,7 @@ export default function MCQs() {
                             <div className={styles.progressBarWrapper}>
                               <div
                                 className={styles.progressBarFill}
-                                style={{ width: `${((currentIndex + (showResult ? 1 : 0)) / questions.length) * 100}%` }}
+                                style={{ width: `${((currentIndex + (showResultModal ? 1 : 0)) / questions.length) * 100}%` }}
                               />
                             </div>
                           </div>
@@ -917,86 +901,80 @@ export default function MCQs() {
                         <div className={styles.optionsGrid}>
                           {currentQuestion?.options.map((option) => {
                             const isSelected = selectedOption === option.id
-                            const isCorrect = option.id === currentQuestion.correctId
-                            const isWrong = showResult && isSelected && !isCorrect
 
                             return (
                               <button
                                 key={option.id}
-                                className={`${styles.optionButton} ${showResult && isCorrect ? styles.optionCorrect :
-                                  isWrong ? styles.optionWrong :
-                                    isSelected ? styles.optionSelected : ''
-                                  }`}
+                                className={`${styles.optionButton} ${isSelected ? styles.optionSelected : ''}`}
                                 onClick={() => handleOptionSelect(option.id)}
-                                disabled={showResult}
+                                disabled={showResultModal}
                               >
                                 <span className={styles.optionLabel}>
                                   {option.id.toUpperCase()}
                                 </span>
                                 <span className={styles.optionText}>{option.text}</span>
-                                {showResult && isCorrect && (
-                                  <span className={styles.optionIcon}>
-                                    <Check size={14} />
-                                  </span>
-                                )}
-                                {isWrong && (
-                                  <span className={styles.optionIcon}>
-                                    <X size={14} />
-                                  </span>
-                                )}
                               </button>
                             )
                           })}
                         </div>
-
-                        {/* Feedback Panel */}
-                        {showResult && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className={`${styles.feedbackPanel} ${selectedOption === currentQuestion?.correctId
-                              ? styles.feedbackSuccess
-                              : styles.feedbackError
-                              }`}
-                          >
-                            <div className={styles.feedbackContent}>
-                              <div className={styles.feedbackIconWrapper}>
-                                {selectedOption === currentQuestion?.correctId
-                                  ? <Check size={20} />
-                                  : <X size={20} />
-                                }
-                              </div>
-                              <div className={styles.feedbackBody}>
-                                <p className={styles.feedbackTitle}>
-                                  {selectedOption === currentQuestion?.correctId
-                                    ? 'Correct!'
-                                    : 'Incorrect'
-                                  }
-                                </p>
-                                <p className={styles.feedbackExplanation}>
-                                  {currentQuestion?.explanation}
-                                </p>
-                                {selectedOption === currentQuestion?.correctId && (
-                                  <span className={styles.tokenReward}>
-                                    <Zap size={14} />
-                                    +15 Points Earned
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <button
-                              className={styles.nextButton}
-                              onClick={handleNextQuestion}
-                            >
-                              {currentIndex < questions.length - 1 ? 'Next Question' : 'View Results'}
-                              <ArrowRight size={16} />
-                            </button>
-                          </motion.div>
-                        )}
                       </motion.div>
                     </AnimatePresence>
                   </motion.div>
                 )}
+
+                {/* Result Modal */}
+                <AnimatePresence>
+                  {showResultModal && currentQuestion && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className={styles.resultModalOverlay}
+                      onClick={() => setShowResultModal(false)}
+                    >
+                      <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.9, opacity: 0 }}
+                        className={styles.resultModal}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className={`${styles.resultModalIcon} ${selectedOption === currentQuestion.correctId ? styles.correct : styles.incorrect}`}>
+                          {selectedOption === currentQuestion.correctId ? (
+                            <Check size={32} />
+                          ) : (
+                            <X size={32} />
+                          )}
+                        </div>
+                        
+                        <h3 className={`${styles.resultModalTitle} ${selectedOption === currentQuestion.correctId ? styles.correct : styles.incorrect}`}>
+                          {selectedOption === currentQuestion.correctId ? 'Correct!' : 'Incorrect'}
+                        </h3>
+
+                        {selectedOption === currentQuestion.correctId && (
+                          <div className={styles.resultModalPoints}>
+                            <Zap size={14} />
+                            +15 Points Earned
+                          </div>
+                        )}
+
+                        <div className={styles.resultModalExplanation}>
+                          {currentQuestion.explanation}
+                        </div>
+
+                        <div className={styles.resultModalActions}>
+                          <button
+                            className={`${styles.resultModalButton} ${styles.primary}`}
+                            onClick={handleNextQuestion}
+                          >
+                            {currentIndex < questions.length - 1 ? 'Next' : 'View Results'}
+                            <ArrowRight size={16} />
+                          </button>
+                        </div>
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 {/* Quiz Complete State */}
                 {quizComplete && (
@@ -1048,13 +1026,12 @@ export default function MCQs() {
               </div>
 
               {/* Stats Sidebar */}
-              {(questions.length > 0 || generating || quizComplete) && (
+              {(questions.length > 0 || generating || quizComplete) && isSidebarCollapsed && (
                 <aside className={styles.statsSidebar}>
                   {/* MCQ Stats Card */}
                   <div className={styles.statsCard}>
                     <div className={styles.statsCardHeader}>
                       <h3 className={styles.statsCardTitle}>MCQ Stats</h3>
-                      <ChevronRight size={16} color="#94A3B8" />
                     </div>
 
                     <div className={styles.circularProgress}>
@@ -1121,7 +1098,6 @@ export default function MCQs() {
                       </div>
                     </div>
                   </div>
-
                 </aside>
               )}
             </div>

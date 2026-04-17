@@ -120,8 +120,8 @@ export default function SessionSidebar({
             top: '16px',
             left: '16px',
             zIndex: 40,
-            background: 'white',
-            border: '1px solid #e2e8f0',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-subtle)',
             borderRadius: '12px',
             width: '40px',
             height: '40px',
@@ -129,7 +129,7 @@ export default function SessionSidebar({
             alignItems: 'center',
             justifyContent: 'center',
             boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-            color: '#1e293b'
+            color: 'var(--text-main)'
           }}
         >
           <Menu size={20} />
@@ -164,10 +164,10 @@ export default function SessionSidebar({
                 animation: 'slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
               }}
             >
-              <div style={{ padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9' }}>
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800' }}>History</h3>
+              <div style={{ padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)' }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>History</h3>
                 <button onClick={() => setIsMobileOpen(false)} style={{ background: 'none', border: 'none', padding: '4px' }}>
-                  <X size={24} color="#64748b" />
+                  <X size={24} color="var(--text-muted)" />
                 </button>
               </div>
 
@@ -203,16 +203,16 @@ export default function SessionSidebar({
                         padding: '14px',
                         borderRadius: '12px',
                         marginBottom: '8px',
-                        background: currentSessionId === session.id ? '#f8fafc' : 'transparent',
-                        border: currentSessionId === session.id ? '1px solid #e2e8f0' : '1px solid transparent',
+                        background: currentSessionId === session.id ? 'var(--accent-soft)' : 'transparent',
+                        border: currentSessionId === session.id ? '1px solid var(--border-subtle)' : '1px solid transparent',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between'
                       }}
                     >
                       <div style={{ flex: 1, overflow: 'hidden' }}>
-                        <div style={{ fontWeight: currentSessionId === session.id ? '700' : '500', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session.title || untitledLabel}</div>
-                        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>{formatDate(session.updated_at)}</div>
+                        <div style={{ fontWeight: currentSessionId === session.id ? '700' : '500', color: currentSessionId === session.id ? 'var(--text-main)' : 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session.title || untitledLabel}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{formatDate(session.updated_at)}</div>
                       </div>
                     </div>
                   ))}
@@ -238,7 +238,7 @@ export default function SessionSidebar({
         width: '70px',
         backgroundColor: 'var(--bg-sidebar)',
         borderRadius: '12px',
-        border: '1px solid #e2e8f0',
+        border: '1px solid var(--border-subtle)',
         boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
         display: 'flex',
         flexDirection: 'column',
@@ -252,8 +252,8 @@ export default function SessionSidebar({
         <button
           onClick={() => setIsCollapsed(false)}
           style={{
-            background: 'white',
-            border: '1px solid rgba(0,0,0,0.08)',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-subtle)',
             borderRadius: '12px',
             cursor: 'pointer',
             width: '42px',
@@ -261,7 +261,7 @@ export default function SessionSidebar({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#64748b',
+            color: 'var(--text-muted)',
             boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
             marginBottom: '16px',
             transition: 'all 0.2s',
@@ -274,7 +274,7 @@ export default function SessionSidebar({
           onClick={onNewSession}
           disabled={isNewChatDisabled}
           style={{
-            background: isNewChatDisabled ? '#e2e8f0' : '#3b82f6',
+            background: isNewChatDisabled ? 'var(--accent-soft)' : '#3b82f6',
             border: 'none',
             borderRadius: '12px',
             cursor: isNewChatDisabled ? 'not-allowed' : 'pointer',
@@ -331,9 +331,9 @@ export default function SessionSidebar({
                     width: '42px',
                     height: '36px',
                     borderRadius: '10px',
-                    border: isActive ? '2px solid #3b82f6' : '1px solid rgba(0,0,0,0.08)',
-                    background: 'white',
-                    color: isActive ? '#3b82f6' : '#475569',
+                    border: isActive ? '2px solid #3b82f6' : '1px solid var(--border-subtle)',
+                    background: 'var(--bg-card)',
+                    color: isActive ? '#3b82f6' : 'var(--text-muted)',
                     fontSize: '12px',
                     fontWeight: 500, // Reduced from 700
                     cursor: 'pointer',
@@ -358,7 +358,7 @@ export default function SessionSidebar({
                       top: '50%',
                       left: '50%',
                       transform: 'translate(-50%, -50%)',
-                      color: isActive ? '#3b82f6' : '#64748b',
+                      color: isActive ? '#3b82f6' : 'var(--text-muted)',
                       paddingTop: '0.2px'
                     }}>
                       {displayNum}
@@ -370,14 +370,14 @@ export default function SessionSidebar({
           </div>
         )}
 
-        <div style={{ marginTop: 'auto', padding: '12px 0 12px 0', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', borderTop: '1.5px solid rgba(0,0,0,0.08)' }}>
+        <div style={{ marginTop: 'auto', padding: '12px 0 12px 0', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', borderTop: '1.5px solid var(--border-subtle)' }}>
           <button
             onClick={() => setShowNumbering(!showNumbering)}
             title={showNumbering ? "Hide numbering" : "Show numbering"}
             className="view-toggle-btn"
             style={{
-              background: 'white',
-              border: '1px solid rgba(0,0,0,0.08)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-subtle)',
               borderRadius: '12px',
               cursor: 'pointer',
               width: '38px', // Reduced height "just a bit"
@@ -385,7 +385,7 @@ export default function SessionSidebar({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: showNumbering ? '#3b82f6' : '#64748b',
+              color: showNumbering ? '#3b82f6' : 'var(--text-muted)',
               boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
               flexShrink: 0
@@ -421,7 +421,7 @@ export default function SessionSidebar({
       width: isMobile ? '100%' : '320px',
       backgroundColor: 'var(--bg-sidebar)', // Creamy Silver Whitish for Sidebars
       borderRadius: '12px',
-      border: '1px solid #e2e8f0',
+      border: '1px solid var(--border-subtle)',
       boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
       display: 'flex',
       flexDirection: 'column',
@@ -438,13 +438,13 @@ export default function SessionSidebar({
         justifyContent: 'space-between',
         alignItems: 'center'
       }}>
-        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#1E293B', letterSpacing: '-0.02em' }}>
+        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
           History
         </h3>
         <button
           onClick={() => setIsCollapsed(true)}
           style={{
-            background: 'rgba(0,0,0,0.03)',
+            background: 'var(--accent-soft)',
             border: 'none',
             borderRadius: '8px',
             cursor: 'pointer',
@@ -452,7 +452,7 @@ export default function SessionSidebar({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#64748b',
+            color: 'var(--text-muted)',
             transition: 'all 0.2s'
           }}
         >
@@ -470,8 +470,8 @@ export default function SessionSidebar({
             padding: '14px',
             fontSize: '14px',
             fontWeight: '700',
-            background: isNewChatDisabled ? '#e2e8f0' : '#3b82f6',
-            color: isNewChatDisabled ? '#94a3b8' : '#ffffff',
+            background: isNewChatDisabled ? 'var(--accent-soft)' : '#3b82f6',
+            color: isNewChatDisabled ? 'var(--text-muted)' : '#ffffff',
             border: 'none',
             borderRadius: '14px',
             cursor: loading || isNewChatDisabled ? 'not-allowed' : 'pointer',
@@ -504,11 +504,11 @@ export default function SessionSidebar({
         {error && (
           <div style={{
             padding: '12px',
-            backgroundColor: '#fef2f2',
-            color: '#991b1b',
+            backgroundColor: 'var(--accent-soft)',
+            color: 'var(--text-main)',
             borderRadius: '10px',
             fontSize: '13px',
-            border: '1px solid #fee2e2'
+            border: '1px solid var(--border-subtle)'
           }}>
             {error}
           </div>
@@ -534,7 +534,7 @@ export default function SessionSidebar({
             onMouseLeave={() => setHoveredSessionId(null)}
             style={{
               padding: '14px 16px',
-              backgroundColor: currentSessionId === session.id ? '#ffffff' : (hoveredSessionId === session.id ? 'rgba(0,0,0,0.03)' : 'transparent'),
+              backgroundColor: currentSessionId === session.id ? 'var(--bg-card)' : (hoveredSessionId === session.id ? 'var(--accent-soft)' : 'transparent'),
               borderRadius: '14px',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
@@ -542,7 +542,7 @@ export default function SessionSidebar({
               alignItems: 'center',
               justifyContent: 'space-between',
               gap: '12px',
-              border: currentSessionId === session.id ? '1px solid rgba(0,0,0,0.06)' : '1px solid transparent',
+              border: currentSessionId === session.id ? '1px solid var(--border-subtle)' : '1px solid transparent',
               boxShadow: currentSessionId === session.id ? '0 4px 12px rgba(0,0,0,0.03)' : 'none',
               position: 'relative'
             }}
@@ -551,14 +551,14 @@ export default function SessionSidebar({
               <div style={{
                 fontSize: '14px',
                 fontWeight: currentSessionId === session.id ? '700' : '500',
-                color: currentSessionId === session.id ? '#1e293b' : '#64748b',
+                color: currentSessionId === session.id ? 'var(--text-main)' : 'var(--text-muted)',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis'
               }}>
                 {session.title || untitledLabel}
               </div>
-              <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '3px', fontWeight: '500' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '3px', fontWeight: '500' }}>
                 {formatDate(session.updated_at)}
               </div>
             </div>
@@ -571,8 +571,8 @@ export default function SessionSidebar({
                 }}
                 className="delete-btn"
                 style={{
-                  background: 'white',
-                  border: '1px solid rgba(0,0,0,0.06)',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-subtle)',
                   color: '#ef4444',
                   cursor: 'pointer',
                   padding: '6px',
@@ -592,7 +592,7 @@ export default function SessionSidebar({
       {/* Footer - Delete All Button */}
       <div style={{
         padding: '20px',
-        borderTop: '1px solid rgba(0,0,0,0.06)',
+        borderTop: '1px solid var(--border-subtle)',
         backgroundColor: 'var(--bg-sidebar)'
       }}>
         <button
@@ -617,7 +617,7 @@ export default function SessionSidebar({
           }}
           onMouseEnter={(e) => {
             if (sessions && sessions.length > 0) {
-              e.currentTarget.style.backgroundColor = '#fef2f2'
+              e.currentTarget.style.backgroundColor = 'var(--accent-soft)'
               e.currentTarget.style.borderColor = '#ef4444'
             }
           }}
@@ -651,7 +651,7 @@ export default function SessionSidebar({
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              backgroundColor: 'white',
+              backgroundColor: 'var(--bg-card)',
               borderRadius: '20px',
               padding: '24px',
               width: '320px',
@@ -659,12 +659,12 @@ export default function SessionSidebar({
               animation: 'fadeIn 0.2s ease-out'
             }}
           >
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: '700', color: '#1e293b' }}>Delete Chat?</h3>
-            <p style={{ margin: '0 0 24px 0', fontSize: '14px', color: '#64748b' }}>Permanently remove this conversation?</p>
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: '700', color: 'var(--text-main)' }}>Delete Chat?</h3>
+            <p style={{ margin: '0 0 24px 0', fontSize: '14px', color: 'var(--text-muted)' }}>Permanently remove this conversation?</p>
             <div style={{ display: 'flex', gap: '12px' }}>
               <button
                 onClick={() => setDeleteConfirmationId(null)}
-                style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', background: 'white', fontWeight: '700', cursor: 'pointer' }}
+                style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid var(--border-subtle)', background: 'var(--bg-card)', fontWeight: '700', cursor: 'pointer', color: 'var(--text-main)' }}
               >
                 Cancel
               </button>
@@ -730,7 +730,7 @@ export default function SessionSidebar({
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              backgroundColor: 'white',
+              backgroundColor: 'var(--bg-card)',
               borderRadius: '20px',
               padding: '32px',
               width: '380px',
@@ -742,7 +742,7 @@ export default function SessionSidebar({
             <div style={{
               width: '64px',
               height: '64px',
-              background: '#fef2f2',
+              background: 'var(--accent-soft)',
               borderRadius: '20px',
               display: 'flex',
               alignItems: 'center',
@@ -752,8 +752,8 @@ export default function SessionSidebar({
             }}>
               <Trash2 size={32} />
             </div>
-            <h3 style={{ margin: '0 0 12px 0', fontSize: '20px', fontWeight: '800', color: '#1e293b' }}>Delete All Chats?</h3>
-            <p style={{ margin: '0 0 32px 0', fontSize: '15px', color: '#64748b', lineHeight: '1.5' }}>
+            <h3 style={{ margin: '0 0 12px 0', fontSize: '20px', fontWeight: '800', color: 'var(--text-main)' }}>Delete All Chats?</h3>
+            <p style={{ margin: '0 0 32px 0', fontSize: '15px', color: 'var(--text-muted)', lineHeight: '1.5' }}>
               This action cannot be undone. All your chat history will be permanently erased.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -801,11 +801,11 @@ export default function SessionSidebar({
                   width: '100%',
                   padding: '16px',
                   borderRadius: '14px',
-                  border: '1px solid #e2e8f0',
-                  background: 'white',
+                  border: '1px solid var(--border-subtle)',
+                  background: 'var(--bg-card)',
                   fontWeight: '700',
                   cursor: 'pointer',
-                  color: '#1e293b',
+                  color: 'var(--text-main)',
                   fontSize: '15px'
                 }}
               >

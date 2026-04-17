@@ -96,7 +96,7 @@ export default function LandingFooter() {
                                 <li key={link.href}>
                                     <Link
                                         href={isLoggedIn ? link.href : "/login"}
-                                        className="hover:text-black transition-colors"
+                                        className="hover:text-[var(--cream-text-main)] transition-colors"
                                     >
                                         {link.name}
                                     </Link>
@@ -108,21 +108,21 @@ export default function LandingFooter() {
                     <div className="col-span-1 md:col-span-2">
                         <h5 className="font-bold text-[var(--cream-text-main)] uppercase tracking-widest text-xs mb-8">Company</h5>
                         <ul className="space-y-4 text-[var(--cream-text-muted)] font-medium text-sm">
-                            <li><Link href="/#about" className="hover:text-black">About Us</Link></li>
-                            <li><Link href="/contact" className="hover:text-black">Contact</Link></li>
-                            <li><Link href="/privacy" className="hover:text-black">Privacy Policy</Link></li>
-                            <li><Link href="/terms" className="hover:text-black">Terms of Service</Link></li>
+                            <li><Link href="/#about" className="hover:text-[var(--cream-text-main)]">About Us</Link></li>
+                            <li><Link href="/contact" className="hover:text-[var(--cream-text-main)]">Contact</Link></li>
+                            <li><Link href="/privacy" className="hover:text-[var(--cream-text-main)]">Privacy Policy</Link></li>
+                            <li><Link href="/terms" className="hover:text-[var(--cream-text-main)]">Terms of Service</Link></li>
                         </ul>
                     </div>
 
                     <div className="col-span-1 md:col-span-3">
-                        <div className="w-[260px] bg-white p-5 rounded-2xl shadow-sm border border-[var(--cream-accent-soft)]">
+                        <div className="w-[260px] bg-[var(--cream-card)] dark:bg-[var(--bg-card)] p-5 rounded-2xl shadow-sm border border-[var(--cream-accent-soft)] dark:border-[var(--border-subtle)]">
                             {sent ? (
                                 <div className="text-center py-6">
                                     <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-3">
                                         <Send size={20} />
                                     </div>
-                                    <h3 className="text-base font-bold text-slate-800 mb-2">Message Sent!</h3>
+                                    <h3 className="text-base font-bold text-[var(--text-main)] mb-2">Message Sent!</h3>
                                     <button
                                         onClick={() => setSent(false)}
                                         className="text-indigo-600 text-xs font-bold hover:underline"
@@ -133,20 +133,20 @@ export default function LandingFooter() {
                             ) : (
                                 <form onSubmit={handleSubmit} className="space-y-3">
                                     <div>
-                                        <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wide">Topic</label>
-                                        <select className="w-full p-1.5 rounded-lg border border-slate-200 text-xs outline-none focus:border-indigo-500 bg-slate-50">
+                                        <label className="block text-[10px] font-bold text-[var(--text-muted)] mb-1 uppercase tracking-wide">Topic</label>
+                                        <select className="w-full p-1.5 rounded-lg border border-[var(--border-subtle)] text-xs outline-none focus:border-indigo-500 bg-[var(--accent-soft)] dark:bg-[var(--bg-sidebar)] text-[var(--text-main)]">
                                             <option>General Inquiry</option>
                                             <option>Technical Support</option>
                                             <option>Billing Question</option>
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wide">Message</label>
+                                        <label className="block text-[10px] font-bold text-[var(--text-muted)] mb-1 uppercase tracking-wide">Message</label>
                                         <textarea
                                             rows={2}
                                             required
                                             placeholder="How can we help?"
-                                            className="w-full p-2 rounded-lg border border-slate-200 text-xs outline-none focus:border-indigo-500 bg-slate-50 resize-none font-sans"
+                                            className="w-full p-2 rounded-lg border border-[var(--border-subtle)] text-xs outline-none focus:border-indigo-500 bg-[var(--accent-soft)] dark:bg-[var(--bg-sidebar)] text-[var(--text-main)] resize-none font-sans placeholder:text-[var(--text-muted)]"
                                         />
                                     </div>
                                     <button

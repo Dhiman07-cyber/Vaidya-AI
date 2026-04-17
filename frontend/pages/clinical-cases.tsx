@@ -420,7 +420,7 @@ export default function ClinicalCases() {
 
                   <div className="setup-section" style={{ marginTop: '2rem' }}>
                     <h3>CASE SELECTION</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1rem', background: 'white', borderRadius: '12px', border: '2px solid #e2e8f0' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1rem', background: 'var(--bg-card)', borderRadius: '12px', border: '2px solid var(--border-subtle)' }}>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
                         <input
                           type="radio"
@@ -458,15 +458,15 @@ export default function ClinicalCases() {
                             style={{
                               width: '100%',
                               padding: '0.75rem 1rem',
-                              border: '2px solid #cbd5e1',
+                              border: '2px solid var(--border-subtle)',
                               borderRadius: '8px',
                               fontSize: '0.95rem',
                               transition: 'border-color 0.2s'
                             }}
                             onFocus={(e) => e.target.style.borderColor = '#667eea'}
-                            onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
+                            onBlur={(e) => e.target.style.borderColor = 'var(--border-subtle)'}
                           />
-                          <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.5rem' }}>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
                             Enter the specific medical condition you want to practice
                           </p>
                         </div>
@@ -884,13 +884,13 @@ export default function ClinicalCases() {
 
           .specialty-card:hover {
             transform: translateY(-2px);
-            background: white;
+            background: var(--bg-card);
             border-color: rgba(79, 70, 229, 0.2);
             box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.05);
           }
 
           .specialty-card.active {
-            background: white;
+            background: var(--bg-card);
             border-color: #4F46E5;
             box-shadow: 0 4px 12px rgba(79, 70, 229, 0.1);
           }
@@ -999,7 +999,7 @@ export default function ClinicalCases() {
 
           .difficulty-btn.active {
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            background: white;
+            background: var(--bg-card);
           }
 
           .diff-info {
@@ -1066,7 +1066,7 @@ export default function ClinicalCases() {
 
           /* Tips Card */
           .setup-tips-card {
-            background: white;
+            background: var(--bg-card);
             border: 1px solid rgba(0, 0, 0, 0.06);
             border-radius: 20px;
             padding: 20px;
@@ -1136,7 +1136,7 @@ export default function ClinicalCases() {
             max-width: 96.5%;
             width: 100%;
             margin: 10px auto 0 auto;
-            background: white;
+            background: var(--bg-card);
             border: 1px solid #e2e8f0;
             border-radius: 16px;
             padding: 8px 20px;
@@ -1337,7 +1337,7 @@ export default function ClinicalCases() {
           }
 
           .patient-panel {
-            background: white;
+            background: var(--bg-card);
             border-radius: 12px;
             padding: 10px;
             border: 1px solid #e2e8f0;
@@ -1459,7 +1459,7 @@ export default function ClinicalCases() {
           }
 
           .clinical-pathway-card {
-            background: white;
+            background: var(--bg-card);
             border-radius: 12px;
             padding: 10px;
             border: 1px solid #e2e8f0;
@@ -1650,7 +1650,7 @@ export default function ClinicalCases() {
 
           /* Evaluation Card */
           .evaluation-card {
-            background: white;
+            background: var(--bg-card);
             border-radius: 12px;
             padding: 20px;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
@@ -1757,7 +1757,7 @@ export default function ClinicalCases() {
           }
 
           .input-section {
-            background: white;
+            background: var(--bg-card);
             border-radius: 12px;
             padding: 20px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
@@ -1868,7 +1868,7 @@ export default function ClinicalCases() {
           }
 
           .completion-card {
-            background: white;
+            background: var(--bg-card);
             border-radius: 24px;
             padding: 48px;
             max-width: 600px;

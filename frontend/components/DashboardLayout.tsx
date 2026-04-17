@@ -215,11 +215,11 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
                   <ThemeToggle />
                 </div>
                 <div>
-                  <h3 className="m-0 text-lg font-extrabold tracking-tight" style={{ color: '#1e293b' }}>
+                  <h3 className="m-0 text-lg font-extrabold tracking-tight" style={{ color: 'var(--text-main)' }}>
                     {user ? (user.user_metadata?.name || user.email?.split('@')[0]) : 'Loading...'}
                   </h3>
-                  <div className="text-[13px] font-medium mt-0.5" style={{ color: '#64748b' }}>{user?.email || '...'}</div>
-                  <div className="inline-block mt-2 px-2.5 py-1 bg-purple-50 text-purple-700 rounded-md text-[11px] font-extrabold uppercase tracking-wide">
+                  <div className="text-[13px] font-medium mt-0.5" style={{ color: 'var(--text-muted)' }}>{user?.email || '...'}</div>
+                  <div className="inline-block mt-2 px-2.5 py-1 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-md text-[11px] font-extrabold uppercase tracking-wide">
                     {(plan || 'free') === 'free' ? 'User' : 'Premium'}
                   </div>
                 </div>
@@ -227,7 +227,7 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer border"
-                style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-strong)', color: '#64748b' }}
+                style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-strong)', color: 'var(--text-muted)' }}
               >
                 <X size={24} />
               </button>
@@ -257,7 +257,7 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
                         <HubIcon size={18} />
                         <span className="font-bold text-[15px]">{hub.name}</span>
                       </div>
-                      <ChevronRight size={16} style={{ color: '#cbd5e1' }} />
+                      <ChevronRight size={16} style={{ color: 'var(--text-muted)' }} />
                     </Link>
                   )
                 }
@@ -277,7 +277,7 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
                         <HubIcon size={18} />
                         <span className="font-bold text-[15px]">{hub.name}</span>
                       </div>
-                      <ChevronDown size={16} className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} style={{ color: '#cbd5e1' }} />
+                      <ChevronDown size={16} className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} style={{ color: 'var(--text-muted)' }} />
                     </button>
 
                     {isExpanded && hub.children && (
@@ -319,7 +319,7 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
               </button>
 
               <button
-                className="w-full p-4 bg-rose-50 text-rose-600 border-none rounded-2xl font-bold text-[15px] flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full p-4 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border-none rounded-2xl font-bold text-[15px] flex items-center justify-center gap-2 cursor-pointer"
                 onClick={() => { setIsMobileMenuOpen(false); setIsLogoutModalOpen(true); }}
               >
                 <LogOut size={18} />
@@ -334,7 +334,7 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
                     <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <div className="flex flex-col text-[10px] leading-tight" style={{ color: '#94a3b8' }}>
+                <div className="flex flex-col text-[10px] leading-tight" style={{ color: 'var(--text-muted)' }}>
                   <strong>VAIDYA AI SERVICES</strong>
                   <span>VERSION 1.0.0 • PRE-ALFA</span>
                 </div>
@@ -359,8 +359,8 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
         >
           <div>
             <h1
-              className="text-lg font-extrabold tracking-tight m-0 bg-gradient-to-br from-gray-800 to-gray-500 bg-clip-text"
-              style={{ WebkitTextFillColor: 'transparent', color: 'var(--cream-text-main)' }}
+              className="text-lg font-extrabold tracking-tight m-0"
+              style={{ color: 'var(--text-main)' }}
             >
               {getPageTitle(router.pathname)}
             </h1>
@@ -399,8 +399,8 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
                         </button>
                       </div>
                       <div className="max-h-[420px] overflow-y-auto">
-                        <div className="py-14 px-8 flex flex-col items-center text-center gap-4" style={{ background: 'linear-gradient(180deg, white 0%, var(--cream-bg) 100%)' }}>
-                          <div className="w-[72px] h-[72px] bg-white rounded-[22px] flex items-center justify-center shadow-[0_10px_25px_-5px_rgba(0,0,0,0.05),inset_0_0_0_1px_rgba(0,0,0,0.02)] mb-1" style={{ color: '#94A3B8' }}>
+                        <div className="py-14 px-8 flex flex-col items-center text-center gap-4" style={{ background: 'linear-gradient(180deg, var(--bg-card) 0%, var(--cream-bg) 100%)' }}>
+                          <div className="w-[72px] h-[72px] bg-[var(--bg-card)] rounded-[22px] flex items-center justify-center shadow-[0_10px_25px_-5px_rgba(0,0,0,0.05),inset_0_0_0_1px_rgba(0,0,0,0.02)] mb-1" style={{ color: 'var(--text-muted)' }}>
                             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                               <path d="M13.73 21a2 2 0 0 1-3.46 0" />
@@ -485,18 +485,21 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
             {/* Mobile Menu Trigger */}
             {isMobile && (
               <button
-                className="w-11 h-11 flex items-center justify-center bg-white border rounded-xl cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
-                style={{ borderColor: 'rgba(0,0,0,0.1)' }}
+                className="w-11 h-11 flex items-center justify-center bg-[var(--bg-card)] border rounded-xl cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
+                style={{ borderColor: 'var(--border-subtle)' }}
                 onClick={() => setIsMobileMenuOpen(true)}
               >
-                <Menu size={24} color="#1e293b" />
+                <Menu size={24} style={{ color: 'var(--text-main)' }} />
               </button>
             )}
           </div>
         </div>
 
         {/* Main Content Area */}
-        <main className={`flex-1 overflow-y-auto ${['/chat', '/mcqs', '/flashcards', '/explain', '/osce', '/clinical-cases', '/highyield', '/image-analysis'].includes(router.pathname) ? 'p-0' : 'p-10 max-md:p-4'}`}>
+        <main 
+          className={`flex-1 overflow-y-auto ${['/chat', '/mcqs', '/flashcards', '/explain', '/osce', '/clinical-cases', '/highyield', '/image-analysis'].includes(router.pathname) ? 'p-0' : 'p-10 max-md:p-4'}`}
+          style={{ backgroundColor: 'var(--bg-main)' }}
+        >
           {children}
         </main>
       </div>

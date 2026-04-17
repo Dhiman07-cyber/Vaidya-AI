@@ -55,12 +55,12 @@ export default function ChatWindow({ messages, loading, isTyping, error }: ChatW
           alignItems: 'center',
           justifyContent: 'center',
           height: '60%',
-          color: '#94a3b8',
+          color: 'var(--text-muted)',
           gap: '16px'
         }}>
           <div style={{
             fontSize: '48px',
-            backgroundColor: 'white',
+            backgroundColor: 'var(--bg-card)',
             width: '80px',
             height: '80px',
             borderRadius: '24px',
@@ -68,12 +68,12 @@ export default function ChatWindow({ messages, loading, isTyping, error }: ChatW
             alignItems: 'center',
             justifyContent: 'center',
             boxShadow: '0 8px 16px rgba(0,0,0,0.04)',
-            border: '1px solid #f1f5f9'
+            border: '1px solid var(--border-subtle)'
           }}>
             🩺
           </div>
           <div style={{ textAlign: 'center' }}>
-            <h2 style={{ color: '#1e293b', fontSize: '20px', fontWeight: '700', margin: '0 0 8px 0' }}>How can Vaidya help you?</h2>
+            <h2 style={{ color: 'var(--text-main)', fontSize: '20px', fontWeight: '700', margin: '0 0 8px 0' }}>How can Vaidya help you?</h2>
             <p style={{ margin: 0, fontSize: '15px' }}>Ask me about medical concepts, clinical cases, or study summaries.</p>
           </div>
         </div>
@@ -102,9 +102,9 @@ export default function ChatWindow({ messages, loading, isTyping, error }: ChatW
             justifyContent: 'center',
             fontSize: '18px',
             flexShrink: 0,
-            backgroundColor: message.role === 'user' ? '#eef2ff' : '#ffffff',
+            backgroundColor: message.role === 'user' ? 'var(--accent-soft)' : 'var(--bg-card)',
             border: '1px solid',
-            borderColor: message.role === 'user' ? '#e0e7ff' : '#f1f5f9',
+            borderColor: message.role === 'user' ? 'var(--border-subtle)' : 'var(--border-subtle)',
             boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
           }}>
             {message.role === 'user' ? '🩺' : '⚕️'}
@@ -118,12 +118,12 @@ export default function ChatWindow({ messages, loading, isTyping, error }: ChatW
             alignItems: message.role === 'user' ? 'flex-end' : 'flex-start'
           }}>
             <div style={{
-              backgroundColor: message.role === 'user' ? '#6366f1' : '#ffffff',
-              color: message.role === 'user' ? '#ffffff' : '#334155',
+              backgroundColor: message.role === 'user' ? '#6366f1' : 'var(--bg-card)',
+              color: message.role === 'user' ? '#ffffff' : 'var(--text-main)',
               padding: '16px 20px',
               borderRadius: message.role === 'user' ? '20px 4px 20px 20px' : '4px 20px 20px 20px',
               boxShadow: message.role === 'user' ? '0 4px 12px rgba(99, 102, 241, 0.2)' : '0 4px 12px rgba(0,0,0,0.03)',
-              border: message.role === 'user' ? 'none' : '1px solid #f1f5f9',
+              border: message.role === 'user' ? 'none' : '1px solid var(--border-subtle)',
               lineHeight: '1.6',
               fontSize: '15.5px'
             }}>
@@ -146,10 +146,10 @@ export default function ChatWindow({ messages, loading, isTyping, error }: ChatW
               }}>
                 <span style={{
                   fontSize: '11px',
-                  backgroundColor: '#f1f5f9',
+                  backgroundColor: 'var(--accent-soft)',
                   padding: '4px 10px',
                   borderRadius: '100px',
-                  color: '#64748b',
+                  color: 'var(--text-muted)',
                   fontWeight: '600'
                 }}>
                   Source Integrated
@@ -159,7 +159,7 @@ export default function ChatWindow({ messages, loading, isTyping, error }: ChatW
 
             <div style={{
               fontSize: '11px',
-              color: '#94a3b8',
+              color: 'var(--text-muted)',
               fontWeight: '500',
               padding: '0 4px'
             }}>
@@ -187,24 +187,24 @@ export default function ChatWindow({ messages, loading, isTyping, error }: ChatW
             justifyContent: 'center',
             fontSize: '18px',
             flexShrink: 0,
-            backgroundColor: '#ffffff',
-            border: '1px solid #f1f5f9'
+            backgroundColor: 'var(--bg-card)',
+            border: '1px solid var(--border-subtle)'
           }}>
             ⚕️
           </div>
           <div style={{
-            backgroundColor: '#ffffff',
+            backgroundColor: 'var(--bg-card)',
             padding: '16px 24px',
             borderRadius: '4px 20px 20px 20px',
-            border: '1px solid #f1f5f9',
+            border: '1px solid var(--border-subtle)',
             boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
             display: 'flex',
             alignItems: 'center',
             gap: '8px'
           }}>
-            <div className="typing-dot" style={{ width: '6px', height: '6px', backgroundColor: '#cbd5e1', borderRadius: '50%', animation: 'bounce 1s infinite 0.1s' }} />
-            <div className="typing-dot" style={{ width: '6px', height: '6px', backgroundColor: '#cbd5e1', borderRadius: '50%', animation: 'bounce 1s infinite 0.2s' }} />
-            <div className="typing-dot" style={{ width: '6px', height: '6px', backgroundColor: '#cbd5e1', borderRadius: '50%', animation: 'bounce 1s infinite 0.3s' }} />
+            <div className="typing-dot" style={{ width: '6px', height: '6px', backgroundColor: 'var(--text-muted)', borderRadius: '50%', animation: 'bounce 1s infinite 0.1s' }} />
+            <div className="typing-dot" style={{ width: '6px', height: '6px', backgroundColor: 'var(--text-muted)', borderRadius: '50%', animation: 'bounce 1s infinite 0.2s' }} />
+            <div className="typing-dot" style={{ width: '6px', height: '6px', backgroundColor: 'var(--text-muted)', borderRadius: '50%', animation: 'bounce 1s infinite 0.3s' }} />
           </div>
         </div>
       )}
@@ -214,10 +214,10 @@ export default function ChatWindow({ messages, loading, isTyping, error }: ChatW
           maxWidth: '600px',
           margin: '20px auto',
           padding: '12px 20px',
-          backgroundColor: '#fef2f2',
-          border: '1px solid #fee2e2',
+          backgroundColor: 'var(--accent-soft)',
+          border: '1px solid var(--border-subtle)',
           borderRadius: '12px',
-          color: '#991b1b',
+          color: 'var(--text-main)',
           fontSize: '14px',
           display: 'flex',
           alignItems: 'center',

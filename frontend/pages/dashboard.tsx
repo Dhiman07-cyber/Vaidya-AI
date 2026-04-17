@@ -401,7 +401,7 @@ export default function Dashboard() {
           <motion.div
             animate={{ scale: [1, 1.05, 1] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-[0_0_40px_-10px_rgba(59,130,246,0.6)] border border-blue-100 z-10 relative"
+            className="w-16 h-16 bg-[var(--bg-card)] dark:bg-slate-800 rounded-full flex items-center justify-center shadow-[0_0_40px_-10px_rgba(59,130,246,0.6)] border border-blue-100 dark:border-blue-900 z-10 relative"
           >
             <div className="w-10 h-10 bg-gradient-to-tr from-blue-600 to-blue-400 rounded-full blur-[2px]" />
             <Sparkles className="absolute text-white" size={18} />
@@ -1048,10 +1048,10 @@ export default function Dashboard() {
           }
 
           .metric-card {
-            background: rgba(255, 255, 255, 0.5);
+            background: var(--bg-card);
             border-radius: 18px;
             padding: 20px;
-            border: 1px solid rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-subtle);
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
           }
 
@@ -1092,7 +1092,7 @@ export default function Dashboard() {
             justify-content: space-around;
             margin-top: 20px;
             padding-top: 16px;
-            border-top: 1px solid rgba(0, 0, 0, 0.06);
+            border-top: 1px solid var(--border-subtle);
           }
 
           .activity-stats .stat {
@@ -1180,11 +1180,11 @@ export default function Dashboard() {
           }
 
           .sidebar-card {
-            background: var(--cream-card);
+            background: var(--bg-card);
             border-radius: 20px;
             padding: 20px;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
-            border: 1px solid rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-subtle);
             transition: all 0.3s ease;
           }
 
@@ -1195,8 +1195,8 @@ export default function Dashboard() {
 
           /* Plan Card Styles */
           .plan-card {
-            background: linear-gradient(145deg, #F8FAFC 0%, #F1F5F9 100%);
-            border: 1px solid rgba(92, 103, 242, 0.15);
+            background: linear-gradient(145deg, var(--bg-card) 0%, var(--bg-sidebar) 100%);
+            border: 1px solid var(--border-subtle);
           }
 
           .plan-badge-container {
@@ -1267,7 +1267,7 @@ export default function Dashboard() {
           .manage-plan-btn {
             width: 100%;
             background: transparent;
-            border: 1px solid rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-subtle);
             color: var(--cream-text-main);
             padding: 10px 16px;
             border-radius: 10px;
@@ -1504,14 +1504,14 @@ function StatCard({ icon, value, label, subtext, trend, trendUp, color, bgColor 
       </div>
       <style jsx>{`
         .stat-card {
-          background: var(--cream-card);
+          background: var(--bg-card);
           padding: 16px;
           border-radius: 18px;
           display: flex;
           align-items: center;
           gap: 12px;
           box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
-          border: 1px solid rgba(0, 0, 0, 0.08);
+          border: 1px solid var(--border-subtle);
           transition: all 0.3s ease;
           min-width: 0;
         }

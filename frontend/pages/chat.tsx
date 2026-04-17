@@ -586,6 +586,7 @@ export default function Chat() {
                     fontWeight: 600,
                     transition: 'all 0.2s'
                   }}
+                  className="dark:bg-white/30"
                   onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
                   onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
                 >
@@ -631,6 +632,7 @@ export default function Chat() {
                       transition: 'all 0.2s',
                       marginBottom: '12px'
                     }}
+                    className="dark:bg-red-600 dark:hover:bg-red-700"
                     onMouseEnter={(e) => {
                       e.currentTarget.style.backgroundColor = '#DC2626'
                       e.currentTarget.style.transform = 'translateY(-1px)'

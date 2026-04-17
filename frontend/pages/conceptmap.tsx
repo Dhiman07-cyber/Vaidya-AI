@@ -12,40 +12,40 @@ const styles = {
   container: "w-full min-h-[500px] h-[calc(100dvh-150px)] flex flex-col overflow-hidden relative",
   mainLayout: "flex gap-4 flex-1 min-h-0 max-[1024px]:flex-col overflow-hidden",
 
-  mainContent: "bg-[var(--bg-sidebar)] rounded-xl p-4 shadow-sm border border-slate-200 flex flex-col min-h-0 overflow-hidden flex-1 max-[1024px]:order-1",
+  mainContent: "bg-[var(--bg-sidebar)] rounded-xl p-4 shadow-sm border border-[var(--border-subtle)] flex flex-col min-h-0 overflow-hidden flex-1 max-[1024px]:order-1",
   inputSection: "flex gap-3 mb-4 flex-shrink-0 max-[640px]:flex-col items-center",
-  searchBox: "flex-1 flex items-center bg-white/50 border border-slate-200 rounded-xl px-4 transition-all focus-within:border-medical-indigo focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(102,126,234,0.1)] h-12",
-  searchIcon: "text-slate-400",
-  topicInput: "flex-1 py-1 border-0 bg-transparent text-[15px] outline-none text-slate-900 placeholder:text-slate-400 font-medium ml-2",
+  searchBox: "flex-1 flex items-center bg-[var(--bg-card)]/50 border border-[var(--border-subtle)] rounded-xl px-4 transition-all focus-within:border-medical-indigo focus-within:bg-[var(--bg-card)] focus-within:shadow-[0_0_0_4px_rgba(102,126,234,0.1)] h-12",
+  searchIcon: "text-[var(--text-muted)]",
+  topicInput: "flex-1 py-1 border-0 bg-transparent text-[15px] outline-none text-[var(--text-main)] placeholder:text-[var(--text-muted)] font-medium ml-2",
   generateBtn: "bg-gradient-to-br from-[#6366F1] to-[#4F46E5] text-white border-none px-6 h-12 rounded-[14px] text-[15px] font-bold cursor-pointer transition-all whitespace-nowrap hover:shadow-[0_8px_24px_rgba(99,102,241,0.35)] hover:-translate-y-[2px] disabled:opacity-60 disabled:cursor-not-allowed max-[640px]:w-full flex items-center justify-center",
-  error: "bg-red-50 text-red-700 px-4 py-3 rounded-lg mb-4 border-l-[3px] border-red-600 text-sm font-medium flex-shrink-0",
-  mapContainer: "flex-1 min-h-0 flex flex-col rounded-xl overflow-hidden border border-slate-100",
-  placeholder: "flex-1 flex flex-col items-center justify-center text-slate-500 bg-slate-50/50 rounded-xl border-2 border-dashed border-slate-200 p-8", // Reverted transparency
-  placeholderIcon: "w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-[2.5rem] mb-4 border border-slate-100 flex-shrink-0 animate-pulse",
+  error: "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg mb-4 border-l-[3px] border-red-600 dark:border-red-500 text-sm font-medium flex-shrink-0",
+  mapContainer: "flex-1 min-h-0 flex flex-col rounded-xl overflow-hidden border border-[var(--border-subtle)]",
+  placeholder: "flex-1 flex flex-col items-center justify-center text-[var(--text-muted)] bg-[var(--accent-soft)]/50 rounded-xl border-2 border-dashed border-[var(--border-subtle)] p-8",
+  placeholderIcon: "w-16 h-16 bg-[var(--bg-card)] rounded-2xl shadow-sm flex items-center justify-center text-[2.5rem] mb-4 border border-[var(--border-subtle)] flex-shrink-0 animate-pulse",
 
-  rightSidebar: "bg-[var(--bg-sidebar)] rounded-xl shadow-sm border border-slate-200 flex flex-col h-full overflow-hidden flex-shrink-0 max-[1024px]:order-3 max-[1024px]:!w-full",
+  rightSidebar: "bg-[var(--bg-sidebar)] rounded-xl shadow-sm border border-[var(--border-subtle)] flex flex-col h-full overflow-hidden flex-shrink-0 max-[1024px]:order-3 max-[1024px]:!w-full",
   rightSidebarHeader: "p-3.5 flex items-center gap-2 flex-shrink-0",
   rightSidebarContent: "flex-1 overflow-y-auto p-3 custom-scrollbar h-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]",
   summaryCard: "flex flex-col gap-3",
   topicIcon: "flex justify-center mb-1",
   iconCircle: "w-12 h-12 bg-gradient-to-br from-medical-indigo/10 to-medical-indigo/5 rounded-2xl flex items-center justify-center text-[1.2rem] shadow-sm border border-medical-indigo/10",
-  topicTitle: "text-center text-sm text-slate-600 m-0 font-bold tracking-tight px-2",
-  statsSection: "flex flex-col gap-2.5 py-2.5 border-t border-b border-slate-100",
+  topicTitle: "text-center text-sm text-[var(--text-muted)] m-0 font-bold tracking-tight px-2",
+  statsSection: "flex flex-col gap-2.5 py-2.5 border-t border-b border-[var(--border-subtle)]",
   statItem: "flex flex-col gap-1",
-  statLabel: "text-[9px] text-slate-400 font-extrabold tracking-widest uppercase",
+  statLabel: "text-[9px] text-[var(--text-muted)] font-extrabold tracking-widest uppercase",
   statBadges: "flex flex-wrap gap-1",
   badge: "bg-blue-50 text-blue-700 px-2 py-1 rounded-lg text-[11px] font-bold border border-blue-100/50 shadow-sm",
   treatmentList: "flex flex-col gap-1",
   treatmentItem: "bg-green-50 text-green-700 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border border-green-100/50 flex items-center gap-1.5 shadow-sm",
   legend: "pt-1.5",
-  legendTitle: "text-[9px] text-slate-400 font-extrabold tracking-widest uppercase mb-1.5",
+  legendTitle: "text-[9px] text-[var(--text-muted)] font-extrabold tracking-widest uppercase mb-1.5",
   legendItems: "grid grid-cols-1 gap-1",
-  legendItem: "flex items-center gap-2 p-1 rounded-lg hover:bg-slate-50 transition-colors",
+  legendItem: "flex items-center gap-2 p-1 rounded-lg hover:bg-[var(--accent-soft)] transition-colors",
   legendColor: "w-4 h-4 rounded-md shadow-sm border border-black/5",
-  legendLabel: "text-[12px] font-semibold text-slate-500/90 flex-1",
-  legendCount: "bg-slate-100 text-slate-400 px-2 py-0.5 rounded-md text-[10px] font-bold min-w-[20px] text-center",
-  sidebarTitle: "text-[11px] font-bold text-slate-400/80 uppercase tracking-widest m-0",
-  emptyState: "flex flex-col items-center justify-center py-6 px-4 text-slate-400 text-sm font-medium gap-3 h-full",
+  legendLabel: "text-[12px] font-semibold text-[var(--text-secondary)] flex-1",
+  legendCount: "bg-[var(--accent-soft)] text-[var(--text-muted)] px-2 py-0.5 rounded-md text-[10px] font-bold min-w-[20px] text-center",
+  sidebarTitle: "text-[11px] font-extrabold text-[var(--text-muted)] tracking-widest uppercase m-0",
+  emptyState: "flex flex-col items-center justify-center py-6 px-4 text-[var(--text-muted)] text-sm font-medium gap-3 h-full",
 }
 
 // Helper to get emoji icon based on topic
@@ -378,8 +378,8 @@ export default function ConceptMap() {
                   <div className={styles.placeholderIcon}>
                     <MapIcon size={40} className="text-medical-indigo opacity-80" />
                   </div>
-                  <h3 className="text-2xl font-bold text-slate-600 mb-3 text-center tracking-tight">Generate Clinical Maps</h3>
-                  <p className="text-slate-400/90 text-[15px] font-medium text-center max-w-[340px] leading-relaxed">
+                  <h3 className="text-2xl font-bold text-[var(--text-main)] mb-3 text-center tracking-tight">Generate Clinical Maps</h3>
+                  <p className="text-[var(--text-muted)]/90 text-[15px] font-medium text-center max-w-[340px] leading-relaxed">
                     Enter a medical topic above to create a visual comprehensive guide
                   </p>
                 </div>
@@ -388,19 +388,19 @@ export default function ConceptMap() {
 
             {/* Right Sidebar - Card Summary */}
             <div
-              className={`${styles.rightSidebar} ${(!isMobileScreen && summaryCollapsed) ? '!w-[70px] items-center py-6' : 'w-[280px]'} transition-all duration-300 border-l border-slate-200 relative`}
+              className={`${styles.rightSidebar} ${(!isMobileScreen && summaryCollapsed) ? '!w-[70px] items-center py-6' : 'w-[280px]'} transition-all duration-300 border-l border-[var(--border-subtle)] relative`}
             >
               {(!summaryCollapsed || isMobileScreen) && (
                 /* Expanded Header */
-                <div className={`${styles.rightSidebarHeader} justify-between border-b border-slate-100 mb-2 w-full`}>
+                <div className={`${styles.rightSidebarHeader} justify-between border-b border-[var(--border-subtle)] mb-2 w-full`}>
                   <div className="flex items-center gap-2">
-                    <Info size={16} className="text-slate-500" />
+                    <Info size={16} className="text-[var(--text-muted)]" />
                     <h3 className={styles.sidebarTitle}>Card Summary</h3>
                   </div>
                   {!isMobileScreen && (
                     <button
                       onClick={() => setSummaryCollapsed(true)}
-                      className="bg-white border border-black/5 shadow-sm p-1.5 rounded-lg transition-all cursor-pointer text-slate-400 hover:bg-slate-50 hover:text-slate-600"
+                      className="bg-[var(--bg-card)] border border-[var(--border-subtle)] shadow-sm p-1.5 rounded-lg transition-all cursor-pointer text-[var(--text-muted)] hover:bg-[var(--accent-soft)] hover:text-[var(--text-main)]"
                       title="Collapse Summary"
                     >
                       <ChevronRight size={18} />
@@ -414,8 +414,8 @@ export default function ConceptMap() {
                 <button
                   onClick={() => setSummaryCollapsed(false)}
                   style={{
-                    background: 'white',
-                    border: '1px solid rgba(0,0,0,0.08)',
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-subtle)',
                     borderRadius: '12px',
                     cursor: 'pointer',
                     width: '42px',
@@ -423,7 +423,7 @@ export default function ConceptMap() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: '#64748b',
+                    color: 'var(--text-muted)',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
                     marginBottom: '20px',
                     marginTop: '4px',
@@ -439,8 +439,8 @@ export default function ConceptMap() {
               {(summaryCollapsed && !isMobileScreen) ? (
                 <div className="flex-1 flex flex-col items-center justify-between w-full px-2 py-4 overflow-hidden" data-lenis-prevent="true">
                   <div className="flex flex-col items-center gap-6">
-                    <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center text-lg flex-shrink-0">
-                      {currentMaterial ? getTopicIcon(currentMaterial.topic) : <Sparkles size={18} className="text-slate-300" />}
+                    <div className="w-10 h-10 bg-[var(--bg-card)] rounded-xl shadow-sm border border-[var(--border-subtle)] flex items-center justify-center text-lg flex-shrink-0">
+                      {currentMaterial ? getTopicIcon(currentMaterial.topic) : <Sparkles size={18} className="text-[var(--text-muted)] opacity-30" />}
                     </div>
                     <div className="flex flex-col gap-4 w-full">
                       {['symptoms', 'diagnosis', 'riskFactors', 'treatments'].map((type) => (

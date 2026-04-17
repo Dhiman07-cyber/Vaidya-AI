@@ -50,13 +50,13 @@ export default function ChatInput({
 
   return (
     <div style={{
-      backgroundColor: '#ffffff',
+      backgroundColor: 'var(--bg-card)',
       borderRadius: '24px',
       padding: '6px 6px 6px 16px', // Reduced padding
       display: 'flex',
       alignItems: 'flex-end',
       boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.08), 0 4px 10px -2px rgba(0, 0, 0, 0.04)',
-      border: '1px solid #e2e8f0',
+      border: '1px solid var(--border-subtle)',
       gap: '8px', // Reduced gap
       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       outline: 'none',
@@ -67,7 +67,7 @@ export default function ChatInput({
         e.currentTarget.style.boxShadow = '0 12px 40px -12px rgba(99, 102, 241, 0.15), 0 4px 12px -2px rgba(0,0,0,0.03)'
       }}
       onBlur={(e) => {
-        e.currentTarget.style.borderColor = '#e2e8f0'
+        e.currentTarget.style.borderColor = 'var(--border-subtle)'
         e.currentTarget.style.boxShadow = '0 10px 30px -10px rgba(0, 0, 0, 0.08), 0 4px 10px -2px rgba(0, 0, 0, 0.04)'
       }}
     >
@@ -90,7 +90,7 @@ export default function ChatInput({
           minHeight: '22px',
           backgroundColor: 'transparent',
           cursor: 'text',
-          color: '#1e293b'
+          color: 'var(--text-main)'
         }}
       />
 
@@ -104,8 +104,8 @@ export default function ChatInput({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: disabled || !message.trim() ? '#f1f5f9' : 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
-          color: disabled || !message.trim() ? '#94a3b8' : 'white',
+          background: disabled || !message.trim() ? 'var(--accent-soft)' : 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+          color: disabled || !message.trim() ? 'var(--text-muted)' : 'white',
           border: 'none',
           borderRadius: '12px', // Smaller radius
           cursor: disabled || !message.trim() ? 'not-allowed' : 'pointer',

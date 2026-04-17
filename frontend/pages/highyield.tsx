@@ -23,15 +23,15 @@ const SUGGESTIONS = [
 const stylesMap = {
   container: "max-w-[1200px] mx-auto",
   mainArea: "flex-1 flex flex-col overflow-y-auto p-4 pt-12 sm:p-8 custom-scrollbar bg-[var(--bg-main)]",
-  searchOnlyState: "bg-white rounded-[24px] sm:rounded-[32px] p-6 sm:p-10 text-center border border-[#E2E8F0] mt-4 sm:mt-0 w-full max-w-[750px] mx-auto",
-  sparkleIcon: "w-10 h-10 sm:w-14 sm:h-14 bg-[#EDE9FE] rounded-xl sm:rounded-2xl mx-auto mb-3 sm:mb-4 flex items-center justify-center",
-  h1: "text-2xl sm:text-2xl font-[800] mb-1 sm:mb-2 text-[#0F172A]",
-  p: "text-sm sm:text-base text-[#64748B] mb-5 sm:mb-6",
-  largeSearch: "bg-white border-[1.5px] border-[#E2E8F0] p-1.5 pl-4 sm:p-1.5 sm:pl-5 rounded-xl sm:rounded-2xl flex items-center gap-2 sm:gap-3 focus-within:border-[#8B5CF6] focus-within:ring-4 focus-within:ring-[#8B5CF6]/5 transition-all outline-none",
-  topicInput: "border-none bg-transparent flex-1 text-sm sm:text-base font-medium outline-none text-[#1E293B] placeholder:text-slate-400 min-w-0",
+  searchOnlyState: "bg-[var(--bg-card)] rounded-[24px] sm:rounded-[32px] p-6 sm:p-10 text-center border border-[var(--border-subtle)] mt-4 sm:mt-0 w-full max-w-[750px] mx-auto",
+  sparkleIcon: "w-10 h-10 sm:w-14 sm:h-14 bg-[#EDE9FE] dark:bg-purple-900/30 rounded-xl sm:rounded-2xl mx-auto mb-3 sm:mb-4 flex items-center justify-center",
+  h1: "text-2xl sm:text-2xl font-[800] mb-1 sm:mb-2 text-[#111827] dark:text-slate-100",
+  p: "text-sm sm:text-base text-[#374151] dark:text-slate-300 mb-5 sm:mb-6",
+  largeSearch: "bg-[var(--bg-card)] border-[1.5px] border-[var(--border-subtle)] p-1.5 pl-4 sm:p-1.5 sm:pl-5 rounded-xl sm:rounded-2xl flex items-center gap-2 sm:gap-3 focus-within:border-[#8B5CF6] focus-within:ring-4 focus-within:ring-[#8B5CF6]/5 transition-all outline-none",
+  topicInput: "border-none bg-transparent flex-1 text-sm sm:text-base font-medium outline-none text-[#1E293B] dark:text-slate-100 placeholder:text-slate-400 min-w-0",
   generateBtn: "bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] text-white border-none px-4 py-2.5 sm:px-6 sm:py-3 rounded-lg sm:rounded-xl font-bold cursor-pointer hover:translate-y-[-2px] transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm sm:text-base",
-  suggestionChip: "px-4 py-2 bg-[#F1F5F9] text-[#475569] rounded-full text-xs sm:text-sm font-bold cursor-pointer border border-transparent hover:bg-[#EDE9FE] hover:text-[#8B5CF6] hover:border-[#8B5CF6]/20 transition-all",
-  resultCard: "bg-[#FFFFFF] rounded-2xl sm:rounded-3xl p-6 sm:p-10 border border-[#E2E8F0] border-2"
+  suggestionChip: "px-4 py-2 bg-[var(--accent-soft)] text-[var(--text-muted)] rounded-full text-xs sm:text-sm font-bold cursor-pointer border border-transparent hover:bg-[#EDE9FE] dark:hover:bg-purple-900/30 hover:text-[#8B5CF6] hover:border-[#8B5CF6]/20 transition-all",
+  resultCard: "bg-[var(--bg-card)] rounded-2xl sm:rounded-3xl p-6 sm:p-10 border border-[var(--border-subtle)] border-2"
 }
 
 export default function HighYield() {
@@ -49,6 +49,7 @@ export default function HighYield() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
   const [sessionsLoading, setSessionsLoading] = useState(false)
   const [sessionsError, setSessionsError] = useState<string | null>(null)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -298,18 +299,11 @@ export default function HighYield() {
         <title>High Yield - Vaidya AI</title>
       </Head>
       <DashboardLayout user={user}>
-        <div style={{
-          height: 'calc(100dvh - 64px)',
-          display: 'flex',
-          backgroundColor: 'var(--bg-main)',
-          position: 'relative'
-        }}>
-          <div style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            position: 'relative'
-          }}>
+        <div className="flex min-h-[calc(100dvh-64px)] relative bg-[var(--bg-main)]">
+          <div 
+            className="flex-1 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] max-lg:!mr-0"
+            style={{ marginRight: isSidebarCollapsed ? '80px' : '320px' }}
+          >
             <div className={styles.hyWrapper} data-station-active="true">
               <div className={styles.mainContent}>
 
@@ -415,7 +409,7 @@ export default function HighYield() {
                         </div>
                         <div>
                           <h2>High-Yield Summary</h2>
-                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748B' }}>Topic: {topic}</p>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Topic: {topic}</p>
                         </div>
                       </div>
                       <button
@@ -446,20 +440,20 @@ export default function HighYield() {
                       {generating ? (
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px' }}>
                           <div className={styles.loadingSpinner} style={{ width: '40px', height: '40px', borderTopColor: '#8B5CF6', marginBottom: '20px' }}></div>
-                          <p style={{ fontWeight: 600, color: '#475569' }}>Synthesizing high-yield content...</p>
+                          <p style={{ fontWeight: 600, color: 'var(--text-muted)' }}>Synthesizing high-yield content...</p>
                         </div>
                       ) : (
-                        <div className={styles.scrollArea} style={{ overflowY: 'auto', maxHeight: 'calc(100dvh - 400px)' }}>
+                        <div className={styles.scrollArea}>
                           <div className={styles.noteContent}>
                             <div dangerouslySetInnerHTML={{ __html: parseMarkdown(result?.content || '') }} />
                           </div>
 
                           {result?.citations && (
                             <div className={styles.citationsSection}>
-                              <h4 className="text-sm font-bold text-[#1E293B] mb-4">Evidence-Based Citations</h4>
+                              <h4 className="text-sm font-bold text-[var(--text-main)] mb-4">Evidence-Based Citations</h4>
                               {result.citations.sources?.map((source: any, idx: number) => (
-                                <div key={idx} className="bg-[#F8FAFC] px-4 py-3 rounded-xl mb-2 text-[#64748B] font-medium border border-[#F1F5F9] flex items-center gap-2 text-xs sm:text-sm">
-                                  <BookOpen size={14} className="text-[#8B5CF6]" />
+                                <div key={idx} className="bg-[var(--accent-soft)] px-4 py-3 rounded-xl mb-2 text-[var(--text-main)] font-medium border border-[var(--border-subtle)] flex items-center gap-2 text-xs sm:text-sm">
+                                  <BookOpen size={14} className="text-[var(--accent-primary,#8B5CF6)]" />
                                   <span className="text-sm">{source.document_filename}</span>
                                 </div>
                               ))}
@@ -474,21 +468,25 @@ export default function HighYield() {
             </div>
           </div>
 
-          <SessionSidebar
-            sessions={sessions}
-            currentSessionId={currentSessionId}
-            onSelectSession={handleSelectSession}
-            onNewSession={handleNewSession}
-            onDeleteSession={handleDeleteSession}
-            onDeleteAllSessions={handleDeleteAllSessions}
-            isNewChatDisabled={false}
-            loading={sessionsLoading}
-            error={sessionsError}
-            position="right"
-            newSessionLabel="New Topic"
-            untitledLabel="Untitled Topic"
-            disableMobileHamburger
-          />
+          <div className="static lg:fixed lg:top-[64px] lg:right-0 lg:bottom-0 z-10 bg-[var(--bg-sidebar)]">
+            <SessionSidebar
+              sessions={sessions}
+              currentSessionId={currentSessionId}
+              onSelectSession={handleSelectSession}
+              onNewSession={handleNewSession}
+              onDeleteSession={handleDeleteSession}
+              onDeleteAllSessions={handleDeleteAllSessions}
+              isNewChatDisabled={false}
+              loading={sessionsLoading}
+              error={sessionsError}
+              position="right"
+              newSessionLabel="New Topic"
+              untitledLabel="Untitled Topic"
+              isCollapsed={isSidebarCollapsed}
+              onToggleCollapsed={setIsSidebarCollapsed}
+              disableMobileHamburger
+            />
+          </div>
         </div>
       </DashboardLayout>
     </>

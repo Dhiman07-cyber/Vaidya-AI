@@ -13,22 +13,22 @@ import SessionSidebar, { ChatSession } from '@/components/SessionSidebar'
 const styles = {
   container: "max-w-[1200px] mx-auto",
   mainArea: "flex-1 flex flex-col overflow-y-auto p-4 pt-12 sm:p-8 custom-scrollbar bg-[var(--bg-main)]", // Matches chat theme color
-  searchOnlyState: "bg-white rounded-[24px] sm:rounded-[32px] p-6 sm:p-10 text-center border border-[#E2E8F0] mt-4 sm:mt-0 w-full max-w-[750px] mx-auto",
-  sparkleIcon: "w-10 h-10 sm:w-14 sm:h-14 bg-[#EEF2FF] rounded-xl sm:rounded-2xl mx-auto mb-3 sm:mb-4 flex items-center justify-center", // Reduced size and margin
-  h1: "text-2xl sm:text-2xl font-[800] mb-1 sm:mb-2 text-[#0F172A]", // Reduced text size and margin
-  p: "text-sm sm:text-base text-[#64748B] mb-5 sm:mb-6", // Reduced margin
-  largeSearch: "bg-white border-[1.5px] border-[#E2E8F0] p-1.5 pl-4 sm:p-1.5 sm:pl-5 rounded-xl sm:rounded-2xl flex items-center gap-2 sm:gap-3 focus-within:border-[#6366F1] focus-within:ring-4 focus-within:ring-[#6366F1]/5 transition-all outline-none", // Reduced padding
-  topicInput: "border-none bg-transparent flex-1 text-sm sm:text-base font-medium outline-none text-[#1E293B] placeholder:text-slate-400 min-w-0",
+  searchOnlyState: "bg-[var(--bg-card)] rounded-[24px] sm:rounded-[32px] p-6 sm:p-10 text-center border border-[var(--border-subtle)] mt-4 sm:mt-0 w-full max-w-[750px] mx-auto",
+  sparkleIcon: "w-10 h-10 sm:w-14 sm:h-14 bg-[#EEF2FF] dark:bg-indigo-900/30 rounded-xl sm:rounded-2xl mx-auto mb-3 sm:mb-4 flex items-center justify-center", // Reduced size and margin
+  h1: "text-2xl sm:text-2xl font-[800] mb-1 sm:mb-2 text-[#0F172A] dark:text-slate-100", // Reduced text size and margin
+  p: "text-sm sm:text-base text-[#64748B] dark:text-slate-300 mb-5 sm:mb-6", // Reduced margin
+  largeSearch: "bg-[var(--bg-card)] border-[1.5px] border-[var(--border-subtle)] p-1.5 pl-4 sm:p-1.5 sm:pl-5 rounded-xl sm:rounded-2xl flex items-center gap-2 sm:gap-3 focus-within:border-[#6366F1] focus-within:ring-4 focus-within:ring-[#6366F1]/5 transition-all outline-none", // Reduced padding
+  topicInput: "border-none bg-transparent flex-1 text-sm sm:text-base font-medium outline-none text-[#1E293B] dark:text-slate-100 placeholder:text-slate-400 min-w-0",
   generateBtn: "bg-gradient-to-br from-[#6366F1] to-[#4F46E5] text-white border-none px-4 py-2.5 sm:px-6 sm:py-3 rounded-lg sm:rounded-2xl font-bold cursor-pointer hover:translate-y-[-2px] transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm sm:text-base",
   activeHeader: "flex flex-col gap-3 mb-6 sm:mb-10 w-full",
-  breadcrumb: "flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-[#94A3B8] pl-1 tracking-wider uppercase",
-  miniSearch: "flex items-center justify-between bg-white px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-[#6366F1]/20 w-full",
+  breadcrumb: "flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-[#94A3B8] dark:text-slate-400 pl-1 tracking-wider uppercase",
+  miniSearch: "flex items-center justify-between bg-[var(--bg-card)] px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-[#6366F1]/20 w-full",
   aiMessage: "flex flex-col gap-3 mb-6 sm:mb-10 items-start",
   aiAvatar: "hidden",
-  aiBubble: "bg-white p-6 sm:p-10 rounded-2xl sm:rounded-3xl border border-[#E2E8F0] w-full text-[#334155] leading-relaxed text-sm sm:text-[17px]",
-  resultCard: "bg-[#FFFFFF] rounded-2xl sm:rounded-3xl p-6 sm:p-12 border border-[#E2E8F0] border-2",
-  citations: "mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-[#F1F5F9]",
-  citation: "bg-[#F8FAFC] px-4 py-3 rounded-xl mb-2 text-[#64748B] font-medium border border-[#F1F5F9] flex items-center gap-2 text-xs sm:text-sm"
+  aiBubble: "bg-[var(--bg-card)] p-6 sm:p-10 rounded-2xl sm:rounded-3xl border border-[var(--border-subtle)] w-full text-[var(--text-main)] leading-relaxed text-sm sm:text-[17px]",
+  resultCard: "bg-[var(--bg-card)] rounded-2xl sm:rounded-3xl p-6 sm:p-12 border border-[var(--border-subtle)] border-2",
+  citations: "mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-[var(--border-subtle)]",
+  citation: "bg-[var(--accent-soft)] px-4 py-3 rounded-xl mb-2 text-[var(--text-muted)] font-medium border border-[var(--border-subtle)] flex items-center gap-2 text-xs sm:text-sm"
 }
 
 export default function Flashcards() {
@@ -161,27 +161,105 @@ export default function Flashcards() {
                 }
               }
               
-              // Find JSON object boundaries
-              const firstBrace = cleaned.indexOf('{')
-              const lastBrace = cleaned.lastIndexOf('}')
-              if (firstBrace !== -1 && lastBrace !== -1) {
-                cleaned = cleaned.substring(firstBrace, lastBrace + 1)
+              // Try multiple parsing strategies
+              let parsed = null
+              
+              // Strategy 1: Try to parse as-is first
+              try {
+                parsed = JSON.parse(cleaned)
+              } catch (e) {
+                console.log('Strategy 1 failed, trying cleaning...')
               }
               
-              const parsed = JSON.parse(cleaned)
+              // Strategy 2: Try with cleaned JSON
+              if (!parsed) {
+                try {
+                  let cleaned2 = cleaned.trim()
+                  
+                  // Find JSON object boundaries
+                  const firstBrace = cleaned2.indexOf('{')
+                  const lastBrace = cleaned2.lastIndexOf('}')
+                  if (firstBrace !== -1 && lastBrace !== -1) {
+                    cleaned2 = cleaned2.substring(firstBrace, lastBrace + 1)
+                  }
+                  
+                  // Fix common JSON syntax issues
+                  cleaned2 = cleaned2
+                    .replace(/,\s*}/g, '}')  // Remove trailing commas before }
+                    .replace(/,\s*]/g, ']')  // Remove trailing commas before ]
+                    .replace(/,\s*([}\]])/g, '$1')  // Remove trailing commas before brackets
+                    .replace(/\n/g, ' ')     // Replace newlines with spaces
+                    .replace(/\t/g, ' ')     // Replace tabs with spaces
+                    .replace(/\s+/g, ' ')    // Replace multiple spaces with single space
+                    .replace(/,\s*,/g, ',')  // Remove double commas
+                    .trim()
+                  
+                  parsed = JSON.parse(cleaned2)
+                } catch (e) {
+                  console.log('Strategy 2 failed, trying array extraction...')
+                }
+              }
+              
+              // Strategy 3: Try to extract just the flashcards array
+              if (!parsed) {
+                try {
+                  const arrayMatch = cleaned.match(/\[\s*\{[\s\S]*\}\s*\]/)
+                  if (arrayMatch) {
+                    const arrayStr = arrayMatch[0]
+                    // Clean the array
+                    const cleanedArray = arrayStr
+                      .replace(/,\s*]/g, ']')  // Remove trailing commas before ]
+                      .replace(/\n/g, ' ')     // Replace newlines with spaces
+                      .replace(/\t/g, ' ')     // Replace tabs with spaces
+                      .replace(/\s+/g, ' ')    // Replace multiple spaces with single space
+                      .replace(/,\s*,/g, ',')  // Remove double commas
+                      .trim()
+                    parsed = { flashcards: JSON.parse(cleanedArray) }
+                  }
+                } catch (e) {
+                  console.log('Strategy 3 failed, trying manual extraction...')
+                }
+              }
+              
+              // Strategy 4: Manual extraction of flashcard objects
+              if (!parsed) {
+                try {
+                  // Try to extract individual flashcard objects
+                  const flashcardPattern = /\{[^{}]*"question"[^{}]*"answer"[^{}]*\}/g
+                  const matches = cleaned.match(flashcardPattern)
+                  if (matches && matches.length > 0) {
+                    const flashcards = matches.map((match: string) => {
+                      try {
+                        return JSON.parse(match)
+                      } catch (e) {
+                        return null
+                      }
+                    }).filter((f: any) => f !== null)
+                    
+                    if (flashcards.length > 0) {
+                      parsed = { flashcards }
+                    }
+                  }
+                } catch (e) {
+                  console.log('Strategy 4 failed')
+                }
+              }
               
               // If parsed successfully and has flashcards array, use it
-              if (parsed.flashcards && Array.isArray(parsed.flashcards)) {
+              if (parsed && parsed.flashcards && Array.isArray(parsed.flashcards)) {
                 setResult({
                   ...material,
                   flashcards: parsed.flashcards
                 })
               } else {
                 // Fallback to raw content
+                console.warn('Could not extract flashcards from content, using raw content')
                 setResult(material)
               }
             } catch (parseError) {
               console.error('Failed to parse flashcards JSON from history:', parseError)
+              console.error('Original content length:', material.content?.length)
+              console.error('Original content preview (first 500 chars):', material.content?.substring(0, 500))
               // Fallback to raw content display
               setResult(material)
             }

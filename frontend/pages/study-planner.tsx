@@ -343,7 +343,7 @@ export default function StudyPlanner() {
             // Options to ensure full capture
             const canvas = await html2canvas(timetableElement, {
                 scale: 2,
-                backgroundColor: '#ffffff',
+                backgroundColor: 'var(--bg-card)',
                 useCORS: true,
                 logging: false,
                 width: timetableElement.scrollWidth,
@@ -1281,19 +1281,19 @@ export default function StudyPlanner() {
                     }
                     .calendar-status-btn:hover { color: #5C67F2; border-color: #5C67F2; background: #F5F3FF; }
                     .add-btn { 
-                        display: flex; align-items: center; gap: 8px; background: var(--cream-text-main); 
+                        display: flex; align-items: center; gap: 8px; background: var(--accent); 
                         color: white; border: none; padding: 12px 24px; border-radius: 14px; 
                         font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.25s; 
                         box-shadow: 0 8px 20px -4px rgba(0,0,0,0.15); 
                     }
-                    .add-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 28px -4px rgba(0,0,0,0.25); background: #111; }
+                    .add-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 28px -4px rgba(0,0,0,0.25); background: var(--accent-hover); }
                     
                     .stats-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 20px; margin-bottom: 32px; }
                     .stat-card { 
-                        background: white;
+                        background: var(--bg-card);
                         border-radius: 20px; padding: 16px 20px; 
                         display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 12px; 
-                        border: 1px solid rgba(0,0,0,0.1); 
+                        border: 1px solid var(--border-subtle); 
                         box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.03);
                         transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
                         position: relative;
@@ -1309,8 +1309,8 @@ export default function StudyPlanner() {
                     .stat-card:hover { 
                         transform: translateY(-5px); 
                         box-shadow: 0 25px 40px -12px rgba(0,0,0,0.1);
-                        border-color: rgba(92, 103, 242, 0.4);
-                        background: #FAFBFC;
+                        border-color: var(--accent);
+                        background: var(--accent-soft);
                     }
                     .stat-icon { 
                         width: 44px; height: 44px; border-radius: 14px; 
@@ -1321,31 +1321,31 @@ export default function StudyPlanner() {
                     
                     .stat-content { display: flex; flex-direction: column; gap: 4px; width: 100%; }
                     .stat-value { 
-                        font-size: 28px; font-weight: 800; color: var(--cream-text-main); 
+                        font-size: 28px; font-weight: 800; color: var(--text-main); 
                         line-height: 1; letter-spacing: -0.02em; display: flex; align-items: baseline; gap: 2px;
                     }
                     .stat-value-sub {
-                        font-size: 16px; color: var(--cream-text-muted); font-weight: 600;
+                        font-size: 16px; color: var(--text-muted); font-weight: 600;
                     }
                     .stat-label { 
-                        font-size: 13px; font-weight: 600; color: var(--cream-text-muted); 
+                        font-size: 13px; font-weight: 600; color: var(--text-muted); 
                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
                     }
                     
                     .week-nav { 
                         display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 24px; 
-                        background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.95) 100%);
-                        padding: 14px 24px; border-radius: 18px; border: 1px solid rgba(0,0,0,0.06);
+                        background: var(--bg-card);
+                        padding: 14px 24px; border-radius: 18px; border: 1px solid var(--border-subtle);
                         box-shadow: 0 4px 20px rgba(0,0,0,0.04);
                     }
                     .week-nav button { 
-                        background: #F8FAFC; border: 1px solid rgba(0,0,0,0.08); width: 40px; height: 40px; 
+                        background: var(--accent-soft); border: 1px solid var(--border-subtle); width: 40px; height: 40px; 
                         border-radius: 12px; display: flex; align-items: center; justify-content: center; 
-                        cursor: pointer; color: var(--cream-text-main); transition: all 0.25s;
+                        cursor: pointer; color: var(--text-main); transition: all 0.25s;
                         box-shadow: 0 2px 8px rgba(0,0,0,0.04);
                     }
-                    .week-nav button:hover { background: var(--cream-text-main); color: white; transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-                    .week-display { font-size: 16px; font-weight: 700; color: var(--cream-text-main); min-width: 220px; text-align: center; }
+                    .week-nav button:hover { background: var(--accent); color: white; transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+                    .week-display { font-size: 16px; font-weight: 700; color: var(--text-main); min-width: 220px; text-align: center; }
                     .today-btn { width: auto !important; padding: 0 20px !important; font-weight: 700; font-size: 13px; background: #5C67F2 !important; color: white !important; border: none !important; }
                     .today-btn:hover { background: #4F46E5 !important; }
                     .download-btn { 
@@ -1369,8 +1369,8 @@ export default function StudyPlanner() {
                     /* Timetable Styles */
                     .timetable-container {
                         position: relative;
-                        background: white; border-radius: 24px; padding: 0; 
-                        border: 2px solid #E2E8F0; box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+                        background: var(--bg-card); border-radius: 24px; padding: 0; 
+                        border: 2px solid var(--border-subtle); box-shadow: 0 20px 40px rgba(0,0,0,0.1);
                         overflow: hidden;
                         margin-bottom: 32px;
                     }
@@ -1391,26 +1391,26 @@ export default function StudyPlanner() {
                     
                     .timetable-header { 
                         display: grid; grid-template-columns: 100px repeat(var(--slot-count, 17), minmax(160px, 1fr)); gap: 2px;
-                        background: #E2E8F0;
-                        border-bottom: 2px solid #E2E8F0;
+                        background: var(--border-subtle);
+                        border-bottom: 2px solid var(--border-subtle);
                     }
                     .time-label-header { 
-                        padding: 14px 8px; font-size: 11px; font-weight: 700; color: var(--cream-text-muted);
-                        text-transform: uppercase; letter-spacing: 0.05em; background: #F8FAFC;
+                        padding: 14px 8px; font-size: 11px; font-weight: 700; color: var(--text-muted);
+                        text-transform: uppercase; letter-spacing: 0.05em; background: var(--accent-soft);
                         display: flex; align-items: center; justify-content: center;
                         position: sticky; left: 0; z-index: 20;
-                        border-right: 2px solid #E2E8F0;
+                        border-right: 2px solid var(--border-subtle);
                     }
                     .time-slot-header { 
-                        padding: 14px 4px; font-size: 11px; font-weight: 700; color: var(--cream-text-main);
-                        text-align: center; background: #F8FAFC;
+                        padding: 14px 4px; font-size: 11px; font-weight: 700; color: var(--text-main);
+                        text-align: center; background: var(--accent-soft);
                     }
                     .time-slot-header:last-child { border-right: none; }
                     
                     .timetable-row { 
                         display: grid; grid-template-columns: 100px repeat(var(--slot-count, 17), minmax(160px, 1fr)); gap: 2px;
-                        background: #E2E8F0;
-                        border-bottom: 2px solid #E2E8F0;
+                        background: var(--border-subtle);
+                        border-bottom: 2px solid var(--border-subtle);
                     }
                     .timetable-row:last-child { border-radius: 0 0 12px 12px; }
                     .timetable-row:last-child .day-label { border-radius: 0 0 0 12px; }
@@ -1439,17 +1439,17 @@ export default function StudyPlanner() {
                     
                     .timetable-cell { 
                         min-height: 120px; 
-                        background: linear-gradient(135deg, #FFFFFF 0%, #FAFBFC 100%);
+                        background: var(--bg-card);
                         padding: 8px;
                         transition: all 0.25s; cursor: pointer;
                         position: relative; overflow: visible;
                     }
                     .timetable-cell:last-child { border-right: none; }
                     .timetable-cell:hover:not(.has-entry) { 
-                        background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); 
-                        box-shadow: inset 0 0 0 2px rgba(92, 103, 242, 0.15);
+                        background: var(--accent-soft); 
+                        box-shadow: inset 0 0 0 2px var(--accent);
                     }
-                    .timetable-cell.has-entry { background: #FAFBFC; padding: 4px; overflow: visible; }
+                    .timetable-cell.has-entry { background: var(--accent-soft); padding: 4px; overflow: visible; }
                     .timetable-cell.completed .cell-entry { opacity: 0.6; }
                     .timetable-cell.in-progress .cell-entry { 
                         box-shadow: 0 0 0 3px #10B981, 0 8px 24px rgba(16, 185, 129, 0.3);
@@ -1470,7 +1470,7 @@ export default function StudyPlanner() {
                     .timetable-cell:hover .empty-cell { opacity: 1; transform: scale(1.1); }
                     
                     .cell-entry { 
-                        background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.92) 100%);
+                        background: var(--bg-card);
                         backdrop-filter: blur(10px);
                         border-radius: 12px; padding: 12px; height: 100%;
                         cursor: pointer;
@@ -1488,9 +1488,9 @@ export default function StudyPlanner() {
                         font-size: 9px; font-weight: 700; padding: 3px 6px; border-radius: 4px;
                         display: inline-flex; align-items: center; gap: 3px; margin-bottom: 6px;
                     }
-                    .entry-subject { font-size: 12px; font-weight: 700; color: var(--cream-text-main); line-height: 1.3; margin-bottom: 2px; }
-                    .entry-topic { font-size: 10px; color: var(--cream-text-muted); margin-bottom: 6px; }
-                    .entry-meta { display: flex; align-items: center; gap: 6px; font-size: 9px; color: var(--cream-text-muted); }
+                    .entry-subject { font-size: 12px; font-weight: 700; color: var(--text-main); line-height: 1.3; margin-bottom: 2px; }
+                    .entry-topic { font-size: 10px; color: var(--text-muted); margin-bottom: 6px; }
+                    .entry-meta { display: flex; align-items: center; gap: 6px; font-size: 9px; color: var(--text-muted); }
                     .priority-dot { width: 6px; height: 6px; border-radius: 50%; }
                     
                     .completed-badge { 
@@ -1621,16 +1621,16 @@ export default function StudyPlanner() {
                     
                     /* AI Recommendation */
                     .ai-recommendation { 
-                        display: flex; gap: 20px; background: linear-gradient(135deg, #FFF 0%, #F5F3FF 100%); 
-                        border-radius: 24px; padding: 24px; margin-top: 24px; border: 1px solid rgba(92, 103, 242, 0.2);
-                        box-shadow: 0 8px 30px rgba(92, 103, 242, 0.12);
+                        display: flex; gap: 20px; background: var(--bg-card); 
+                        border-radius: 24px; padding: 24px; margin-top: 24px; border: 1px solid var(--border-subtle);
+                        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
                     }
                     .ai-icon { 
-                        width: 56px; height: 56px; background: #5C67F2; border-radius: 16px; 
+                        width: 56px; height: 56px; background: var(--accent); border-radius: 16px; 
                         display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;
                     }
-                    .ai-content h4 { font-size: 17px; font-weight: 800; color: var(--cream-text-main); margin: 0 0 6px; }
-                    .ai-content p { font-size: 14px; color: var(--cream-text-muted); margin: 0; line-height: 1.6; }
+                    .ai-content h4 { font-size: 17px; font-weight: 800; color: var(--text-main); margin: 0 0 6px; }
+                    .ai-content p { font-size: 14px; color: var(--text-muted); margin: 0; line-height: 1.6; }
                     
                     /* Modal Styles */
                     .modal-overlay { 
@@ -1638,10 +1638,10 @@ export default function StudyPlanner() {
                         display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px;
                     }
                     .modal-content { 
-                        position: relative; background: white; border-radius: 32px; padding: 40px; 
+                        position: relative; background: var(--bg-card); border-radius: 32px; padding: 40px; 
                         max-width: 540px; width: 100%; max-height: 90vh; overflow-y: auto;
                         box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.35);
-                        border: 1px solid rgba(0,0,0,0.05);
+                        border: 1px solid var(--border-subtle);
                         -ms-overflow-style: none; scrollbar-width: none;
                     }
                     .modal-content::-webkit-scrollbar { display: none; }
@@ -1651,19 +1651,19 @@ export default function StudyPlanner() {
                         padding: 6px; border-radius: 50%; width: 36px; height: 36px;
                         display: flex; align-items: center; justify-content: center;
                     }
-                    .close-modal-btn:hover { color: #DC2626; background: #FEE2E2; transform: rotate(90deg); }
+                    .close-modal-btn:hover { color: #DC2626; background: var(--accent-soft); transform: rotate(90deg); }
                     .modal-header { margin-bottom: 32px; text-align: center; }
-                    .modal-content h2 { font-size: 28px; font-weight: 800; margin: 0; color: var(--cream-text-main); }
-                    .modal-header p { color: var(--cream-text-muted); font-size: 15px; margin-top: 8px; }
+                    .modal-content h2 { font-size: 28px; font-weight: 800; margin: 0; color: var(--text-main); }
+                    .modal-header p { color: var(--text-muted); font-size: 15px; margin-top: 8px; }
                     
                     .form-group { margin-bottom: 24px; }
-                    .form-group label { display: block; font-size: 13px; font-weight: 700; color: var(--cream-text-main); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+                    .form-group label { display: block; font-size: 13px; font-weight: 700; color: var(--text-main); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
                     .form-group input, .form-group select, .form-group textarea { 
-                        width: 100%; padding: 16px 18px; border: 2px solid #E2E8F0; background-color: #F1F5F9;
-                        border-radius: 16px; font-size: 15px; font-weight: 600; color: var(--cream-text-main);
+                        width: 100%; padding: 16px 18px; border: 2px solid var(--border-subtle); background-color: var(--accent-soft);
+                        border-radius: 16px; font-size: 15px; font-weight: 600; color: var(--text-main);
                         transition: all 0.25s; font-family: inherit;
                     }
-                    .form-group input:hover, .form-group select:hover, .form-group textarea:hover { border-color: #CBD5E1; background-color: #E2E8F0; }
+                    .form-group input:hover, .form-group select:hover, .form-group textarea:hover { border-color: var(--border-strong); background-color: var(--border-subtle); }
                     .form-group input:focus, .form-group select:focus, .form-group textarea:focus { 
                         outline: none; border-color: #5C67F2; background-color: white; 
                         box-shadow: 0 0 0 4px rgba(92, 103, 242, 0.1);

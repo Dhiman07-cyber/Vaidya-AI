@@ -584,7 +584,7 @@ export default function OSCESimulator() {
                 <div className={styles.optionsRow}>
                   <div className={styles.optionSection}>
                     <h3>Case Selection</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1rem', background: 'white', borderRadius: '12px', border: '2px solid #e2e8f0' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1rem', background: 'var(--bg-card)', borderRadius: '12px', border: '2px solid var(--border-subtle)' }}>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
                         <input
                           type="radio"
@@ -596,19 +596,18 @@ export default function OSCESimulator() {
                           }}
                           style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: '#667eea' }}
                         />
-                        <span style={{ fontSize: '0.95rem', fontWeight: '600', color: '#334155' }}>
+                        <span style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-main)' }}>
                           Random Case (AI selects condition)
                         </span>
                       </label>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
                         <input
                           type="radio"
-                          name="case-type"
                           checked={useCustomCondition}
                           onChange={() => setUseCustomCondition(true)}
                           style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: '#667eea' }}
                         />
-                        <span style={{ fontSize: '0.95rem', fontWeight: '600', color: '#334155' }}>
+                        <span style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-main)' }}>
                           Custom Condition
                         </span>
                       </label>
@@ -622,15 +621,25 @@ export default function OSCESimulator() {
                             style={{
                               width: '100%',
                               padding: '0.75rem 1rem',
-                              border: '2px solid #cbd5e1',
+                              border: '2px solid var(--border-subtle)',
                               borderRadius: '8px',
                               fontSize: '0.95rem',
-                              transition: 'border-color 0.2s'
+                              transition: 'border-color 0.2s',
+                              backgroundColor: 'var(--bg-card)',
+                              color: 'var(--text-main)'
                             }}
-                            onFocus={(e) => e.target.style.borderColor = '#667eea'}
-                            onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
+                            className="dark:bg-slate-700 dark:border-slate-500 dark:text-slate-200"
+                            onFocus={(e) => {
+                              e.target.style.borderColor = '#667eea'
+                              e.target.classList.add('dark:border-indigo-400')
+                            }}
+                            onBlur={(e) => {
+                              e.target.style.borderColor = 'var(--border-subtle)'
+                              e.target.classList.remove('dark:border-indigo-400')
+                              e.target.classList.add('dark:border-slate-500')
+                            }}
                           />
-                          <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.5rem' }}>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.5rem' }} className="dark:text-slate-400">
                             Enter the specific medical condition you want to practice
                           </p>
                         </div>
@@ -1007,7 +1016,7 @@ export default function OSCESimulator() {
             display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '20px'
           }}>
             <div className="modal-content" style={{
-              background: 'white', borderRadius: '32px', padding: '40px', maxWidth: '400px', width: '100%',
+              background: 'var(--bg-card)', borderRadius: '32px', padding: '40px', maxWidth: '400px', width: '100%',
               textAlign: 'center', boxShadow: '0 40px 80px -20px rgba(0, 0, 0, 0.35)', border: '1px solid rgba(0,0,0,0.05)'
             }}>
               <div style={{
@@ -1022,7 +1031,7 @@ export default function OSCESimulator() {
               <div style={{ display: 'flex', gap: '12px' }}>
                 {dialogConfig.type === 'confirm' && (
                   <button style={{
-                    flex: 1, padding: '14px', borderRadius: '16px', border: '1px solid #e2e8f0', background: 'white',
+                    flex: 1, padding: '14px', borderRadius: '16px', border: '1px solid var(--border-subtle)', background: 'var(--bg-card)',
                     fontWeight: '700', cursor: 'pointer'
                   }} onClick={() => setDialogConfig({ ...dialogConfig, isOpen: false })}>Cancel</button>
                 )}

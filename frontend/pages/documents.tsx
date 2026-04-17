@@ -129,12 +129,12 @@ export default function DocumentsPage() {
       </Head>
       <DashboardLayout user={user}>
         {loading ? (
-          <div className={styles.innerLoader}>
+          <div className={`${styles.innerLoader} ${styles.noBorder}`}>
             <div className={styles.spinner}></div>
-            <p style={{ fontWeight: 800, color: '#0F172A', letterSpacing: '-0.01em' }}>Initializing Clinical Workspace...</p>
+            <p style={{ fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.01em' }}>Initializing Clinical Workspace...</p>
           </div>
         ) : (
-          <div className={`${styles.documentsContainer} ${isUploadModalOpen || docToDelete ? styles.blurredPage : ''}`}>
+          <div className={`${styles.documentsContainer} ${styles.noBorder} ${isUploadModalOpen || docToDelete ? styles.blurredPage : ''}`}>
             {/* Header Action Unit */}
             <motion.header
               initial={{ opacity: 0, y: -20 }}
@@ -142,8 +142,8 @@ export default function DocumentsPage() {
               className={styles.heroHeader}
             >
               <div className={styles.headerIntro}>
-                <h1>Clinical Vault</h1>
-                <p>Manage medical archives with AI-ready precision.</p>
+                <h1 style={{ color: 'var(--text-main)' }}>Clinical Vault</h1>
+                <p style={{ color: 'var(--text-secondary)' }}>Manage medical archives with AI-ready precision.</p>
               </div>
 
               <div className={styles.headerControls}>
@@ -175,19 +175,21 @@ export default function DocumentsPage() {
                     <button
                       className={`${styles.filterPill} ${activeTab === 'all' ? styles.active : ''}`}
                       onClick={() => setActiveTab('all')}
+                      style={{ color: activeTab === 'all' ? 'white' : '#000000' }}
                     >
                       All Documents
                     </button>
                     <button
                       className={`${styles.filterPill} ${activeTab === 'synced' ? styles.active : ''}`}
                       onClick={() => setActiveTab('synced')}
+                      style={{ color: activeTab === 'synced' ? 'white' : '#000000' }}
                     >
                       Synced ({stats.processed})
                     </button>
                   </div>
 
                   <button className={styles.filterPill} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <ListFilter size={14} />
+                    <ListFilter size={14} style={{ color: 'inherit' }} />
                     Sort: Most Recent
                   </button>
                 </div>
@@ -219,10 +221,10 @@ export default function DocumentsPage() {
                     <div className={styles.intelIcon}>
                       <Zap size={20} />
                     </div>
-                    <h3>Medical Insight</h3>
+                    <h3 style={{ color: 'var(--text-main, #111827)' }}>Medical Insight</h3>
                   </div>
                   <div className={styles.intelBody}>
-                    <p>Your vault uses 256-bit encryption. Documents are automatically indexed for sub-second retrieval in clinical chats.</p>
+                    <p style={{ color: 'var(--text-secondary, #6b7280)' }}>Your vault uses 256-bit encryption. Documents are automatically indexed for sub-second retrieval in clinical chats.</p>
                     <div className={styles.intelList}>
                       <div className={styles.intelItem}>
                         <Database size={14} />
@@ -233,7 +235,7 @@ export default function DocumentsPage() {
                         {documents.some(d => d.processing_status === 'processing') ? (
                           <span style={{ color: '#F59E0B' }}>Syncing Active...</span>
                         ) : (
-                          <span>Cloud OCR Synchronized</span>
+                          <span style={{ color: 'var(--text-secondary, #6b7280)' }}>Cloud OCR Synchronized</span>
                         )}
                       </div>
                     </div>
@@ -241,8 +243,8 @@ export default function DocumentsPage() {
 
                   <div className={styles.storageBarSection}>
                     <div className={styles.storageMeta}>
-                      <span>Secure Vault Capacity</span>
-                      <span>
+                      <span style={{ color: 'var(--text-secondary, #6b7280)' }}>Secure Vault Capacity</span>
+                      <span style={{ color: 'var(--text-secondary, #6b7280)' }}>
                         {(() => {
                           const totalBytes = documents.reduce((acc, doc) => acc + (doc.file_size || 0), 0)
                           const limitBytes = 2 * 1024 * 1024 * 1024 // 2GB Limit
@@ -363,6 +365,34 @@ export default function DocumentsPage() {
       </AnimatePresence>
 
       <style jsx global>{`
+          /* COMPREHENSIVE BORDER RESET - PREVENT BLACK BORDER FLASH */
+          *:not(.spinner):not([class*="spinner"]) {
+              border-color: transparent !important;
+              border-style: solid !important;
+              border-width: 0 !important;
+          }
+          
+          /* Only show borders when explicitly defined */
+          [class*="border"], [style*="border"] {
+              border-color: inherit !important;
+              border-style: inherit !important;
+              border-width: inherit !important;
+          }
+          
+          /* Specific override for known border classes */
+          .border, .border-1, .border-2, .border-4, .border-8 {
+              border-color: inherit !important;
+          }
+          
+          /* Fix spinner visibility - strong override */
+          .spinner {
+              border: 2px solid var(--border-strong, #d1d5db) !important;
+              border-top: 3px solid #6366F1 !important;
+              border-style: solid !important;
+              border-width: 2px !important;
+              border-radius: 50% !important;
+          }
+          
           .modal-root-overlay {
               position: fixed; 
               inset: 0; 
@@ -377,7 +407,7 @@ export default function DocumentsPage() {
           .vault-modal-backdrop {
               position: absolute; 
               inset: 0; 
-              background: rgba(15, 23, 42, 0.4);
+              background: rgba(0, 0, 0, 0.4);
           }
           .modal-content-container {
               position: relative; 
@@ -388,21 +418,20 @@ export default function DocumentsPage() {
           
           /* Confirmation Modal Specifics */
           .confirm-modal-box {
-              background: white;
+              background: var(--bg-card, #ffffff);
               padding: 48px;
               border-radius: 32px;
               width: 100%;
               max-width: 440px;
-              text-align: center;
-              position: relative;
               z-index: 10001;
               box-shadow: 0 40px 100px -20px rgba(0,0,0,0.2);
+              border: 1px solid var(--border-subtle, #e5e7eb);
           }
 
           .confirm-icon-wrap {
               width: 72px;
               height: 72px;
-              background: #FEE2E2;
+              background: rgba(239, 68, 68, 0.1);
               color: #EF4444;
               border-radius: 20px;
               display: flex;
@@ -414,13 +443,13 @@ export default function DocumentsPage() {
           .confirm-modal-box h2 {
               font-size: 24px;
               font-weight: 800;
-              color: #0F172A;
+              color: var(--text-main, #111827);
               margin: 0 0 12px;
               letter-spacing: -0.02em;
           }
 
           .confirm-modal-box p {
-              color: #64748B;
+              color: var(--text-secondary, #6b7280);
               font-size: 15px;
               line-height: 1.6;
               font-weight: 500;
@@ -435,7 +464,7 @@ export default function DocumentsPage() {
 
           .burn-btn {
               padding: 16px;
-              background: #0F172A;
+              background: #EF4444;
               color: white;
               border: none;
               border-radius: 16px;
@@ -452,9 +481,9 @@ export default function DocumentsPage() {
 
           .keep-btn {
               padding: 16px;
-              background: #F8FAFC;
-              color: #64748B;
-              border: 1px solid #E2E8F0;
+              background: var(--accent-soft, #f9fafb);
+              color: var(--text-secondary, #6b7280);
+              border: 1px solid var(--border-subtle, #e5e7eb);
               border-radius: 16px;
               font-weight: 700;
               cursor: pointer;
@@ -462,9 +491,9 @@ export default function DocumentsPage() {
           }
 
           .keep-btn:hover {
-              background: white;
-              color: #0F172A;
-              border-color: #0F172A;
+              background: var(--bg-card, #ffffff);
+              color: var(--text-main, #111827);
+              border-color: var(--border-subtle, #e5e7eb);
           }
       `}</style>
     </>

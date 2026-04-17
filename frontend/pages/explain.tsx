@@ -13,22 +13,22 @@ import SessionSidebar, { ChatSession } from '@/components/SessionSidebar'
 const styles = {
   container: "max-w-[1200px] mx-auto",
   mainArea: "flex-1 flex flex-col overflow-y-auto p-4 pt-20 sm:p-10 custom-scrollbar bg-[var(--bg-main)]", // Matches chat theme color
-  searchOnlyState: "bg-white rounded-[24px] sm:rounded-[32px] p-6 sm:p-10 text-center border border-[#E2E8F0] mt-4 sm:mt-0 w-full max-w-[750px] mx-auto",
-  sparkleIcon: "w-10 h-10 sm:w-14 sm:h-14 bg-[#F0FDF4] rounded-xl sm:rounded-2xl mx-auto mb-3 sm:mb-4 flex items-center justify-center",
-  h1: "text-2xl sm:text-2xl font-[800] mb-1 sm:mb-2 text-[#064E3B]",
-  p: "text-sm sm:text-base text-[#64748B] mb-5 sm:mb-6",
-  largeSearch: "bg-white border-[1.5px] border-[#E2E8F0] p-1.5 pl-4 sm:p-1.5 sm:pl-5 rounded-xl sm:rounded-2xl flex items-center gap-2 sm:gap-3 focus-within:border-[#10B981] focus-within:ring-4 focus-within:ring-[#10B981]/5 transition-all outline-none",
-  topicInput: "border-none bg-transparent flex-1 text-sm sm:text-base font-medium outline-none text-[#1E293B] placeholder:text-slate-400 min-w-0",
+  searchOnlyState: "bg-[var(--bg-card)] rounded-[24px] sm:rounded-[32px] p-6 sm:p-10 text-center border border-[var(--border-subtle)] mt-4 sm:mt-0 w-full max-w-[750px] mx-auto",
+  sparkleIcon: "w-10 h-10 sm:w-14 sm:h-14 bg-[#F0FDF4] dark:bg-green-900/30 rounded-xl sm:rounded-2xl mx-auto mb-3 sm:mb-4 flex items-center justify-center",
+  h1: "text-2xl sm:text-2xl font-[800] mb-1 sm:mb-2 text-[#064E3B] dark:text-green-300",
+  p: "text-sm sm:text-base text-[#64748B] dark:text-slate-300 mb-5 sm:mb-6",
+  largeSearch: "bg-[var(--bg-card)] border-[1.5px] border-[var(--border-subtle)] p-1.5 pl-4 sm:p-1.5 sm:pl-5 rounded-xl sm:rounded-2xl flex items-center gap-2 sm:gap-3 focus-within:border-[#10B981] focus-within:ring-4 focus-within:ring-[#10B981]/5 transition-all outline-none",
+  topicInput: "border-none bg-transparent flex-1 text-sm sm:text-base font-medium outline-none text-[#1E293B] dark:text-slate-100 min-w-0",
   generateBtn: "bg-gradient-to-br from-[#6366F1] to-[#4F46E5] text-white border-none px-4 py-2.5 sm:px-6 sm:py-3 rounded-lg sm:rounded-xl font-bold cursor-pointer hover:translate-y-[-2px] transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm sm:text-base",
   activeHeader: "flex flex-col gap-3 mb-6 sm:mb-10 w-full",
-  breadcrumb: "flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-[#94A3B8] pl-1 tracking-wider uppercase",
-  miniSearch: "flex items-center justify-between bg-white px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-[#10B981]/20 w-full",
+  breadcrumb: "flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-[#94A3B8] dark:text-slate-400 pl-1 tracking-wider uppercase",
+  miniSearch: "flex items-center justify-between bg-[var(--bg-card)] px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-[#10B981]/20 w-full",
   aiMessage: "flex flex-col gap-3 mb-6 sm:mb-10 items-start",
   aiAvatar: "hidden",
-  aiBubble: "bg-white p-6 sm:p-10 rounded-2xl sm:rounded-3xl border border-[#E2E8F0] w-full text-[#1E293B] leading-relaxed text-sm sm:text-[17px]",
-  resultCard: "bg-[#FFFFFF] rounded-2xl sm:rounded-3xl p-6 sm:p-12 border border-[#E2E8F0] border-2",
-  citations: "mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-[#F1F5F9]",
-  citation: "bg-[#FBFDFB] px-3 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl mb-2 text-[#64748B] font-medium border border-[#F1F5F9] flex items-center gap-2 text-xs sm:text-sm"
+  aiBubble: "bg-[var(--bg-card)] p-6 sm:p-10 rounded-2xl sm:rounded-3xl border border-[var(--border-subtle)] w-full text-[var(--text-main)] leading-relaxed text-sm sm:text-[17px]",
+  resultCard: "bg-[var(--bg-card)] rounded-2xl sm:rounded-3xl p-6 sm:p-12 border border-[var(--border-subtle)] border-2",
+  citations: "mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-[var(--border-subtle)]",
+  citation: "bg-[var(--accent-soft)] px-3 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl mb-2 text-[var(--text-muted)] font-medium border border-[var(--border-subtle)] flex items-center gap-2 text-xs sm:text-sm"
 }
 
 export default function Explain() {
@@ -377,8 +377,8 @@ export default function Explain() {
             ) : generating ? (
               <div className="flex flex-col items-center justify-center flex-1 h-full">
                 <Clock size={48} className="animate-spin mb-4 text-[#6366F1]" />
-                <h3 className="text-xl font-bold text-[#1E293B]">Analyzing topic...</h3>
-                <p className="text-[#64748B]">Synthesizing evidence-based explanation for {topic}</p>
+                <h3 className="text-xl font-bold text-[var(--text-main)]">Analyzing topic...</h3>
+                <p className="text-[var(--text-muted)]">Synthesizing evidence-based explanation for {topic}</p>
               </div>
             ) : (
               <motion.div
@@ -400,19 +400,19 @@ export default function Explain() {
                 </div>
 
                 <div className={styles.resultCard}>
-                  <div className="flex justify-between items-center mb-8 pb-6 border-b-2 border-[#F0FDF4]">
+                  <div className="flex justify-between items-center mb-8 pb-6 border-b-2 border-[#F0FDF4] dark:border-slate-600">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-gradient-to-br from-[#10B981] to-[#059669] rounded-xl flex items-center justify-center">
                         <BookOpen size={20} className="text-white" />
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold text-[#064E3B]">Comprehensive Explanation</h3>
-                        <p className="text-xs text-[#64748B] mt-0.5">Evidence-based clinical breakdown</p>
+                        <h3 className="text-xl font-bold text-[#064E3B] dark:text-green-400">Comprehensive Explanation</h3>
+                        <p className="text-xs text-[#64748B] dark:text-slate-400 mt-0.5">Evidence-based clinical breakdown</p>
                       </div>
                     </div>
                     <button
                       onClick={handleNewSession}
-                      className="text-xs font-bold text-[#64748B] hover:text-white hover:bg-gradient-to-r hover:from-[#EF4444] hover:to-[#DC2626] px-5 py-2.5 rounded-xl transition-all cursor-pointer uppercase tracking-wide shadow-sm hover:shadow-md"
+                      className="text-xs font-bold text-white bg-gradient-to-r from-[#6366F1] to-[#4F46E5] hover:from-[#4F46E5] hover:to-[#4338CA] px-5 py-2.5 rounded-xl transition-all cursor-pointer uppercase tracking-wide shadow-md hover:shadow-lg transform hover:scale-105"
                     >
                       New Topic
                     </button>
@@ -425,18 +425,18 @@ export default function Explain() {
                   {result.citations && (
                     <div className={styles.citations}>
                       <div className="flex items-center gap-2 mb-5">
-                        <div className="w-8 h-8 bg-[#EEF2FF] rounded-lg flex items-center justify-center">
-                          <BookOpen size={16} className="text-[#6366F1]" />
+                        <div className="w-8 h-8 bg-[#EEF2FF] dark:bg-slate-700 rounded-lg flex items-center justify-center">
+                          <BookOpen size={16} className="text-[#6366F1] dark:text-indigo-400" />
                         </div>
-                        <h4 className="text-base font-bold text-[#1E293B]">Referenced Sources</h4>
+                        <h4 className="text-base font-bold text-[#1E293B] dark:text-slate-100">Referenced Sources</h4>
                       </div>
                       <div className="grid gap-3">
                         {result.citations.sources?.map((source: any, idx: number) => (
-                          <div key={idx} className="bg-gradient-to-r from-[#F8FAFC] to-[#F1F5F9] px-4 py-3 rounded-xl border border-[#E2E8F0] flex items-center gap-3 hover:shadow-md transition-shadow">
-                            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
-                              <span className="text-xs font-bold text-[#6366F1]">{idx + 1}</span>
+                          <div key={idx} className="bg-gradient-to-r from-[#F8FAFC] to-[#F1F5F9] dark:from-slate-700 dark:to-slate-600 px-4 py-3 rounded-xl border border-[#E2E8F0] dark:border-slate-500 flex items-center gap-3 hover:shadow-md transition-shadow">
+                            <div className="w-8 h-8 bg-white dark:bg-slate-800 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+                              <span className="text-xs font-bold text-[#6366F1] dark:text-indigo-400">{idx + 1}</span>
                             </div>
-                            <span className="text-sm font-medium text-[#475569]">{source.document_filename}</span>
+                            <span className="text-sm font-medium text-[#475569] dark:text-slate-200">{source.document_filename}</span>
                           </div>
                         ))}
                       </div>
@@ -473,26 +473,43 @@ export default function Explain() {
           .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
           .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2); }
           .animate-spin { animation: spin 1.5s linear infinite; }
-          @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+          @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } 
           
+                    
           /* Enhanced Explanation Content Styling */
           .explanation-content {
             font-size: 17px;
             line-height: 1.9;
-            color: #334155;
+            color: var(--text-main);
             max-width: 100%;
           }
           
           .explanation-content h1 {
-            font-size: 28px;
-            font-weight: 800;
-            color: #064E3B;
+            font-size: 36px;
+            font-weight: 900;
             margin-top: 48px;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 3px solid #10B981;
-            letter-spacing: -0.02em;
-            line-height: 1.3;
+            margin-bottom: 32px;
+            padding: 20px 24px;
+            background: linear-gradient(135deg, #065F46 0%, #10B981 100%);
+            color: white;
+            border-radius: 16px;
+            border-left: 6px solid #10B981;
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+            letter-spacing: -0.03em;
+            line-height: 1.2;
+            position: relative;
+            overflow: hidden;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+          }
+          
+          .explanation-content h1::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #10B981, #059669, #047857);
           }
           
           .explanation-content h1:first-child {
@@ -500,75 +517,136 @@ export default function Explain() {
           }
           
           .explanation-content h2 {
-            font-size: 22px;
-            font-weight: 700;
-            color: #065F46;
-            margin-top: 36px;
-            margin-bottom: 16px;
-            padding-left: 14px;
-            border-left: 4px solid #10B981;
-            letter-spacing: -0.01em;
-            line-height: 1.4;
+            font-size: 28px;
+            font-weight: 800;
+            color: white;
+            margin-top: 48px;
+            margin-bottom: 24px;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%);
+            border-radius: 12px;
+            border-left: 5px solid #6366F1;
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
+            letter-spacing: -0.02em;
+            line-height: 1.3;
+            position: relative;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+          }
+          
+          .explanation-content h2::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, #818CF8, #6366F1);
+            border-radius: 2px;
           }
           
           .explanation-content h3 {
-            font-size: 19px;
-            font-weight: 600;
-            color: #047857;
-            margin-top: 28px;
-            margin-bottom: 14px;
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            margin-top: 40px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
-            gap: 8px;
-            line-height: 1.4;
+            gap: 12px;
+            line-height: 1.3;
+            padding: 14px 18px;
+            background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%);
+            border-radius: 10px;
+            border-left: 4px solid #F59E0B;
+            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.35);
+            position: relative;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+          }
+          
+          .explanation-content h3::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 60px;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1));
+            border-radius: 0 10px 10px 0;
           }
           
           .explanation-content h3::before {
-            content: "▸";
-            color: #10B981;
+            content: "◆";
+            color: white;
             font-size: 18px;
             flex-shrink: 0;
+            font-weight: 900;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
           }
           
           .explanation-content p {
-            margin-bottom: 18px;
-            color: #475569;
+            margin-bottom: 20px;
+            color: #1E293B;
             text-align: left;
-            line-height: 1.9;
-            letter-spacing: 0.01em;
+            line-height: 1.8;
+            letter-spacing: 0.005em;
+            font-size: 17px;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%);
+            border-radius: 8px;
+            border-left: 3px solid #E5E7EB;
+            transition: all 0.2s ease;
+          }
+          
+          .dark .explanation-content p {
+            color: var(--text-main);
+            background: linear-gradient(135deg, #1E293B 0%, #334155 100%);
+            border-left-color: #475569;
+          }
+          
+          .explanation-content p:hover {
+            background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
+            border-left-color: #9CA3AF;
+          }
+          
+          .dark .explanation-content p:hover {
+            background: linear-gradient(135deg, #334155 0%, #475569 100%);
+            border-left-color: #64748B;
           }
           
           .explanation-content strong {
-            font-weight: 700;
-            color: #0F172A;
-            background: linear-gradient(120deg, #D1FAE5 0%, #A7F3D0 100%);
-            padding: 2px 6px;
-            border-radius: 4px;
+            font-weight: 800;
+            color: #1E293B;
+            background: linear-gradient(120deg, #FEF3C7 0%, #FDE68A 100%);
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid #F59E0B;
+            box-shadow: 0 2px 4px rgba(245, 158, 11, 0.1);
+            display: inline-block;
           }
           
           .explanation-content em {
             font-style: italic;
-            color: #64748B;
+            color: var(--text-muted);
           }
           
           .explanation-content code {
-            background: #F1F5F9;
-            color: #6366F1;
+            background: var(--accent-soft);
+            color: var(--accent-primary, #6366F1);
             padding: 4px 8px;
             border-radius: 6px;
             font-family: 'Monaco', 'Courier New', monospace;
             font-size: 15px;
             font-weight: 600;
-            border: 1px solid #E2E8F0;
+            border: 1px solid var(--border-subtle);
           }
           
           .explanation-content pre {
-            background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+            background: var(--accent-soft);
             padding: 20px;
             border-radius: 12px;
             overflow-x: auto;
             margin: 20px 0;
-            border: 2px solid #E2E8F0;
+            border: 2px solid var(--border-subtle);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
           }
           
@@ -576,79 +654,242 @@ export default function Explain() {
             background: transparent;
             padding: 0;
             border: none;
-            color: #334155;
+            color: var(--text-main);
             font-size: 14px;
             line-height: 1.7;
           }
           
-          .explanation-content ul {
-            margin: 20px 0;
-            padding-left: 0;
-            list-style: none;
+          .explanation-content ul,
+          .explanation-content > div > ul {
+            margin: 24px 0 !important;
+            padding-left: 0 !important;
+            list-style: none !important;
+            background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%) !important;
+            border-radius: 16px !important;
+            padding: 20px !important;
+            border: 1px solid #E2E8F0 !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
           }
           
-          .explanation-content ul li {
-            position: relative;
-            padding-left: 36px;
-            margin-bottom: 14px;
-            color: #475569;
-            line-height: 1.8;
-            letter-spacing: 0.01em;
+          .explanation-content ul li,
+          .explanation-content > div > ul li {
+            position: relative !important;
+            padding: 12px 16px 12px 40px !important;
+            margin-bottom: 16px !important;
+            color: #1E293B !important;
+            line-height: 1.7 !important;
+            letter-spacing: 0.005em !important;
+            font-size: 16px !important;
+            font-weight: 500 !important;
+            background: white !important;
+            border-radius: 10px !important;
+            border-left: 3px solid transparent !important;
+            transition: all 0.2s ease !important;
           }
           
-          .explanation-content ul li::before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            top: 2px;
-            width: 22px;
-            height: 22px;
-            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-            color: white;
+          .explanation-content ul li:hover,
+          .explanation-content > div > ul li:hover {
+            background: #F8FAFC !important;
+            border-left-color: var(--accent-primary, #10B981) !important;
+            transform: translateX(2px) !important;
+          }
+          
+          .explanation-content ul li::before,
+          .explanation-content > div > ul li::before {
+            content: "▶" !important;
+            position: absolute !important;
+            left: 12px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            width: 8px !important;
+            height: 8px !important;
+            background: linear-gradient(135deg, var(--accent-primary, #10B981) 0%, var(--accent-primary-dark, #059669) 100%) !important;
+            border-radius: 50% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 10px !important;
+            font-weight: bold !important;
+            color: white !important;
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25) !important;
+            flex-shrink: 0 !important;
+          }
+          
+          .explanation-content ol,
+          .explanation-content > div > ol {
+            margin: 24px 0 !important;
+            padding-left: 0 !important;
+            list-style: none !important;
+            counter-reset: item !important;
+            background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%) !important;
+            border-radius: 16px !important;
+            padding: 20px !important;
+            border: 1px solid #C7D2FE !important;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1) !important;
+          }
+          
+          .explanation-content ol li,
+          .explanation-content > div > ol li {
+            position: relative !important;
+            padding: 12px 16px 12px 48px !important;
+            margin-bottom: 16px !important;
+            color: #1E293B !important;
+            line-height: 1.7 !important;
+            counter-increment: item !important;
+            letter-spacing: 0.005em !important;
+            font-size: 16px !important;
+            font-weight: 500 !important;
+            background: white !important;
+            border-radius: 10px !important;
+            border-left: 3px solid transparent !important;
+            transition: all 0.2s ease !important;
+          }
+          
+          .explanation-content ol li:hover,
+          .explanation-content > div > ol li:hover {
+            background: #F8FAFC !important;
+            border-left-color: var(--accent-secondary, #6366F1) !important;
+            transform: translateX(2px) !important;
+          }
+          
+          .explanation-content ol li::before,
+          .explanation-content > div > ol li::before {
+            content: counter(item) !important;
+            position: absolute !important;
+            left: 12px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            width: 24px !important;
+            height: 24px !important;
+            background: linear-gradient(135deg, var(--accent-secondary, #6366F1) 0%, var(--accent-secondary-dark, #4F46E5) 100%) !important;
+            color: white !important;
+            border-radius: 50% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 12px !important;
+            font-weight: bold !important;
+            box-shadow: 0 2px 6px rgba(99, 102, 241, 0.25) !important;
+            flex-shrink: 0 !important;
+          }
+          
+          /* Nested Lists */
+          .explanation-content ul ul, .explanation-content ol ol {
+            margin: 12px 0 12px 20px;
+            background: transparent;
+            border: none;
+            padding: 0;
+            box-shadow: none;
+          }
+          
+          .explanation-content ul ul li, .explanation-content ol ol li {
+            background: rgba(248, 250, 252, 0.8);
+            border-left: 2px solid #CBD5E1;
+            padding: 8px 12px 8px 32px;
+            margin-bottom: 8px;
+            font-size: 15px;
             border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 13px;
-            font-weight: bold;
-            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.15);
-            flex-shrink: 0;
           }
           
-          .explanation-content ol {
-            margin: 20px 0;
-            padding-left: 0;
-            list-style: none;
-            counter-reset: item;
+          .explanation-content ul ul li::before {
+            width: 6px;
+            height: 6px;
+            background: #64748B;
+            left: 16px;
+            content: "•";
+            color: #64748B;
+            font-size: 8px;
           }
           
-          .explanation-content ol li {
+          .explanation-content ol ol li::before {
+            width: 18px;
+            height: 18px;
+            background: #94A3B8;
+            left: 12px;
+            font-size: 10px;
+          }
+          
+          /* Strong text within lists */
+          .explanation-content ul li strong, .explanation-content ol li strong {
+            color: #1E293B;
+            font-weight: 800;
+            background: linear-gradient(120deg, #FEF3C7 0%, #FDE68A 100%) !important;
+            padding: 3px 6px;
+            border-radius: 4px;
+            border: 1px solid #F59E0B;
+            box-shadow: 0 1px 3px rgba(245, 158, 11, 0.2);
+          }
+          
+          /* Topic section separators */
+          .explanation-content > div {
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 2px solid #E5E7EB;
             position: relative;
-            padding-left: 40px;
-            margin-bottom: 14px;
-            color: #475569;
-            line-height: 1.8;
-            counter-increment: item;
-            letter-spacing: 0.01em;
           }
           
-          .explanation-content ol li::before {
-            content: counter(item);
-            position: absolute;
-            left: 0;
-            top: 2px;
-            width: 26px;
-            height: 26px;
-            background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
-            color: white;
-            border-radius: 7px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 13px;
-            font-weight: bold;
-            box-shadow: 0 2px 4px rgba(99, 102, 241, 0.15);
-            flex-shrink: 0;
+          .explanation-content > div:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+          }
+          
+          /* Enhanced Key Points section - using class-based approach */
+          .explanation-content .key-points-section {
+            margin-top: 40px !important;
+            padding: 24px !important;
+            background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%) !important;
+            border-radius: 20px !important;
+            border: 2px solid #FCA5A5 !important;
+            box-shadow: 0 8px 32px rgba(220, 38, 38, 0.15) !important;
+          }
+          
+          .explanation-content .key-points-section h3 {
+            background: linear-gradient(135deg, #DC2626 0%, #EF4444 50%, #F87171 100%) !important;
+            border-left-color: #DC2626 !important;
+            box-shadow: 0 8px 24px rgba(220, 38, 38, 0.4) !important;
+            margin-bottom: 24px !important;
+            padding: 18px 22px !important;
+            font-size: 26px !important;
+          }
+          
+          .explanation-content .key-points-section h3::before {
+            content: "★" !important;
+            font-size: 24px !important;
+          }
+          
+          .explanation-content .key-points-section ul {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+          }
+          
+          .explanation-content .key-points-section ul li {
+            background: white !important;
+            border-left: 4px solid #EF4444 !important;
+            border-radius: 12px !important;
+            padding: 16px 20px !important;
+            margin-bottom: 12px !important;
+            font-size: 17px !important;
+            font-weight: 600 !important;
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1) !important;
+            transition: all 0.3s ease !important;
+          }
+          
+          .explanation-content .key-points-section ul li:hover {
+            background: #FEF2F2 !important;
+            border-left-color: #DC2626 !important;
+            transform: translateX(4px) !important;
+            box-shadow: 0 4px 16px rgba(220, 38, 38, 0.2) !important;
+          }
+          
+          .explanation-content .key-points-section ul li::before {
+            background: linear-gradient(135deg, #DC2626, #EF4444) !important;
+            content: "✓" !important;
+            font-size: 14px !important;
+            width: 24px !important;
+            height: 24px !important;
           }
           
           .explanation-content br {
@@ -658,13 +899,13 @@ export default function Explain() {
           }
           
           .explanation-content blockquote {
-            background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
-            border-left: 4px solid #F59E0B;
+            background: var(--accent-soft);
+            border-left: 4px solid var(--accent-warning, #F59E0B);
             padding: 18px 20px;
             margin: 20px 0;
             border-radius: 10px;
             font-style: italic;
-            color: #78350F;
+            color: var(--text-main);
             box-shadow: 0 2px 6px rgba(245, 158, 11, 0.08);
             line-height: 1.8;
           }
@@ -680,7 +921,7 @@ export default function Explain() {
           }
           
           .explanation-content th {
-            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            background: linear-gradient(135deg, var(--accent-primary, #10B981) 0%, var(--accent-primary-dark, #059669) 100%);
             color: white;
             padding: 14px 16px;
             text-align: left;
@@ -692,9 +933,9 @@ export default function Explain() {
           
           .explanation-content td {
             padding: 14px 16px;
-            border-bottom: 1px solid #E2E8F0;
-            background: white;
-            color: #475569;
+            border-bottom: 1px solid var(--border-subtle);
+            background: var(--bg-card);
+            color: var(--text-main);
             line-height: 1.7;
           }
           
@@ -703,11 +944,11 @@ export default function Explain() {
           }
           
           .explanation-content tr:nth-child(even) td {
-            background: #F8FAFC;
+            background: var(--accent-soft);
           }
           
           .explanation-content a {
-            color: #6366F1;
+            color: var(--accent-secondary, #6366F1);
             text-decoration: none;
             font-weight: 600;
             border-bottom: 2px solid transparent;
@@ -715,7 +956,7 @@ export default function Explain() {
           }
           
           .explanation-content a:hover {
-            border-bottom-color: #6366F1;
+            border-bottom-color: var(--accent-secondary, #6366F1);
           }
           
           /* Responsive adjustments */

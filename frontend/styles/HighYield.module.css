@@ -20,6 +20,13 @@
     position: relative;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.hyWrapper::-webkit-scrollbar {
+    display: none;
 }
 
 .mainContent {
@@ -31,6 +38,7 @@
     width: 100%;
     max-width: 1000px;
     margin: 0 auto;
+    margin-bottom: 120px;
 }
 
 /* ============================================================
@@ -204,29 +212,39 @@
 }
 
 .resultCard {
-    background: #FDFDFD;
-    /* Ultra-soft creamy whitish for near-zero eye strain */
+    background: #FFFFFF;
+    /* Pure white for light theme */
     border-radius: var(--hy-radius);
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.08);
     box-shadow:
         0 4px 6px -1px rgba(0, 0, 0, 0.05),
         0 2px 4px -1px rgba(0, 0, 0, 0.03);
     flex: 1;
     display: flex;
     flex-direction: column;
-    min-height: 0;
-    overflow: hidden;
+    min-height: 600px;
+    overflow: visible;
+    margin-bottom: 60px;
+}
+
+.dark .resultCard {
+    background: #1E293B;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .scrollArea {
     flex: 1;
-    padding: 32px;
+    padding: 20px;
+    padding-top: 5px;
+    padding-bottom: 20px;
     overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    min-height: 500px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
 }
 
 .scrollArea::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
 }
 
 .scrollArea::-webkit-scrollbar-track {
@@ -234,31 +252,67 @@
 }
 
 .scrollArea::-webkit-scrollbar-thumb {
-    background: rgba(139, 92, 246, 0.2);
-    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
 }
 
 .scrollArea::-webkit-scrollbar-thumb:hover {
-    background: rgba(139, 92, 246, 0.4);
+    background: rgba(0, 0, 0, 0.3);
 }
 
 .noteContent {
-    font-size: 1rem;
-    line-height: 1.7;
-    color: #334155;
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: var(--text-main);
+    font-weight: 500;
+    margin: 0;
 }
 
 /* Markdown styling inside noteContent */
 .noteContent h1,
 .noteContent h2,
 .noteContent h3 {
-    color: var(--hy-text);
-    margin-top: 1.5em;
-    margin-bottom: 0.5em;
+    color: var(--text-main);
+    margin-top: 1.8em;
+    margin-bottom: 0.8em;
+    font-weight: 700;
+}
+
+.noteContent h1 {
+    font-size: 1.8em;
+    font-weight: 800;
+    border-bottom: 2px solid var(--border-subtle);
+    padding-bottom: 0.5em;
+}
+
+.noteContent h2 {
+    font-size: 1.5em;
+    font-weight: 700;
+    border-left: 4px solid var(--accent-primary, #8B5CF6);
+    padding-left: 0.8em;
+}
+
+.noteContent h3 {
+    font-size: 1.3em;
+    font-weight: 600;
 }
 
 .noteContent p {
-    margin-bottom: 1em;
+    margin-bottom: 1.2em;
+    color: var(--text-main);
+}
+
+.noteContent strong {
+    font-weight: 700;
+    color: var(--text-main);
+    background: var(--accent-soft);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.noteContent em {
+    font-style: italic;
+    color: var(--text-muted);
 }
 
 .noteContent ul,
@@ -268,7 +322,99 @@
 }
 
 .noteContent li {
-    margin-bottom: 0.5em;
+    margin-bottom: 0.8em;
+    color: var(--text-main);
+}
+
+.noteContent code {
+    background: var(--accent-soft);
+    color: var(--accent-primary, #8B5CF6);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.9em;
+    font-weight: 600;
+    border: 1px solid var(--border-subtle);
+}
+
+.noteContent pre {
+    background: var(--accent-soft);
+    padding: 20px;
+    border-radius: 12px;
+    overflow-x: auto;
+    margin: 20px 0;
+    border: 2px solid var(--border-subtle);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.noteContent pre code {
+    background: transparent;
+    padding: 0;
+    border: none;
+    color: var(--text-main);
+    font-size: 0.9em;
+    line-height: 1.7;
+}
+
+.noteContent blockquote {
+    background: var(--accent-soft);
+    border-left: 4px solid var(--accent-warning, #F59E0B);
+    padding: 18px 20px;
+    margin: 20px 0;
+    border-radius: 10px;
+    font-style: italic;
+    color: var(--text-main);
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.08);
+    line-height: 1.8;
+}
+
+.noteContent table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 20px 0;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.noteContent th {
+    background: linear-gradient(135deg, var(--accent-primary, #8B5CF6) 0%, #7C3AED 100%);
+    color: white;
+    padding: 14px 16px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.9em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.noteContent td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-card);
+    color: var(--text-main);
+    line-height: 1.7;
+}
+
+.noteContent tr:last-child td {
+    border-bottom: none;
+}
+
+.noteContent tr:nth-child(even) td {
+    background: var(--accent-soft);
+}
+
+.noteContent a {
+    color: var(--accent-primary, #8B5CF6);
+    text-decoration: none;
+    font-weight: 600;
+    border-bottom: 2px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.noteContent a:hover {
+    border-bottom-color: var(--accent-primary, #8B5CF6);
 }
 
 .citationsSection {
@@ -278,22 +424,33 @@
 }
 
 .citationsSection h4 {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     font-weight: 700;
-    color: var(--hy-text-muted);
-    margin-bottom: 12px;
+    color: var(--text-main);
+    margin-bottom: 16px;
+}
+
+.dark .citationsSection h4 {
+    color: var(--text-main);
 }
 
 .citationItem {
-    padding: 10px 16px;
-    background: #f1f5f9;
-    border-radius: 10px;
-    font-size: 0.85rem;
-    color: #475569;
-    margin-bottom: 8px;
+    padding: 12px 20px;
+    background: var(--accent-soft);
+    border-radius: 12px;
+    font-size: 0.9rem;
+    color: var(--text-main);
+    margin-bottom: 12px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    border: 1px solid var(--border-subtle);
+}
+
+.dark .citationItem {
+    background: var(--accent-soft);
+    color: var(--text-main);
+    border: 1px solid var(--border-subtle);
 }
 
 /* ============================================================

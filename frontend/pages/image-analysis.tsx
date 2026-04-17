@@ -317,7 +317,7 @@ export default function ImageAnalysis() {
           <motion.div
             animate={{ scale: [1, 1.05, 1] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-xl border border-blue-100 z-10 relative"
+            className="w-16 h-16 bg-[var(--bg-card)] rounded-full flex items-center justify-center shadow-xl border border-blue-100 dark:border-slate-600 z-10 relative"
           >
             <Microscope className="text-blue-600" size={24} />
           </motion.div>
@@ -368,7 +368,7 @@ export default function ImageAnalysis() {
                   <motion.button
                     variants={itemVariants}
                     onClick={handleNewAnalysis}
-                    className="flex items-center gap-2 px-5 py-2 bg-white border-2 border-blue-100 text-blue-600 rounded-full font-bold text-sm hover:border-blue-500 hover:bg-blue-50 transition-all shadow-sm"
+                    className="flex items-center gap-2 px-5 py-2 bg-[var(--bg-card)] border-2 border-blue-100 text-blue-600 rounded-full font-bold text-sm hover:border-blue-500 hover:bg-blue-50 transition-all shadow-sm"
                   >
                     <Activity size={18} />
                     New Analysis
@@ -391,7 +391,7 @@ export default function ImageAnalysis() {
                       <div
                         onDrop={handleDrop}
                         onDragOver={(e) => e.preventDefault()}
-                        className={`relative group bg-white border-3 border-dashed rounded-[2.5rem] transition-all cursor-pointer overflow-hidden flex-1 flex flex-col ${imagePreview ? 'border-blue-200 p-2' : 'border-slate-200 hover:border-blue-400 p-8 md:p-12'
+                        className={`relative group bg-[var(--bg-card)] border-3 border-dashed rounded-[2.5rem] transition-all cursor-pointer overflow-hidden flex-1 flex flex-col ${imagePreview ? 'border-blue-200 p-2' : 'border-slate-200 hover:border-blue-400 p-8 md:p-12'
                           }`}
                       >
                         {!imagePreview ? (
@@ -399,19 +399,19 @@ export default function ImageAnalysis() {
                             onClick={() => fileInputRef.current?.click()}
                             className="flex flex-col items-center justify-center h-full text-center px-6"
                           >
-                            <div className="w-20 h-20 bg-blue-50 rounded-[2.5rem] flex items-center justify-center mb-6 text-blue-500 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+                            <div className="w-20 h-20 bg-blue-50 rounded-[2.5rem] flex items-center justify-center mb-6 text-blue-500 border-3 border-dashed border-blue-600 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-500 transition-all duration-300">
                               <Upload size={36} />
                             </div>
                             <h3 className="text-2xl font-black text-[var(--cream-text-main)] mb-2">Drop Clinical Imagery</h3>
                             <p className="text-[var(--cream-text-muted)] font-medium mb-6">Drag and drop or click to browse files</p>
                             <div className="flex flex-wrap justify-center gap-3">
                               {['X-Ray', 'CT Scan', 'MRI', 'Ultrasound'].map(tag => (
-                                <span key={tag} className="px-4 py-1.5 bg-slate-50 text-slate-500 rounded-full text-xs font-black uppercase tracking-widest">{tag}</span>
+                                <span key={tag} className="px-4 py-1.5 bg-[var(--accent-soft)] text-[var(--text-muted)] rounded-full text-xs font-black uppercase tracking-widest">{tag}</span>
                               ))}
                             </div>
                           </div>
                         ) : (
-                          <div className="relative rounded-2xl overflow-hidden group/img h-full bg-slate-900 flex items-center justify-center">
+                          <div className="relative rounded-2xl overflow-hidden group/img h-full bg-[var(--accent-soft)] flex items-center justify-center">
                             <img
                               src={imagePreview}
                               alt="Selected medical image"
@@ -432,7 +432,7 @@ export default function ImageAnalysis() {
                               </span>
                             </div>
                             {analyzing && (
-                              <div className="absolute inset-0 bg-blue-900/40 backdrop-blur-sm flex flex-col items-center justify-center">
+                              <div className="absolute inset-0 bg-blue-500/30 backdrop-blur-sm flex flex-col items-center justify-center">
                                 <motion.div
                                   animate={{ height: ['0%', '100%', '0%'], top: ['0%', '0%', '0%'] }}
                                   transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
@@ -457,7 +457,7 @@ export default function ImageAnalysis() {
 
                     {/* Right Column: Context & Action */}
                     <div className="lg:col-span-5 flex flex-col h-full gap-4 min-h-0">
-                      <div className="bg-white rounded-[2.5rem] p-6 border border-slate-100 shadow-sm flex-1 flex flex-col overflow-hidden">
+                      <div className="bg-[var(--bg-card)] rounded-[2.5rem] p-6 border border-slate-100 shadow-sm flex-1 flex flex-col overflow-hidden">
                         <div className="flex items-center gap-3 mb-4 flex-shrink-0">
                           <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-500">
                             <Info size={20} />
@@ -472,7 +472,7 @@ export default function ImageAnalysis() {
                               value={additionalContext}
                               onChange={(e) => setAdditionalContext(e.target.value)}
                               placeholder="e.g. 45yo Male, chronic cough for 3 weeks, non-smoker..."
-                              className="w-full flex-1 p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-sm font-medium focus:border-blue-500 focus:bg-white transition-all outline-none resize-none"
+                              className="w-full flex-1 p-4 bg-[var(--accent-soft)] border-2 border-slate-100 rounded-2xl text-sm font-medium text-[var(--text-main)] focus:border-blue-500 focus:bg-[var(--bg-card)] transition-all outline-none resize-none"
                             />
                           </label>
                         </div>
@@ -503,10 +503,10 @@ export default function ImageAnalysis() {
                       </div>
 
                       {/* Quick Tips */}
-                      <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden flex-shrink-0">
-                        <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl" />
-                        <h4 className="text-xs font-black uppercase tracking-[0.2em] text-blue-400 mb-2 italic">Pro Tip</h4>
-                        <p className="text-sm font-medium text-slate-300 leading-relaxed">
+                      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-6 text-slate-700 shadow-xl relative overflow-hidden flex-shrink-0">
+                        <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-blue-200/30 rounded-full blur-3xl" />
+                        <h4 className="text-xs font-black uppercase tracking-[0.2em] text-blue-600 mb-2 italic">Pro Tip</h4>
+                        <p className="text-sm font-medium text-slate-600 leading-relaxed">
                           For higher diagnostic accuracy, provide patient age, primary symptoms, and any relevant surgical history in the context field.
                         </p>
                       </div>
@@ -517,17 +517,17 @@ export default function ImageAnalysis() {
                     key="results-view"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="grid lg:grid-cols-12 gap-8 items-start pb-20"
+                    className="flex flex-col gap-8 pb-20"
                     style={{ minHeight: 'auto' }}
                   >
-                    {/* Left Column: Image Card */}
-                    <div className="lg:col-span-5 sticky top-8">
-                      <div className="bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-xl group">
+                    {/* Image Section - Top */}
+                    <div className="flex justify-center">
+                      <div className="bg-[var(--bg-card)] rounded-[2rem] overflow-hidden border border-slate-100 shadow-xl group max-w-2xl w-full">
                         <div className="relative">
                           <img
                             src={imagePreview || ''}
                             alt="Analyzed medical image"
-                            className="w-full object-contain max-h-[500px] bg-slate-900"
+                            className="w-full object-contain max-h-[500px] bg-[var(--accent-soft)]"
                           />
                           <div className="absolute top-4 right-4 flex gap-2">
                             <button className="p-2.5 bg-white/10 backdrop-blur-md rounded-full text-white border border-white/20 hover:bg-white hover:text-slate-900 transition-all">
@@ -559,9 +559,9 @@ export default function ImageAnalysis() {
                       </div>
                     </div>
 
-                    {/* Right Column: Findings */}
-                    <div className="lg:col-span-7 space-y-6">
-                      <div className="bg-white rounded-[2.5rem] p-8 md:p-12 border border-blue-50 shadow-2xl relative overflow-hidden">
+                    {/* Findings Section - Below */}
+                    <div className="max-w-4xl mx-auto w-full">
+                      <div className="bg-[var(--bg-card)] rounded-[2.5rem] p-8 md:p-12 border border-blue-50 shadow-2xl relative overflow-hidden">
                         {/* Decorative elements */}
                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 
@@ -578,17 +578,17 @@ export default function ImageAnalysis() {
                           </div>
                         </div>
 
-                        <div className="prose max-w-none text-slate-700">
+                        <div className="prose max-w-none text-[var(--text-main)]">
                           <ReactMarkdown>{currentAnalysis.findings}</ReactMarkdown>
                         </div>
 
                         <div className="mt-12 pt-8 border-t border-slate-100 flex flex-wrap gap-4 items-center justify-between">
                           <div className="flex gap-2">
-                            <button className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-slate-800 transition-all">
+                            <button className="flex items-center gap-2 px-5 py-2.5 bg-slate-800 text-white rounded-xl text-xs font-black hover:bg-slate-900 transition-all">
                               <Download size={16} />
                               EXPORT PDF
                             </button>
-                            <button className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-xs font-black hover:bg-slate-50 transition-all">
+                            <button className="flex items-center gap-2 px-5 py-2.5 bg-[var(--bg-card)] border border-slate-200 text-[var(--text-main)] rounded-xl text-xs font-black hover:bg-slate-50 transition-all">
                               <Share2 size={16} />
                               SHARE
                             </button>
